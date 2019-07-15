@@ -29,269 +29,37 @@ use strum::IntoEnumIterator;
 
 use log::error;
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct NodeLocation {
+    line: usize,
+    character: usize,
+}
+
 #[derive(Clone, Debug, PartialEq)]
-pub struct NodeMeta {
-    pub gene: Option<Gene>,
+pub struct NodeGene {
+    // todo: the whole idea of having a gene here seems wrong. maybe a unique id that can be a key into a HashMap?
+    pub gene: Option<Gene>, // option because we don't know what gene it is at construction time?
     pub parameter_ast: Vec<Node>,
     pub parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
 }
 
-impl NodeMeta {
-    pub fn new_with_gene(gene: Gene) -> Self {
-        NodeMeta {
-            gene: Some(gene),
-            parameter_ast: Vec::new(),
-            parameter_prefix: Vec::new(),
-        }
-    }
+#[derive(Clone, Debug, PartialEq)]
+pub struct NodeMeta {
+    pub loc: NodeLocation,
+    pub gene_info: Option<NodeGene>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Node {
-    List(Vec<Node>, Option<NodeMeta>),
-    Vector(Vec<Node>, Option<NodeMeta>),
-    Float(f32, String, Option<NodeMeta>),
-    FromName(String, Iname, Option<NodeMeta>), // text, iname, meta
-    Name(String, Iname, Option<NodeMeta>),     // text, iname, meta
-    Label(String, Iname, Option<NodeMeta>),    // text, iname, meta
-    String(String, Iname, Option<NodeMeta>),
-    Whitespace(String, Option<NodeMeta>),
-    Comment(String, Option<NodeMeta>),
-}
-
-impl Node {
-    pub fn is_semantic(&self) -> bool {
-        match *self {
-            Node::Comment(_, _) | Node::Whitespace(_, _) => false,
-            _ => true,
-        }
-    }
-
-    pub fn get_float(&self, use_genes: bool) -> Result<f32> {
-        if let Node::Float(f, _, meta) = self {
-            if use_genes && meta.is_some() {
-                if let Some(meta) = meta {
-                    if let Some(gene) = &meta.gene {
-                        match gene {
-                            Gene::Float(f) => return Ok(*f),
-                            _ => {
-                                error!("Node::get_float incompatible gene");
-                                return Err(Error::Parser);
-                            }
-                        }
-                    }
-                }
-            } else {
-                return Ok(*f);
-            }
-        }
-        error!("Node::get_float expected Node::Float not {:?}", self);
-        Err(Error::Parser)
-    }
-
-    pub fn get_iname(&self, use_genes: bool) -> Result<Iname> {
-        match self {
-            Node::Name(_text, iname, meta) => {
-                if use_genes && meta.is_some() {
-                    if let Some(meta) = meta {
-                        if let Some(gene) = &meta.gene {
-                            match gene {
-                                Gene::Name(i) => return Ok(*i),
-                                _ => {
-                                    error!("Node::get_iname incompatible gene for Name");
-                                    return Err(Error::Parser);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    return Ok(*iname);
-                }
-            }
-            Node::FromName(_text, iname, meta) => {
-                if use_genes && meta.is_some() {
-                    if let Some(meta) = meta {
-                        if let Some(gene) = &meta.gene {
-                            match gene {
-                                Gene::Name(i) => return Ok(*i),
-                                _ => {
-                                    error!("Node::get_iname incompatible gene for FromName");
-                                    return Err(Error::Parser);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    return Ok(*iname);
-                }
-            }
-            Node::String(_text, iname, meta) => {
-                if use_genes && meta.is_some() {
-                    if let Some(meta) = meta {
-                        if let Some(gene) = &meta.gene {
-                            match gene {
-                                Gene::String(i) => return Ok(*i),
-                                _ => {
-                                    error!("Node::get_iname incompatible gene for String");
-                                    return Err(Error::Parser);
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    return Ok(*iname);
-                }
-            }
-            _ => {
-                error!(
-                    "Node::get_iname expected Node::Name or Node::String not {:?}",
-                    self
-                );
-                return Err(Error::Parser);
-            }
-        }
-
-        error!(
-            "Node::get_iname expected Node::Name or Node::String not {:?}",
-            self
-        );
-        Err(Error::Parser)
-    }
-
-    pub fn get_label_iname(&self, use_genes: bool) -> Result<Iname> {
-        if let Node::Label(_, iname, meta) = self {
-            if use_genes && meta.is_some() {
-                if let Some(meta) = meta {
-                    if let Some(gene) = &meta.gene {
-                        match gene {
-                            // todo: what type of gene would a Node::Label have?
-                            Gene::Int(i) => return Ok(Iname::new(*i)),
-                            Gene::Name(i) => return Ok(*i),
-                            _ => {
-                                error!("Node::get_label_iname incompatible gene");
-                                return Err(Error::Parser);
-                            }
-                        }
-                    }
-                }
-            } else {
-                return Ok(*iname);
-            }
-        }
-        error!("Node::get_label_iname expected Node::Label not {:?}", self);
-        Err(Error::Parser)
-    }
-
-    pub fn get_colour(&self, use_genes: bool) -> Result<Colour> {
-        if let Node::List(_, meta) = self {
-            if use_genes && meta.is_some() {
-                if let Some(meta) = meta {
-                    if let Some(gene) = &meta.gene {
-                        match gene {
-                            Gene::Colour(col) => return Ok(*col),
-                            _ => {
-                                error!("Node::get_colour incompatible gene");
-                                return Err(Error::Parser);
-                            }
-                        }
-                    }
-                }
-            } else {
-                error!("Node::get_colour expected to use gene");
-                return Err(Error::Parser);
-            }
-        }
-        error!("Node::get_colour expected Node::List not {:?}", self);
-        Err(Error::Parser)
-    }
-
-    pub fn get_2d(&self, use_genes: bool) -> Result<(f32, f32)> {
-        if let Node::Vector(_, meta) = self {
-            if use_genes && meta.is_some() {
-                if let Some(meta) = meta {
-                    if let Some(gene) = &meta.gene {
-                        match gene {
-                            Gene::V2D(x, y) => return Ok((*x, *y)),
-                            _ => {
-                                error!("Node::get_2d incompatible gene");
-                                return Err(Error::Parser);
-                            }
-                        }
-                    }
-                }
-            } else {
-                error!("Node::get_2d expected to use gene");
-                return Err(Error::Parser);
-            }
-        }
-        error!("Node::get_2d expected Node::Vector not {:?}", self);
-        Err(Error::Parser)
-    }
-
-    pub fn is_name(&self) -> bool {
-        match self {
-            Node::Name(_, _, _) => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_name_with_iname(&self, iname: &Iname) -> bool {
-        match self {
-            Node::Name(_, name_iname, _) => {
-                name_iname == iname
-            },
-            _ => false,
-        }
-    }
-
-    pub fn is_alterable(&self) -> bool {
-        match self {
-            Node::List(_, meta)
-            | Node::Vector(_, meta)
-            | Node::Float(_, _, meta)
-            | Node::FromName(_, _, meta)
-            | Node::Name(_, _, meta)
-            | Node::Label(_, _, meta)
-            | Node::String(_, _, meta)
-            | Node::Whitespace(_, meta)
-            | Node::Comment(_, meta) => meta.is_some(),
-        }
-    }
-
-    pub fn has_gene(&self) -> bool {
-        match self {
-            Node::List(_, meta)
-            | Node::Vector(_, meta)
-            | Node::Float(_, _, meta)
-            | Node::FromName(_, _, meta)
-            | Node::Name(_, _, meta)
-            | Node::Label(_, _, meta)
-            | Node::String(_, _, meta)
-            | Node::Whitespace(_, meta)
-            | Node::Comment(_, meta) => {
-                if let Some(meta) = meta {
-                    return meta.gene.is_some();
-                } else {
-                    false
-                }
-            }
-        }
-    }
-}
-
-struct NodeAndRemainder<'a> {
-    node: Node,
-    tokens: &'a [Token<'a>],
-}
-
-fn is_name_or_keyword(s: &str) -> bool {
-    if let Ok(_) = Native::from_str(s) {
-        return true;
-    }
-    if let Ok(_) = Keyword::from_str(s) {
-        return true;
-    }
-    false
+    List(NodeMeta, Vec<Node>),
+    Vector(NodeMeta, Vec<Node>),
+    Float(NodeMeta, f32, String),
+    FromName(NodeMeta, String, Iname),
+    Name(NodeMeta, String, Iname),
+    Label(NodeMeta, String, Iname),
+    String(NodeMeta, String, Iname),
+    Whitespace(NodeMeta, String),
+    Comment(NodeMeta, String),
 }
 
 #[derive(Debug)]
@@ -305,6 +73,248 @@ pub struct WordLut {
     iname_to_word: HashMap<Iname, String>,
     iname_to_native: HashMap<Iname, String>,
     iname_to_keyword: HashMap<Iname, String>,
+}
+
+struct NodeAndRemainder<'a> {
+    node: Node,
+    loc: NodeLocation,
+    tokens: &'a [Token<'a>],
+}
+
+impl NodeMeta {
+    pub fn new_with_gene(&self, gene: Gene) -> Self {
+        NodeMeta {
+            loc: self.loc,
+            gene_info: Some(NodeGene {
+                gene: Some(gene),
+                parameter_ast: Vec::new(),
+                parameter_prefix: Vec::new(),
+            }),
+        }
+    }
+}
+
+impl Node {
+    pub fn is_semantic(&self) -> bool {
+        match *self {
+            Node::Comment(_, _) | Node::Whitespace(_, _) => false,
+            _ => true,
+        }
+    }
+
+    pub fn get_float(&self, use_genes: bool) -> Result<f32> {
+        if let Node::Float(meta, f, _) = self {
+            genetic_f32(use_genes, *f, meta)
+        } else {
+            error!("Node::get_float expected Node::Float not {:?}", self);
+            Err(Error::Parser)
+        }
+    }
+
+    pub fn get_iname(&self, use_genes: bool) -> Result<Iname> {
+        match self {
+            Node::Name(meta, _text, iname) => genetic_iname(use_genes, *iname, meta, gene_name),
+            Node::FromName(meta, _text, iname) => genetic_iname(use_genes, *iname, meta, gene_name),
+            Node::String(meta, _text, iname) => genetic_iname(use_genes, *iname, meta, gene_string),
+            _ => {
+                error!(
+                    "Node::get_iname expected Node::Name or Node::String not {:?}",
+                    self
+                );
+                Err(Error::Parser)
+            }
+        }
+    }
+
+    pub fn get_label_iname(&self, use_genes: bool) -> Result<Iname> {
+        if let Node::Label(meta, _, iname) = self {
+            genetic_iname(use_genes, *iname, meta, gene_name_or_int)
+        } else {
+            error!("Node::get_label_iname expected Node::Label not {:?}", self);
+            Err(Error::Parser)
+        }
+    }
+
+    pub fn get_colour(&self, use_genes: bool) -> Result<Colour> {
+        if let Node::List(meta, _) = self {
+            genetic_colour(use_genes, meta)
+        } else {
+            error!("Node::get_colour expected Node::List not {:?}", self);
+            Err(Error::Parser)
+        }
+    }
+
+    pub fn get_2d(&self, use_genes: bool) -> Result<(f32, f32)> {
+        if let Node::Vector(meta, _) = self {
+            genetic_v2d(use_genes, meta)
+        } else {
+            error!("Node::get_2d expected Node::Vector not {:?}", self);
+            Err(Error::Parser)
+        }
+    }
+
+    pub fn is_name(&self) -> bool {
+        match self {
+            Node::Name(_, _, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_name_with_iname(&self, iname: &Iname) -> bool {
+        match self {
+            Node::Name(_, _, name_iname) => name_iname == iname,
+            _ => false,
+        }
+    }
+
+    pub fn is_alterable(&self) -> bool {
+        match self {
+            Node::List(meta, _)
+            | Node::Vector(meta, _)
+            | Node::Float(meta, _, _)
+            | Node::FromName(meta, _, _)
+            | Node::Name(meta, _, _)
+            | Node::Label(meta, _, _)
+            | Node::String(meta, _, _)
+            | Node::Whitespace(meta, _)
+            | Node::Comment(meta, _) => meta.gene_info.is_some(),
+        }
+    }
+
+    pub fn has_gene(&self) -> bool {
+        match self {
+            Node::List(meta, _)
+            | Node::Vector(meta, _)
+            | Node::Float(meta, _, _)
+            | Node::FromName(meta, _, _)
+            | Node::Name(meta, _, _)
+            | Node::Label(meta, _, _)
+            | Node::String(meta, _, _)
+            | Node::Whitespace(meta, _)
+            | Node::Comment(meta, _) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    gene_info.gene.is_some()
+                } else {
+                    false
+                }
+            }
+        }
+    }
+}
+
+fn gene_name(gene: &Gene) -> Result<Iname> {
+    match gene {
+        Gene::Name(i) => return Ok(*i),
+        _ => {
+            error!("gene_name: expected Gene::Name");
+            return Err(Error::Parser);
+        }
+    }
+}
+
+fn gene_string(gene: &Gene) -> Result<Iname> {
+    match gene {
+        Gene::String(i) => return Ok(*i),
+        _ => {
+            error!("gene_string: expected Gene::String");
+            return Err(Error::Parser);
+        }
+    }
+}
+
+fn gene_name_or_int(gene: &Gene) -> Result<Iname> {
+    match gene {
+        // todo: what type of gene would a Node::Label have?
+        Gene::Int(i) => return Ok(Iname::new(*i)),
+        Gene::Name(i) => return Ok(*i),
+        _ => {
+            error!("gene_name_or_int: expected Gene::Int or Gene::Name");
+            return Err(Error::Parser);
+        }
+    }
+}
+
+fn genetic_iname(
+    use_genes: bool,
+    iname: Iname,
+    meta: &NodeMeta,
+    f: fn(&Gene) -> Result<Iname>,
+) -> Result<Iname> {
+    if use_genes {
+        if let Some(gene_info) = &meta.gene_info {
+            if let Some(gene) = &gene_info.gene {
+                return f(&gene);
+            }
+        }
+    }
+
+    Ok(iname)
+}
+
+fn genetic_colour(use_genes: bool, meta: &NodeMeta) -> Result<Colour> {
+    if use_genes {
+        if let Some(gene_info) = &meta.gene_info {
+            if let Some(gene) = &gene_info.gene {
+                match gene {
+                    Gene::Colour(col) => return Ok(*col),
+                    _ => {
+                        error!("genetic_colour incompatible gene");
+                        return Err(Error::Parser);
+                    }
+                }
+            }
+        }
+    } else {
+        error!("genetic_colour: expected to use gene");
+    }
+    Err(Error::Parser)
+}
+
+fn genetic_v2d(use_genes: bool, meta: &NodeMeta) -> Result<(f32, f32)> {
+    if use_genes {
+        if let Some(gene_info) = &meta.gene_info {
+            if let Some(gene) = &gene_info.gene {
+                match gene {
+                    Gene::V2D(x, y) => return Ok((*x, *y)),
+                    _ => {
+                        error!("genetic_v2d incompatible gene");
+                        return Err(Error::Parser);
+                    }
+                }
+            }
+        }
+    } else {
+        error!("genetic_v2d: expected to use gene");
+    }
+    Err(Error::Parser)
+}
+
+fn genetic_f32(use_genes: bool, float: f32, meta: &NodeMeta) -> Result<f32> {
+    if use_genes {
+        if let Some(gene_info) = &meta.gene_info {
+            if let Some(gene) = &gene_info.gene {
+                match gene {
+                    Gene::Float(f) => return Ok(*f),
+                    _ => {
+                        error!("genetic_f32 incompatible gene");
+                        return Err(Error::Parser);
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(float)
+}
+
+fn is_name_or_keyword(s: &str) -> bool {
+    if let Ok(_) = Native::from_str(s) {
+        return true;
+    }
+    if let Ok(_) = Keyword::from_str(s) {
+        return true;
+    }
+    false
 }
 
 impl Default for WordLut {
@@ -424,13 +434,19 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
     let mut tokens = t.as_slice();
     let mut res = Vec::new();
 
+    let mut loc = NodeLocation {
+        line: 1,
+        character: 1,
+    };
+
     let word_lut = WordLut::new(tokens);
 
     while !tokens.is_empty() {
-        match eat_token(tokens, None, &word_lut) {
+        match eat_token(tokens, loc, None, &word_lut) {
             Ok(nar) => {
                 res.push(nar.node);
                 tokens = nar.tokens;
+                loc = nar.loc;
             }
             Err(e) => return Err(e),
         }
@@ -443,23 +459,32 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
 //
 fn eat_list<'a>(
     t: &'a [Token<'a>],
-    meta: Option<NodeMeta>,
+    loc: NodeLocation,
+    gene_info: Option<NodeGene>,
     word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
+    let mut loc2 = NodeLocation {
+        line: loc.line,
+        character: loc.character + 1,
+    };
+
     loop {
         match tokens[0] {
             Token::ParenEnd => {
+                loc2.character += 1;
                 return Ok(NodeAndRemainder {
-                    node: Node::List(res, meta),
+                    node: Node::List(NodeMeta { loc, gene_info }, res),
+                    loc: loc2,
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut) {
                 Ok(nar) => {
                     res.push(nar.node);
+                    loc2 = nar.loc;
                     tokens = nar.tokens;
                 }
                 Err(e) => return Err(e),
@@ -470,23 +495,32 @@ fn eat_list<'a>(
 
 fn eat_vector<'a>(
     t: &'a [Token<'a>],
-    meta: Option<NodeMeta>,
+    loc: NodeLocation,
+    gene_info: Option<NodeGene>,
     word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
     let mut res: Vec<Node> = Vec::new();
 
+    let mut loc2 = NodeLocation {
+        line: loc.line,
+        character: loc.character + 1,
+    };
+
     loop {
         match tokens[0] {
             Token::SquareBracketEnd => {
+                loc2.character += 1;
                 return Ok(NodeAndRemainder {
-                    node: Node::Vector(res, meta),
+                    node: Node::Vector(NodeMeta { loc, gene_info }, res),
+                    loc: loc2,
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut) {
                 Ok(nar) => {
                     res.push(nar.node);
+                    loc2 = nar.loc;
                     tokens = nar.tokens;
                 }
                 Err(e) => return Err(e),
@@ -495,61 +529,108 @@ fn eat_vector<'a>(
     }
 }
 
-fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &WordLut) -> Result<NodeAndRemainder<'a>> {
+fn eat_alterable<'a>(
+    t: &'a [Token<'a>],
+    loc: NodeLocation,
+    word_lut: &WordLut,
+) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
+
+    let mut loc2 = NodeLocation {
+        line: loc.line,
+        character: loc.character + 1, // the '{'
+    };
 
     // possible parameter_prefix
     let mut parameter_prefix: Vec<Node> = Vec::new();
     loop {
         match tokens[0] {
+            Token::Newline => {
+                parameter_prefix.push(Node::Whitespace(
+                    NodeMeta {
+                        loc: loc2,
+                        gene_info: None,
+                    },
+                    "\n".to_string(),
+                ));
+                loc2.line += 1;
+                loc2.character = 1;
+                tokens = &tokens[1..];
+            }
             Token::Whitespace(ws) => {
-                parameter_prefix.push(Node::Whitespace(ws.to_string(), None));
+                parameter_prefix.push(Node::Whitespace(
+                    NodeMeta {
+                        loc: loc2,
+                        gene_info: None,
+                    },
+                    ws.to_string(),
+                ));
+                loc2.character += ws.len();
                 tokens = &tokens[1..];
             }
             Token::Comment(comment) => {
-                parameter_prefix.push(Node::Comment(comment.to_string(), None));
+                parameter_prefix.push(Node::Comment(
+                    NodeMeta {
+                        loc: loc2,
+                        gene_info: None,
+                    },
+                    comment.to_string(),
+                ));
+                loc2.character += comment.len();
                 tokens = &tokens[1..];
             }
             _ => break,
         }
     }
 
-    let default_expression = eat_token(tokens, None, word_lut)?;
+    let default_loc = loc2;
+    let default_expression = eat_token(tokens, loc2, None, word_lut)?;
     tokens = default_expression.tokens;
+
+    loc2 = default_expression.loc;
 
     // parameter ast (incl. whitespace, comments etc)
     let mut parameter_ast: Vec<Node> = Vec::new();
     loop {
         match tokens[0] {
             Token::CurlyBracketEnd => {
-                // construct the NodeMeta
-                let meta = Some(NodeMeta {
+                // construct the gene_info
+                let gene_info = Some(NodeGene {
                     gene: None,
                     parameter_ast,
                     parameter_prefix,
                 });
 
-                // add the correct meta information to the parsed default node
-                let default_with_meta = match default_expression.node {
-                    Node::List(ns, _) => Node::List(ns, meta),
-                    Node::Vector(ns, _) => Node::Vector(ns, meta),
-                    Node::Float(f, s, _) => Node::Float(f, s, meta),
-                    Node::FromName(s, i, _) => Node::FromName(s, i, meta),
-                    Node::Name(s, i, _) => Node::Name(s, i, meta),
-                    Node::Label(s, i, _) => Node::Label(s, i, meta),
-                    Node::String(s, i, _) => Node::String(s, i, meta),
-                    Node::Whitespace(s, _) => Node::Whitespace(s, meta),
-                    Node::Comment(s, _) => Node::Comment(s, meta),
+                let meta = NodeMeta {
+                    loc: default_loc,
+                    gene_info,
                 };
 
+                // add the correct meta information to the parsed default node
+                let default_with_meta = match default_expression.node {
+                    Node::List(_, ns) => Node::List(meta, ns),
+                    Node::Vector(_, ns) => Node::Vector(meta, ns),
+                    Node::Float(_, f, s) => Node::Float(meta, f, s),
+                    Node::FromName(_, s, i) => Node::FromName(meta, s, i),
+                    Node::Name(_, s, i) => Node::Name(meta, s, i),
+                    Node::Label(_, s, i) => Node::Label(meta, s, i),
+                    Node::String(_, s, i) => Node::String(meta, s, i),
+                    Node::Whitespace(_, s) => Node::Whitespace(meta, s),
+                    Node::Comment(_, s) => Node::Comment(meta, s),
+                };
+
+                loc2.character += 1; // closing '}'
                 return Ok(NodeAndRemainder {
                     node: default_with_meta,
+                    loc: loc2,
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut) {
+                // loc2 ???
                 Ok(nar) => {
                     parameter_ast.push(nar.node);
+                    loc2 = nar.loc;
                     tokens = nar.tokens;
                 }
                 Err(e) => return Err(e),
@@ -560,7 +641,8 @@ fn eat_alterable<'a>(t: &'a [Token<'a>], word_lut: &WordLut) -> Result<NodeAndRe
 
 fn eat_quoted_form<'a>(
     t: &'a [Token<'a>],
-    meta: Option<NodeMeta>,
+    loc: NodeLocation,
+    gene_info: Option<NodeGene>,
     word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     let mut tokens = t;
@@ -568,26 +650,47 @@ fn eat_quoted_form<'a>(
 
     let q = "quote".to_string();
     let qi = word_lut.get(&q)?;
-    res.push(Node::Name(q, qi, None));
-    res.push(Node::Whitespace(" ".to_string(), None));
+    res.push(Node::Name(
+        NodeMeta {
+            loc,
+            gene_info: None,
+        },
+        q,
+        qi,
+    ));
+    res.push(Node::Whitespace(
+        NodeMeta {
+            loc,
+            gene_info: None,
+        },
+        " ".to_string(),
+    ));
 
-    match eat_token(tokens, None, word_lut) {
+    let mut loc2 = NodeLocation {
+        line: loc.line,
+        character: loc.character + 1,
+    };
+
+    match eat_token(tokens, loc2, None, word_lut) {
         Ok(nar) => {
             res.push(nar.node);
             tokens = nar.tokens;
+            loc2 = nar.loc;
         }
         Err(e) => return Err(e),
     }
 
     Ok(NodeAndRemainder {
-        node: Node::List(res, meta),
+        node: Node::List(NodeMeta { loc, gene_info }, res),
+        loc: loc2,
         tokens: &tokens[..],
     })
 }
 
 fn eat_token<'a>(
     tokens: &'a [Token<'a>],
-    meta: Option<NodeMeta>,
+    loc: NodeLocation,
+    gene_info: Option<NodeGene>,
     word_lut: &WordLut,
 ) -> Result<NodeAndRemainder<'a>> {
     match tokens[0] {
@@ -596,18 +699,31 @@ fn eat_token<'a>(
             let ti = word_lut.get(&t)?;
             if tokens.len() > 1 && tokens[1] == Token::Colon {
                 Ok(NodeAndRemainder {
-                    node: Node::Label(t, ti, meta),
+                    node: Node::Label(NodeMeta { loc, gene_info }, t, ti),
+                    // length of label + 1 for colon
+                    loc: NodeLocation {
+                        line: loc.line,
+                        character: loc.character + txt.len() + 1,
+                    },
                     tokens: &tokens[2..],
                 })
             } else if tokens.len() > 1 && tokens[1] == Token::Dot {
                 Ok(NodeAndRemainder {
-                    node: Node::FromName(t, ti, meta),
+                    node: Node::FromName(NodeMeta { loc, gene_info }, t, ti),
+                    // length of label + 1 for dot syntax
+                    loc: NodeLocation {
+                        line: loc.line,
+                        character: loc.character + txt.len() + 1,
+                    },
                     tokens: &tokens[2..],
                 })
             } else {
                 Ok(NodeAndRemainder {
-                    node: Node::Name(t, ti, meta),
-
+                    node: Node::Name(NodeMeta { loc, gene_info }, t, ti),
+                    loc: NodeLocation {
+                        line: loc.line,
+                        character: loc.character + txt.len(),
+                    },
                     tokens: &tokens[1..],
                 })
             }
@@ -617,13 +733,21 @@ fn eat_token<'a>(
             let ti = word_lut.get(&t)?;
 
             Ok(NodeAndRemainder {
-                node: Node::String(t, ti, meta),
+                node: Node::String(NodeMeta { loc, gene_info }, t, ti),
+                loc: NodeLocation {
+                    line: loc.line,
+                    character: loc.character + txt.len(),
+                },
                 tokens: &tokens[1..],
             })
         }
         Token::Number(txt) => match txt.parse::<f32>() {
             Ok(f) => Ok(NodeAndRemainder {
-                node: Node::Float(f, txt.to_string(), meta),
+                node: Node::Float(NodeMeta { loc, gene_info }, f, txt.to_string()),
+                loc: NodeLocation {
+                    line: loc.line,
+                    character: loc.character + txt.len(),
+                },
                 tokens: &tokens[1..],
             }),
             Err(_) => {
@@ -631,18 +755,52 @@ fn eat_token<'a>(
                 Err(Error::Parser)
             }
         },
+        Token::Newline => Ok(NodeAndRemainder {
+            node: Node::Whitespace(
+                NodeMeta {
+                    loc,
+                    gene_info: None,
+                },
+                "\n".to_string(),
+            ),
+            loc: NodeLocation {
+                line: loc.line + 1,
+                character: 1,
+            },
+            tokens: &tokens[1..],
+        }),
         Token::Whitespace(ws) => Ok(NodeAndRemainder {
-            node: Node::Whitespace(ws.to_string(), None),
+            node: Node::Whitespace(
+                NodeMeta {
+                    loc,
+                    gene_info: None,
+                },
+                ws.to_string(),
+            ),
+            loc: NodeLocation {
+                line: loc.line,
+                character: loc.character + ws.len(),
+            },
             tokens: &tokens[1..],
         }),
         Token::Comment(comment) => Ok(NodeAndRemainder {
-            node: Node::Comment(comment.to_string(), None),
+            node: Node::Comment(
+                NodeMeta {
+                    loc,
+                    gene_info: None,
+                },
+                comment.to_string(),
+            ),
+            loc: NodeLocation {
+                line: loc.line,
+                character: loc.character + comment.len(),
+            },
             tokens: &tokens[1..],
         }),
-        Token::Quote => eat_quoted_form(&tokens[1..], meta, word_lut),
-        Token::ParenStart => eat_list(&tokens[1..], meta, word_lut),
-        Token::SquareBracketStart => eat_vector(&tokens[1..], meta, word_lut),
-        Token::CurlyBracketStart => eat_alterable(&tokens[1..], word_lut),
+        Token::Quote => eat_quoted_form(&tokens[1..], loc, gene_info, word_lut),
+        Token::ParenStart => eat_list(&tokens[1..], loc, gene_info, word_lut),
+        Token::SquareBracketStart => eat_vector(&tokens[1..], loc, gene_info, word_lut),
+        Token::CurlyBracketStart => eat_alterable(&tokens[1..], loc, word_lut),
         _ => {
             error!("ParserHandledToken {:?}", tokens[0]);
             Err(Error::Parser)
@@ -673,31 +831,49 @@ mod tests {
         };
     }
 
+    fn meta_loc(line: usize, character: usize) -> NodeMeta {
+        NodeMeta {
+            loc: NodeLocation { line, character },
+            gene_info: None,
+        }
+    }
+
     #[test]
     fn test_parser_names() {
         assert_eq!(
             ast("hello"),
-            [Node::Name("hello".to_string(), Iname::new(0), None)]
+            [Node::Name(
+                meta_loc(1, 1),
+                "hello".to_string(),
+                Iname::new(0)
+            )]
         );
         assert_eq!(
             ast("hello world"),
             [
-                Node::Name("hello".to_string(), Iname::new(0), None),
-                Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Iname::new(1), None)
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Name(meta_loc(1, 7), "world".to_string(), Iname::new(1))
+            ]
+        );
+        assert_eq!(
+            ast("hello\nworld"),
+            [
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), "\n".to_string()),
+                Node::Name(meta_loc(2, 1), "world".to_string(), Iname::new(1))
             ]
         );
     }
 
     #[test]
     fn test_parser_label() {
-
         assert_eq!(
             ast("hello: world"),
             [
-                Node::Label("hello".to_string(), Iname::new(0), None),
-                Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Iname::new(1), None)
+                Node::Label(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 7), " ".to_string()),
+                Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1))
             ]
         );
     }
@@ -707,9 +883,9 @@ mod tests {
         assert_eq!(
             ast("42 102"),
             [
-                Node::Float(42.0, "42".to_string(), None),
-                Node::Whitespace(" ".to_string(), None),
-                Node::Float(102.0, "102".to_string(), None)
+                Node::Float(meta_loc(1, 1), 42.0, "42".to_string()),
+                Node::Whitespace(meta_loc(1, 3), " ".to_string()),
+                Node::Float(meta_loc(1, 4), 102.0, "102".to_string())
             ]
         );
     }
@@ -719,11 +895,11 @@ mod tests {
         assert_eq!(
             ast("hello world ; some comment"),
             [
-                Node::Name("hello".to_string(), Iname::new(0), None),
-                Node::Whitespace(" ".to_string(), None),
-                Node::Name("world".to_string(), Iname::new(1), None),
-                Node::Whitespace(" ".to_string(), None),
-                Node::Comment(" some comment".to_string(), None)
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Name(meta_loc(1, 7), "world".to_string(), Iname::new(1)),
+                Node::Whitespace(meta_loc(1, 12), " ".to_string()),
+                Node::Comment(meta_loc(1, 13), " some comment".to_string())
             ]
         );
     }
@@ -733,70 +909,86 @@ mod tests {
         assert_eq!(
             ast("(hello world)"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("hello".to_string(), Iname::new(0), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Iname::new(1), None)
+                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
+                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1))
                 ],
-                None
             )]
+        );
+
+        assert_eq!(
+            ast("(hello world) ; another comment"),
+            [
+                Node::List(
+                    meta_loc(1, 1),
+                    vec![
+                        Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
+                        Node::Whitespace(meta_loc(1, 7), " ".to_string()),
+                        Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
+                    ],
+                ),
+                Node::Whitespace(meta_loc(1, 14), " ".to_string()),
+                Node::Comment(meta_loc(1, 15), " another comment".to_string())
+            ]
         );
 
         assert_eq!(
             ast("(bitmap \"foo.png\")"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("bitmap".to_string(), Iname::new(0), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::String("foo.png".to_string(), Iname::new(1), None)
+                    Node::Name(meta_loc(1, 2), "bitmap".to_string(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 8), " ".to_string()),
+                    Node::String(meta_loc(1, 9), "foo.png".to_string(), Iname::new(1))
                 ],
-                None
             )]
         );
 
         assert_eq!(
             ast("(hello world (1 2 3))"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("hello".to_string(), Iname::new(0), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Iname::new(1), None),
-                    Node::Whitespace(" ".to_string(), None),
+                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
+                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
+                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
                     Node::List(
+                        meta_loc(1, 14),
                         vec![
-                            Node::Float(1.0, "1".to_string(), None),
-                            Node::Whitespace(" ".to_string(), None),
-                            Node::Float(2.0, "2".to_string(), None),
-                            Node::Whitespace(" ".to_string(), None),
-                            Node::Float(3.0, "3".to_string(), None)
+                            Node::Float(meta_loc(1, 15), 1.0, "1".to_string()),
+                            Node::Whitespace(meta_loc(1, 16), " ".to_string()),
+                            Node::Float(meta_loc(1, 17), 2.0, "2".to_string()),
+                            Node::Whitespace(meta_loc(1, 18), " ".to_string()),
+                            Node::Float(meta_loc(1, 19), 3.0, "3".to_string())
                         ],
-                        None
                     )
                 ],
-                None
             )]
         );
 
         assert_eq!(
             ast("(hello world [1 2 3])"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("hello".to_string(), Iname::new(0), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Name("world".to_string(), Iname::new(1), None),
-                    Node::Whitespace(" ".to_string(), None),
+                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
+                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
+                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
                     Node::Vector(
+                        meta_loc(1, 14),
                         vec![
-                            Node::Float(1.0, "1".to_string(), None),
-                            Node::Whitespace(" ".to_string(), None),
-                            Node::Float(2.0, "2".to_string(), None),
-                            Node::Whitespace(" ".to_string(), None),
-                            Node::Float(3.0, "3".to_string(), None)
+                            Node::Float(meta_loc(1, 15), 1.0, "1".to_string()),
+                            Node::Whitespace(meta_loc(1, 16), " ".to_string()),
+                            Node::Float(meta_loc(1, 17), 2.0, "2".to_string()),
+                            Node::Whitespace(meta_loc(1, 18), " ".to_string()),
+                            Node::Float(meta_loc(1, 19), 3.0, "3".to_string())
                         ],
-                        None
                     )
                 ],
-                None
             )]
         );
     }
@@ -806,12 +998,12 @@ mod tests {
         assert_eq!(
             ast("'3"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("quote".to_string(), Iname::new(153), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Float(3.0, "3".to_string(), None)
+                    Node::Name(meta_loc(1, 1), "quote".to_string(), Iname::new(153)),
+                    Node::Whitespace(meta_loc(1, 1), " ".to_string()),
+                    Node::Float(meta_loc(1, 2), 3.0, "3".to_string())
                 ],
-                None
             )]
         );
     }
@@ -819,29 +1011,40 @@ mod tests {
     #[test]
     fn test_parser_alterable() {
         assert_eq!(
-            ast("hello { 5 (gen/scalar)}"),
+            ast("hello { 5 (gen/scalar)} foo"),
             [
-                Node::Name("hello".to_string(), Iname::new(0), None),
-                Node::Whitespace(" ".to_string(), None),
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(1)),
+                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
                 Node::Float(
+                    NodeMeta {
+                        loc: NodeLocation {
+                            line: 1,
+                            character: 9
+                        },
+                        gene_info: Some(NodeGene {
+                            gene: None,
+                            parameter_ast: vec![
+                                Node::Whitespace(meta_loc(1, 10), " ".to_string()),
+                                Node::List(
+                                    meta_loc(1, 11),
+                                    vec![Node::Name(
+                                        meta_loc(1, 12),
+                                        "gen/scalar".to_string(),
+                                        Iname::from(Native::GenScalar),
+                                    )],
+                                )
+                            ],
+                            parameter_prefix: vec![Node::Whitespace(
+                                meta_loc(1, 8),
+                                " ".to_string()
+                            )]
+                        })
+                    },
                     5.0,
                     "5".to_string(),
-                    Some(NodeMeta {
-                        gene: None,
-                        parameter_ast: vec![
-                            Node::Whitespace(" ".to_string(), None),
-                            Node::List(
-                                vec![Node::Name(
-                                    "gen/scalar".to_string(),
-                                    Iname::from(Native::GenScalar),
-                                    None
-                                )],
-                                None
-                            )
-                        ],
-                        parameter_prefix: vec![Node::Whitespace(" ".to_string(), None)]
-                    })
-                )
+                ),
+                Node::Whitespace(meta_loc(1, 24), " ".to_string()),
+                Node::Name(meta_loc(1, 25), "foo".to_string(), Iname::new(0)),
             ]
         );
     }
@@ -851,14 +1054,22 @@ mod tests {
         assert_eq!(
             ast("(rect width: 300)"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::Name("rect".to_string(), Iname::from(Native::Rect), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Label("width".to_string(), Iname::from(Keyword::Width), None),
-                    Node::Whitespace(" ".to_string(), None),
-                    Node::Float(300.0, "300".to_string(), None),
+                    Node::Name(
+                        meta_loc(1, 2),
+                        "rect".to_string(),
+                        Iname::from(Native::Rect)
+                    ),
+                    Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                    Node::Label(
+                        meta_loc(1, 7),
+                        "width".to_string(),
+                        Iname::from(Keyword::Width)
+                    ),
+                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
+                    Node::Float(meta_loc(1, 14), 300.0, "300".to_string()),
                 ],
-                None
             )]
         );
     }
@@ -868,15 +1079,15 @@ mod tests {
         assert_eq!(
             ast("(some-vector.vector/length)"),
             [Node::List(
+                meta_loc(1, 1),
                 vec![
-                    Node::FromName("some-vector".to_string(), Iname::new(0), None),
+                    Node::FromName(meta_loc(1, 2), "some-vector".to_string(), Iname::new(0)),
                     Node::Name(
+                        meta_loc(1, 14),
                         "vector/length".to_string(),
                         Iname::from(Native::VectorLength),
-                        None
                     ),
                 ],
-                None
             )]
         );
     }

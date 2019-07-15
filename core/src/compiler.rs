@@ -24,7 +24,7 @@ use crate::keywords::{name_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::{name_to_native_hash, parameter_info, Native};
 use crate::opcodes::{opcode_stack_offset, Opcode};
-use crate::parser::{Node, NodeMeta, WordLut};
+use crate::parser::{Node, WordLut};
 use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
 use crate::result::Result;
 use crate::vm::{Var, MEMORY_LOCAL_SIZE};
@@ -116,10 +116,9 @@ pub fn compile_program_with_genotype(
 ) -> Result<Program> {
     let mut compilation = Compilation::new();
     let mut compiler = Compiler::new();
+
     compiler.use_genes = true;
-
     assign_genotype_to_ast(ast, genotype)?;
-
     compiler.compile_common(&mut compilation, &ast)?;
 
     let mut data: Data = Default::default();
@@ -150,22 +149,18 @@ fn hacky_assign_genes_to_each_node_in_vector(
 
     for n in elements {
         match n {
-            Node::Vector(ns, _) => {
+            Node::Vector(meta, ns) => {
                 res.push(Node::Vector(
+                    meta.new_with_gene(genotype.genes[genotype.current_gene_index].clone()),
                     ns.clone(),
-                    Some(NodeMeta::new_with_gene(
-                        genotype.genes[genotype.current_gene_index].clone(),
-                    )),
                 ));
                 genotype.current_gene_index += 1;
             }
-            Node::Float(f, s, _) => {
+            Node::Float(meta, f, s) => {
                 res.push(Node::Float(
+                    meta.new_with_gene(genotype.genes[genotype.current_gene_index].clone()),
                     *f,
                     s.to_string(),
-                    Some(NodeMeta::new_with_gene(
-                        genotype.genes[genotype.current_gene_index].clone(),
-                    )),
                 ));
                 genotype.current_gene_index += 1;
             }
@@ -185,17 +180,17 @@ fn hacky_assign_genes_to_each_node_in_vector2(ns: &mut Vec<Node>, res: Vec<Node>
 
 fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()> {
     match node {
-        Node::List(ref mut ns, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::List(meta, ref mut ns) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
             for n in ns {
                 assign_genes_to_nodes(n, genotype)?;
             }
         }
-        Node::Vector(ref mut ns, meta) => {
-            if meta.is_some() {
+        Node::Vector(meta, ref mut ns) => {
+            if meta.gene_info.is_some() {
                 let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
                 hacky_assign_genes_to_each_node_in_vector2(ns, res);
             } else {
@@ -204,45 +199,45 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
                 }
             }
         }
-        Node::Float(_, _, ref mut meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::Float(ref mut meta, _, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::FromName(_, _, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::FromName(meta, _, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::Name(_, _, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::Name(meta, _, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::Label(_, _, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::Label(meta, _, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::String(_, _, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::String(meta, _, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::Whitespace(_, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::Whitespace(meta, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
-        Node::Comment(_, meta) => {
-            if let Some(ref mut node_meta) = meta {
-                node_meta.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+        Node::Comment(meta, _) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
                 genotype.current_gene_index += 1;
             }
         }
@@ -253,7 +248,7 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
 
 fn is_node_colour_constructor(children: &[&Node]) -> bool {
     if !children.is_empty() {
-        if let Node::Name(_, iname, _) = children[0] {
+        if let Node::Name(_, _, iname) = children[0] {
             let col_constructor_start = Iname::from(Native::ColConstructorStart_);
             let col_constructor_end = Iname::from(Native::ColConstructorEnd_);
 
@@ -395,7 +390,7 @@ impl Compilation {
     }
 
     fn get_fn_info_index(&self, node: &Node) -> Option<usize> {
-        if let Node::Name(text, _, _) = node {
+        if let Node::Name(_, text, _) = node {
             for (i, fi) in self.fn_info.iter().enumerate() {
                 if fi.fn_name == *text {
                     return Some(i);
@@ -782,7 +777,7 @@ impl Compiler {
     fn register_top_level_fns_1(&self, n: &Node) -> Result<Option<FnInfo>> {
         if self.is_list_beginning_with(n, Keyword::Fn) {
             // get the name of the fn
-            if let Node::List(nodes, _) = n {
+            if let Node::List(_, nodes) = n {
                 let nodes = only_semantic_nodes(nodes);
 
                 if nodes.len() < 2 {
@@ -791,12 +786,12 @@ impl Compiler {
                     return Err(Error::Compiler);
                 }
                 let name_and_params = nodes[1];
-                if let Node::List(np_nodes, _) = name_and_params {
+                if let Node::List(_, np_nodes) = name_and_params {
                     let np_nodes = only_semantic_nodes(np_nodes);
 
                     if !np_nodes.is_empty() {
                         let name_node = &np_nodes[0];
-                        if let Node::Name(text, _, _) = name_node {
+                        if let Node::Name(_, text, _) = name_node {
                             // we have a named top-level fn declaration
                             //
                             // create and add a top level fn
@@ -831,7 +826,7 @@ impl Compiler {
                     return Err(e);
                 }
             }
-            Node::List(nodes, _) | Node::Vector(nodes, _) => {
+            Node::List(_, nodes) | Node::Vector(_, nodes) => {
                 // (define [a b] (something))
                 // (define [a [x y]] (something))
                 let nodes = only_semantic_nodes(nodes);
@@ -862,11 +857,11 @@ impl Compiler {
     fn register_top_level_defines_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
         let define_keyword_string = Keyword::Define.to_string();
 
-        if let Node::List(nodes, _) = n {
+        if let Node::List(_, nodes) = n {
             let nodes = only_semantic_nodes(nodes);
             if !nodes.is_empty() {
                 let define_keyword = &nodes[0];
-                if let Node::Name(text, _, _) = define_keyword {
+                if let Node::Name(_, text, _) = define_keyword {
                     if text == &define_keyword_string {
                         let mut defs = &nodes[1..];
                         while defs.len() > 1 {
@@ -1024,6 +1019,7 @@ impl Compiler {
         self.compile_common_top_level_defines(compilation, &ast)?;
         self.compile_common_top_level_forms(compilation, &ast)?;
         self.compile_common_epilogue(compilation)?;
+
         Ok(())
     }
 
@@ -1058,7 +1054,7 @@ impl Compiler {
         //// single node version of self.compile_common_top_level_defines(compilation, ast)?;
         {
             if self.is_list_beginning_with(n, Keyword::Define) {
-                if let Node::List(children, _) = n {
+                if let Node::List(_, children) = n {
                     let children = only_semantic_nodes(children);
                     self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
@@ -1130,7 +1126,7 @@ impl Compiler {
     ) -> Result<()> {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
-                if let Node::List(children, _) = n {
+                if let Node::List(_, children) = n {
                     let children = only_semantic_nodes(children);
                     self.compile_define(compilation, &children[1..], Mem::Global)?;
                 }
@@ -1166,16 +1162,19 @@ impl Compiler {
     fn compile(&self, compilation: &mut Compilation, ast: &Node) -> Result<()> {
         // todo: move this out of compile and into the compilation struct
         match ast {
-            Node::List(children, meta) => {
+            Node::List(meta, children) => {
                 let children = only_semantic_nodes(children);
 
-                if self.use_genes && meta.is_some() && is_node_colour_constructor(&children[..]) {
+                if self.use_genes
+                    && meta.gene_info.is_some()
+                    && is_node_colour_constructor(&children[..])
+                {
                     // we have an alterable colour constructor so just load in the colour value stored in the gene
                     //
                     let col = self.get_colour(ast)?;
                     compilation.emit(Opcode::LOAD, Mem::Constant, col)?;
                 } else {
-                    if self.use_genes && meta.is_some() {
+                    if self.use_genes && meta.gene_info.is_some() {
                         error!("given an alterable list that wasn't a colour constructor???");
                         return Err(Error::Compiler);
                     }
@@ -1186,7 +1185,7 @@ impl Compiler {
                 let f = self.get_float(ast)?;
                 return compilation.emit(Opcode::LOAD, Mem::Constant, f);
             }
-            Node::Vector(children, _) => {
+            Node::Vector(_, children) => {
                 let children = only_semantic_nodes(children);
 
                 if children.len() == 2 {
@@ -1199,7 +1198,7 @@ impl Compiler {
                 let iname = self.get_iname(ast)?;
                 return compilation.emit_name_as_string(Opcode::LOAD, Mem::Constant, iname);
             }
-            Node::Name(text, _, _) => {
+            Node::Name(_, text, _) => {
                 let iname = self.get_iname(ast)?;
 
                 return if self.compile_user_defined_name(compilation, iname)? {
@@ -1215,7 +1214,7 @@ impl Compiler {
                     Err(Error::Compiler)
                 };
             }
-            Node::FromName(text, _, _) => {
+            Node::FromName(_, text, _) => {
                 let iname = self.get_iname(ast)?;
 
                 return if self.compile_user_defined_name(compilation, iname)? {
@@ -1248,7 +1247,7 @@ impl Compiler {
         }
 
         match &children[0] {
-            Node::List(kids, _) => {
+            Node::List(_, kids) => {
                 let kids = only_semantic_nodes(kids);
                 self.compile_list(compilation, &kids[..])?
             }
@@ -1453,12 +1452,12 @@ impl Compiler {
 
         for (i, node) in label_vals.iter().enumerate() {
             // a label
-            if let Node::Label(_, iname, _) = node {
+            if let Node::Label(_, _, iname) = node {
                 if *iname == kw_name {
                     return Some(i + 1);
                 }
                 preceding_node_was_label = true;
-            } else if let Node::Name(_, iname, _) = node {
+            } else if let Node::Name(_, _, iname) = node {
                 // possibly using the shortened syntax:
                 // (some-fn arg1) that's equivalent to (some-fn arg1: arg1)
                 //
@@ -1539,7 +1538,7 @@ impl Compiler {
                     // define foo 10
                     self.store_from_stack_to_memory(compilation, &lhs_node, mem)?;
                 }
-                Node::Vector(kids, _) => {
+                Node::Vector(_, kids) => {
                     let kids = only_semantic_nodes(kids);
 
                     // define [a b] (something-that-returns-a-vector ...)
@@ -1587,7 +1586,7 @@ impl Compiler {
         let parameters_node = &children[0];
         error_if_alterable(&parameters_node, "compile_fence")?;
 
-        if let Node::List(kids, _) = parameters_node {
+        if let Node::List(_, kids) = parameters_node {
             let kids = only_semantic_nodes(kids);
 
             // the looping variable x
@@ -1602,7 +1601,7 @@ impl Compiler {
                 let label = &label_vals[0];
                 let value = &label_vals[1];
 
-                if let Node::Label(_, iname, _) = label {
+                if let Node::Label(_, _, iname) = label {
                     if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
                     } else if *iname == Iname::from(Keyword::To) {
@@ -1745,7 +1744,7 @@ impl Compiler {
         let parameters_node = &children[0];
         error_if_alterable(&parameters_node, "compile_loop")?;
 
-        if let Node::List(kids, _) = parameters_node {
+        if let Node::List(_, kids) = parameters_node {
             let kids = only_semantic_nodes(kids);
 
             // the looping variable y
@@ -1761,7 +1760,7 @@ impl Compiler {
                 let label = &label_vals[0];
                 let value = &label_vals[1];
 
-                if let Node::Label(_, iname, _) = label {
+                if let Node::Label(_, _, iname) = label {
                     if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
                     } else if *iname == Iname::from(Keyword::To) {
@@ -1868,7 +1867,7 @@ impl Compiler {
         let parameters_node = &children[0];
         error_if_alterable(&parameters_node, "compile_each")?;
 
-        if let Node::List(kids, _) = parameters_node {
+        if let Node::List(_, kids) = parameters_node {
             let kids = only_semantic_nodes(kids);
 
             // the looping variable x
@@ -1881,7 +1880,7 @@ impl Compiler {
                 let label = &label_vals[0];
                 let value = &label_vals[1];
 
-                if let Node::Label(_, iname, _) = label {
+                if let Node::Label(_, _, iname) = label {
                     if *iname == Iname::from(Keyword::From) {
                         maybe_from_node = Some(&value);
                     }
@@ -1960,7 +1959,7 @@ impl Compiler {
         compilation: &mut Compilation,
         list_node: &Node,
     ) -> Result<()> {
-        if let Node::List(children, _) = list_node {
+        if let Node::List(_, children) = list_node {
             error_if_alterable(list_node, "compile_vector_in_quote")?;
 
             // slightly hackish
@@ -1973,7 +1972,7 @@ impl Compiler {
             let children = only_semantic_nodes(children);
             let len = children.len() as i32;
             for n in children {
-                if let Node::Name(_, iname, _) = n {
+                if let Node::Name(_, _, iname) = n {
                     compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?;
                 } else {
                     self.compile(compilation, n)?;
@@ -1993,7 +1992,7 @@ impl Compiler {
         let quoted_form = &children[0];
         match quoted_form {
             Node::List(_, _) => self.compile_vector_in_quote(compilation, quoted_form)?,
-            Node::Name(_, iname, _) => compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?,
+            Node::Name(_, _, iname) => compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?,
             _ => self.compile(compilation, quoted_form)?,
         }
         Ok(())
@@ -2018,7 +2017,7 @@ impl Compiler {
 
         compilation.emit(Opcode::APPEND, 0, 0)?;
 
-        if let Node::Name(_, iname, _) = vector {
+        if let Node::Name(_, _, iname) = vector {
             let mut mem_addr: Option<(Mem, usize)> = None;
 
             if let Some(address) = compilation.get_local_mapping(*iname) {
@@ -2041,7 +2040,7 @@ impl Compiler {
         // fn_name should be a defined function's name
         // it will be known at compile time
 
-        if let Node::List(kids, _) = &children[0] {
+        if let Node::List(_, kids) = &children[0] {
             error_if_alterable(&children[0], "compile_fn_call")?;
 
             let kids = only_semantic_nodes(kids);
@@ -2068,7 +2067,7 @@ impl Compiler {
                 // push the actual fn_info index so that the _FLU opcode can find it
                 self.compile(compilation, fn_info_index)?;
 
-                if let Node::Label(_, iname, _) = label {
+                if let Node::Label(_, _, iname) = label {
                     compilation.emit(Opcode::STORE_F, Mem::Argument, *iname)?;
                 } else {
                     error!("compile_fn_call: label required");
@@ -2217,7 +2216,7 @@ impl Compiler {
         let signature = &children[0]; // (addr a: 0 b: 0)
         error_if_alterable(&signature, "compile_fn")?;
 
-        if let Node::List(kids, _) = signature {
+        if let Node::List(_, kids) = signature {
             let kids = only_semantic_nodes(kids);
 
             if kids.is_empty() {
@@ -2361,12 +2360,12 @@ impl Compiler {
         let mut arg_vals = &children[..];
         while arg_vals.len() > 0 {
             let arg = &arg_vals[0];
-            if let Node::Label(_, iname, _) = arg {
+            if let Node::Label(_, _, iname) = arg {
                 let val = &arg_vals[1];
                 self.compile(compilation, val)?;
                 compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
                 arg_vals = &arg_vals[2..];
-            } else if let Node::Name(_, iname, _) = arg {
+            } else if let Node::Name(_, _, iname) = arg {
                 let val = &arg_vals[0];
                 self.compile(compilation, val)?;
                 compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
@@ -2435,7 +2434,7 @@ impl Compiler {
                 let f = self.get_float(node)?;
                 compilation.emit(Opcode::LOAD, Mem::Constant, f)?;
             }
-            Node::Vector(_elements, _) => {
+            Node::Vector(_, _elements) => {
                 unimplemented!();
             }
             _ => {
@@ -2566,7 +2565,7 @@ impl Compiler {
         node: &Node,
         mem: Mem,
     ) -> Result<usize> {
-        if let Node::Name(_, iname, _) = node {
+        if let Node::Name(_, _, iname) = node {
             match mem {
                 Mem::Local => self.store_locally(compilation, *iname),
                 // a call with mem == global means that this is a user defined global
@@ -2616,11 +2615,11 @@ impl Compiler {
     }
 
     fn is_list_beginning_with(&self, n: &Node, kw: Keyword) -> bool {
-        if let Node::List(nodes, _) = n {
+        if let Node::List(_, nodes) = n {
             let nodes = only_semantic_nodes(nodes);
 
             if !nodes.is_empty() {
-                if let Node::Name(_, iname, _) = nodes[0] {
+                if let Node::Name(_, _, iname) = nodes[0] {
                     // todo: could just cast kw to i32 and compare directly with iname
                     if let Some(name_kw) = self.name_to_keyword.get(iname) {
                         return *name_kw == kw;
@@ -2664,7 +2663,7 @@ fn error_if_alterable(n: &Node, s: &str) -> Result<()> {
 // renamed all_children_have_type as it's only used with children of type NAME
 fn all_children_are_name_nodes(parent: &Node) -> bool {
     match parent {
-        Node::List(children, _) | Node::Vector(children, _) => {
+        Node::List(_, children) | Node::Vector(_, children) => {
             let children = only_semantic_nodes(children);
 
             for n in children {

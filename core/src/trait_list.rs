@@ -17,7 +17,7 @@ use crate::compiler::{compile_program_1, compile_program_for_trait, Compilation,
 use crate::context::Context;
 use crate::iname::Iname;
 use crate::packable::{Mule, Packable};
-use crate::parser::{Node, NodeMeta, WordLut};
+use crate::parser::{Node, NodeGene, WordLut};
 use crate::program::Program;
 use crate::result::Result;
 use crate::run_program_with_preamble;
@@ -112,7 +112,7 @@ impl Trait {
          */
 
         let initial_value = match node {
-            Node::Name(_, i, _) => Var::Name(*i),
+            Node::Name(_, _, i) => Var::Name(*i),
             _ => {
                 let program = compile_program_1(node, word_lut)?;
                 let mut vm: Vm = Default::default();
@@ -166,43 +166,43 @@ impl TraitList {
 
     fn ga_traverse(&mut self, node: &Node, word_lut: &WordLut) -> Result<()> {
         match node {
-            Node::List(ns, meta) => {
-                if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta, word_lut)?;
+            Node::List(meta, ns) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_single_trait(&node, &gene_info, word_lut)?;
                 };
 
                 for n in ns {
                     self.ga_traverse(n, word_lut)?;
                 }
             }
-            Node::Vector(ns, meta) => {
-                if let Some(meta) = meta {
-                    self.add_multiple_traits(ns, &meta, word_lut)?;
+            Node::Vector(meta, ns) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_multiple_traits(ns, &gene_info, word_lut)?;
                 }
 
                 for n in ns {
                     self.ga_traverse(n, word_lut)?;
                 }
             }
-            Node::Float(_, _, meta) => {
-                if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta, word_lut)?;
-                }
+            Node::Float(meta, _, _) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_single_trait(&node, &gene_info, word_lut)?;
+                };
             }
-            Node::Name(_, _, meta) => {
-                if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta, word_lut)?;
-                }
+            Node::Name(meta, _, _) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_single_trait(&node, &gene_info, word_lut)?;
+                };
             }
-            Node::Label(_, _, meta) => {
-                if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta, word_lut)?;
-                }
+            Node::Label(meta, _, _) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_single_trait(&node, &gene_info, word_lut)?;
+                };
             }
-            Node::String(_, _, meta) => {
-                if let Some(meta) = meta {
-                    self.add_single_trait(&node, &meta, word_lut)?;
-                }
+            Node::String(meta, _, _) => {
+                if let Some(gene_info) = &meta.gene_info {
+                    self.add_single_trait(&node, &gene_info, word_lut)?;
+                };
             }
             _ => {}
         };
@@ -210,11 +210,16 @@ impl TraitList {
         Ok(())
     }
 
-    fn add_single_trait(&mut self, node: &Node, meta: &NodeMeta, word_lut: &WordLut) -> Result<()> {
+    fn add_single_trait(
+        &mut self,
+        node: &Node,
+        gene_info: &NodeGene,
+        word_lut: &WordLut,
+    ) -> Result<()> {
         let t = Trait::compile(
             node,
             word_lut,
-            &meta.parameter_ast,
+            &gene_info.parameter_ast,
             &self.global_mapping,
             None,
         )?;
@@ -227,7 +232,7 @@ impl TraitList {
     fn add_multiple_traits(
         &mut self,
         nodes: &[Node],
-        meta: &NodeMeta,
+        gene_info: &NodeGene,
         word_lut: &WordLut,
     ) -> Result<()> {
         let mut i: usize = 0;
@@ -240,7 +245,7 @@ impl TraitList {
                     let t = Trait::compile(
                         n,
                         word_lut,
-                        &meta.parameter_ast,
+                        &gene_info.parameter_ast,
                         &self.global_mapping,
                         Some(i),
                     )?;

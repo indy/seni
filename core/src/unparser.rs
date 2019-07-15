@@ -18,7 +18,7 @@ use crate::error::Error;
 use crate::gene::{Gene, Genotype};
 use crate::iname::Iname;
 use crate::keywords::Keyword;
-use crate::parser::{parse, Node, NodeMeta, WordLut};
+use crate::parser::{parse, Node, NodeGene, WordLut};
 use crate::result::Result;
 
 use log::error;
@@ -50,12 +50,12 @@ fn unparse_ast_node_alterable(
     word_lut: &WordLut,
     ast: &Node,
     genotype: &mut Genotype,
-    meta: &Option<NodeMeta>,
+    gene_info: &Option<NodeGene>,
 ) -> Result<()> {
     cursor.push_str("{");
 
-    if let Some(meta) = meta {
-        for n in &meta.parameter_prefix {
+    if let Some(gene_info) = gene_info {
+        for n in &gene_info.parameter_prefix {
             unparse_ast_node(cursor, word_lut, n, genotype)?;
         }
 
@@ -65,7 +65,7 @@ fn unparse_ast_node_alterable(
         };
         cursor.push_str(&s);
 
-        for n in &meta.parameter_ast {
+        for n in &gene_info.parameter_ast {
             unparse_ast_node(cursor, word_lut, n, genotype)?;
         }
     }
@@ -82,31 +82,31 @@ fn unparse_ast_node(
     genotype: &mut Genotype,
 ) -> Result<()> {
     match ast {
-        Node::List(_, ref meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::List(ref meta, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Vector(_, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Vector(meta, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Float(_, _, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Float(meta, _, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Name(_, _, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Name(meta, _, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Label(_, _, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Label(meta, _, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::String(_, _, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::String(meta, _, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Whitespace(_, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Whitespace(meta, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::Comment(_, meta) if meta.is_some() => {
-            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta)
+        Node::Comment(meta, _) if meta.gene_info.is_some() => {
+            unparse_ast_node_alterable(cursor, word_lut, ast, genotype, &meta.gene_info)
         }
-        Node::List(ns, _) => {
+        Node::List(_, ns) => {
             if let Some(idx) = index_of_quote_keyword(&ns) {
                 // rather than outputing: (quote (1 2 3))
                 // we want: '(1 2 3)
@@ -128,7 +128,7 @@ fn unparse_ast_node(
             }
             Ok(())
         }
-        Node::Vector(ns, _) => {
+        Node::Vector(_, ns) => {
             cursor.push_str("[");
             for n in ns {
                 unparse_ast_node(cursor, word_lut, n, genotype)?
@@ -146,7 +146,7 @@ fn unparse_ast_node(
 
 fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &Node) -> Result<()> {
     match ast {
-        Node::List(ns, _) => {
+        Node::List(_, ns) => {
             if let Some(idx) = index_of_quote_keyword(&ns) {
                 // rather than outputing: (quote (1 2 3))
                 // we want: '(1 2 3)
@@ -168,7 +168,7 @@ fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &No
             }
             Ok(())
         }
-        Node::Vector(ns, _) => {
+        Node::Vector(_, ns) => {
             cursor.push_str("[");
             for n in ns {
                 simplified_unparse_ast_node(cursor, word_lut, n)?
@@ -186,7 +186,7 @@ fn simplified_unparse_ast_node(cursor: &mut String, word_lut: &WordLut, ast: &No
 
 fn index_of_quote_keyword(ns: &[Node]) -> Option<usize> {
     for (i, n) in ns.iter().enumerate() {
-        if let Node::Name(_, iname, _) = n {
+        if let Node::Name(_, _, iname) = n {
             if *iname == Iname::from(Keyword::Quote) {
                 return Some(i);
             }
@@ -205,13 +205,13 @@ fn format_node_value(node: &Node) -> Result<String> {
             error!("Node::Vector ???");
             Err(Error::Unparser)
         }
-        Node::Float(_, s, _) => Ok(s.to_string()),
-        Node::FromName(s, _, _) => Ok(s.to_string() + "."),
-        Node::Name(s, _, _) => Ok(s.to_string()),
-        Node::Label(s, _, _) => Ok(s.to_string() + ":"),
-        Node::String(s, _, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
-        Node::Whitespace(s, _) => Ok(s.to_string()),
-        Node::Comment(s, _) => Ok(";".to_owned() + &s.to_string()),
+        Node::Float(_, _, s) => Ok(s.to_string()),
+        Node::FromName(_, s, _) => Ok(s.to_string() + "."),
+        Node::Name(_, s, _) => Ok(s.to_string()),
+        Node::Label(_, s, _) => Ok(s.to_string() + ":"),
+        Node::String(_, s, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
+        Node::Whitespace(_, s) => Ok(s.to_string()),
+        Node::Comment(_, s) => Ok(";".to_owned() + &s.to_string()),
     }
 }
 
@@ -229,7 +229,7 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
 
     match gene {
         Gene::Float(f) => {
-            if let Node::Float(_, s, _) = node {
+            if let Node::Float(_, _, s) = node {
                 let num_decimals = count_decimals(s);
                 Ok(format!("{:.*}", num_decimals, f))
             } else {
@@ -279,11 +279,11 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
             let mut res = "[".to_string();
 
             // node is a vector
-            if let Node::Vector(ns, _) = node {
+            if let Node::Vector(_, ns) = node {
                 let mut used_x = false;
                 for n in ns {
                     match n {
-                        Node::Float(_, s, _) => {
+                        Node::Float(_, _, s) => {
                             let num_decimals = count_decimals(s);
 
                             if used_x {
@@ -317,7 +317,7 @@ fn unparse_alterable_vector(
     genotype: &mut Genotype,
     word_lut: &WordLut,
 ) -> Result<String> {
-    if let Node::Vector(ns, _) = node {
+    if let Node::Vector(_, ns) = node {
         let mut res = "[".to_string();
 
         for n in ns {

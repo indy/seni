@@ -28,6 +28,7 @@ pub enum Token<'a> {
     Dot,
     String(&'a str),
     Name(&'a str),
+    Newline,
     Number(&'a str),
     ParenEnd,
     ParenStart,
@@ -82,6 +83,7 @@ impl<'a> Lexer<'a> {
                 '"' => eat_string(&self.input),
                 ';' => eat_comment(&self.input),
                 '-' | '0'...'9' => eat_number(&self.input),
+                '\n' => Ok((Token::Newline, 1)),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input),
                 _ if is_name(ch) => eat_name(&self.input),
                 ch => {
@@ -278,11 +280,7 @@ mod tests {
 
         assert_eq!(
             tokenize("hello\nworld").unwrap(),
-            [
-                Token::Name("hello"),
-                Token::Whitespace("\n"),
-                Token::Name("world")
-            ]
+            [Token::Name("hello"), Token::Newline, Token::Name("world")]
         );
 
         assert_eq!(
@@ -296,11 +294,7 @@ mod tests {
 
         assert_eq!(
             tokenize("hello\n\"world\"").unwrap(),
-            [
-                Token::Name("hello"),
-                Token::Whitespace("\n"),
-                Token::String("world")
-            ]
+            [Token::Name("hello"), Token::Newline, Token::String("world")]
         );
 
         assert_eq!(
@@ -318,7 +312,7 @@ mod tests {
                 Token::Name("hello"),
                 Token::Whitespace(" "),
                 Token::Comment(" some comment"),
-                Token::Whitespace("\n"),
+                Token::Newline,
                 Token::ParenStart,
                 Token::Name("valid"),
                 Token::ParenEnd

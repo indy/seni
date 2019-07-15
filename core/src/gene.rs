@@ -359,8 +359,8 @@ mod tests {
 
     pub fn program_with_seeded_genotype(s: &str, seed: i32) -> Result<(Program, Genotype)> {
         // todo: cache the preamble program
-        let (mut ast, word_lut) = parse(s)?;
 
+        let (mut ast, word_lut) = parse(s)?;
         let trait_list = TraitList::compile(&ast, &word_lut)?;
         let mut genotype = Genotype::build_from_seed(&trait_list, seed)?;
         let program = compile_program_with_genotype(&mut ast, &word_lut, &mut genotype)?;

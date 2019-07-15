@@ -415,20 +415,24 @@ impl Default for ProcColourStateStruct {
 impl ProcColourStateStruct {
     pub fn colour(&self, t: f32) -> Colour {
         match self.proc_colour_type {
-            ProcColourType::ProceduralColour => {
-                Colour::new(
-                    ColourFormat::Rgb,
-                    self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
-                    self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
-                    self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
-                    self.alpha[0],
-                )
-            },
+            ProcColourType::ProceduralColour => Colour::new(
+                ColourFormat::Rgb,
+                self.a[0] + self.b[0] * (mathutil::TAU * (self.c[0] * t + self.d[0])).cos(),
+                self.a[1] + self.b[1] * (mathutil::TAU * (self.c[1] * t + self.d[1])).cos(),
+                self.a[2] + self.b[2] * (mathutil::TAU * (self.c[2] * t + self.d[2])).cos(),
+                self.alpha[0],
+            ),
             ProcColourType::BezierColour => {
                 let r = mathutil::bezier_point(self.a[0], self.b[0], self.c[0], self.d[0], t);
                 let g = mathutil::bezier_point(self.a[1], self.b[1], self.c[1], self.d[1], t);
                 let b = mathutil::bezier_point(self.a[2], self.b[2], self.c[2], self.d[2], t);
-                let alpha = mathutil::bezier_point(self.alpha[0], self.alpha[1], self.alpha[2], self.alpha[3], t);
+                let alpha = mathutil::bezier_point(
+                    self.alpha[0],
+                    self.alpha[1],
+                    self.alpha[2],
+                    self.alpha[3],
+                    t,
+                );
                 Colour::new(ColourFormat::Rgb, r, g, b, alpha)
             }
         }
