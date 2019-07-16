@@ -36,6 +36,35 @@ pub enum Mem {
     Void = 4,     // nothing
 }
 
+#[derive(Debug, Default)]
+pub struct Program {
+    pub data: Data,
+    pub code: Vec<Bytecode>,
+    pub fn_info: Vec<FnInfo>,
+}
+
+#[derive(Debug)]
+pub struct Data {
+    // the sub-section of WordLut::iname_to_word that stores Node::String
+    pub strings: BTreeMap<Iname, String>,
+}
+
+#[derive(Debug)]
+pub struct FnInfo {
+    pub fn_name: String,
+    pub arg_address: usize,
+    pub body_address: usize,
+    pub num_args: i32,
+    pub argument_offsets: Vec<Iname>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Bytecode {
+    pub op: Opcode,
+    pub arg0: BytecodeArg,
+    pub arg1: BytecodeArg,
+}
+
 impl fmt::Display for Mem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -188,13 +217,6 @@ impl Packable for BytecodeArg {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct Bytecode {
-    pub op: Opcode,
-    pub arg0: BytecodeArg,
-    pub arg1: BytecodeArg,
-}
-
 impl fmt::Display for Bytecode {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.op {
@@ -242,15 +264,6 @@ impl Packable for Bytecode {
     }
 }
 
-#[derive(Debug)]
-pub struct FnInfo {
-    pub fn_name: String,
-    pub arg_address: usize,
-    pub body_address: usize,
-    pub num_args: i32,
-    pub argument_offsets: Vec<Iname>,
-}
-
 impl Default for FnInfo {
     fn default() -> FnInfo {
         FnInfo {
@@ -272,12 +285,6 @@ impl FnInfo {
         }
         None
     }
-}
-
-#[derive(Debug)]
-pub struct Data {
-    // the sub-section of WordLut::iname_to_word that stores Node::String
-    pub strings: BTreeMap<Iname, String>,
 }
 
 impl Default for Data {
@@ -331,13 +338,6 @@ impl Data {
             .filter(|s| s.ends_with(".png"))
             .collect()
     }
-}
-
-#[derive(Debug, Default)]
-pub struct Program {
-    pub data: Data,
-    pub code: Vec<Bytecode>,
-    pub fn_info: Vec<FnInfo>,
 }
 
 impl fmt::Display for Program {

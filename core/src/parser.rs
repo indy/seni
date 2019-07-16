@@ -94,7 +94,27 @@ impl NodeMeta {
     }
 }
 
+impl NodeLocation {
+    fn error_here(&self, msg: &str) {
+        error!("[{}:{}]: {}", self.line, self.character, msg);
+    }
+}
+
 impl Node {
+    pub fn error_here(&self, msg: &str) {
+        match self {
+            Node::List(meta, _) => meta.loc.error_here(msg),
+            Node::Vector(meta, _) => meta.loc.error_here(msg),
+            Node::Float(meta, _, _) => meta.loc.error_here(msg),
+            Node::FromName(meta, _, _) => meta.loc.error_here(msg),
+            Node::Name(meta, _, _) => meta.loc.error_here(msg),
+            Node::Label(meta, _, _) => meta.loc.error_here(msg),
+            Node::String(meta, _, _) => meta.loc.error_here(msg),
+            Node::Whitespace(meta, _) => meta.loc.error_here(msg),
+            Node::Comment(meta, _) => meta.loc.error_here(msg),
+        }
+    }
+
     pub fn is_semantic(&self) -> bool {
         match *self {
             Node::Comment(_, _) | Node::Whitespace(_, _) => false,
