@@ -52,25 +52,21 @@ fn unparse_ast_node_alterable(
     genotype: &mut Genotype,
     gene_info: &Option<NodeGene>,
 ) -> Result<()> {
-    cursor.push_str("{");
-
     if let Some(gene_info) = gene_info {
-        for n in &gene_info.parameter_prefix {
-            unparse_ast_node(cursor, word_lut, n, genotype)?;
-        }
-
         let s = match ast {
             Node::Vector(_, _) => unparse_alterable_vector(&ast, genotype, word_lut)?,
             _ => format_var_value(&ast, genotype, word_lut)?,
         };
         cursor.push_str(&s);
 
+        for n in &gene_info.parameter_prefix {
+            unparse_ast_node(cursor, word_lut, n, genotype)?;
+        }
+
         for n in &gene_info.parameter_ast {
             unparse_ast_node(cursor, word_lut, n, genotype)?;
         }
     }
-
-    cursor.push_str("}");
 
     Ok(())
 }
@@ -210,6 +206,7 @@ fn format_node_value(node: &Node) -> Result<String> {
         Node::Name(_, s, _) => Ok(s.to_string()),
         Node::Label(_, s, _) => Ok(s.to_string() + ":"),
         Node::String(_, s, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
+        Node::Tilde(_) => Ok("~".to_string()),
         Node::Whitespace(_, s) => Ok(s.to_string()),
         Node::Comment(_, s) => Ok(";".to_owned() + &s.to_string()),
     }
@@ -432,8 +429,8 @@ mod tests {
     fn test_unparser_seeded_string() {
         seeded_unparse_check(
             653,
-            "{\"shabba\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}",
-            "{\"ghi\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}",
+            "\"shabba\" ~ (gen/select from: '(\"abc\" \"def\" \"ghi\"))",
+            "\"ghi\" ~ (gen/select from: '(\"abc\" \"def\" \"ghi\"))",
         );
     }
 
@@ -441,71 +438,71 @@ mod tests {
     fn test_unparser_seeded() {
         seeded_unparse_check(
             975,
-            "(+ 6 {3 (gen/int min: 1 max: 50)})",
-            "(+ 6 {42 (gen/int min: 1 max: 50)})",
+            "(+ 6 3 ~ (gen/int min: 1 max: 50))",
+            "(+ 6 42 ~ (gen/int min: 1 max: 50))",
         );
         seeded_unparse_check(
             975,
-            "{rainbow (gen/select from: col/procedural-fn-presets)}",
-            "{robocop (gen/select from: col/procedural-fn-presets)}",
+            "rainbow ~ (gen/select from: col/procedural-fn-presets)",
+            "robocop ~ (gen/select from: col/procedural-fn-presets)",
         );
         seeded_unparse_check(
             342,
-            "[8 {3 (gen/int min: 0 max: 9)}]",
-            "[8 {5 (gen/int min: 0 max: 9)}]",
+            "[8 3 ~ (gen/int min: 0 max: 9)]",
+            "[8 5 ~ (gen/int min: 0 max: 9)]",
         );
 
         seeded_unparse_check(
             764,
-            "{3.45 (gen/scalar min: 0 max: 9)}",
-            "{4.08 (gen/scalar min: 0 max: 9)}",
+            "3.45 ~ (gen/scalar min: 0 max: 9)",
+            "4.08 ~ (gen/scalar min: 0 max: 9)",
         );
 
         seeded_unparse_check(
             764,
-            "{3.4 (gen/scalar min: 0 max: 9)}",
-            "{4.1 (gen/scalar min: 0 max: 9)}",
+            "3.4 ~ (gen/scalar min: 0 max: 9)",
+            "4.1 ~ (gen/scalar min: 0 max: 9)",
         );
 
         seeded_unparse_check(
             764,
-            "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
-            "(col/rgb r: {0.5 (gen/scalar)} g: 0.1)",
+            "(col/rgb r: 0.4 ~ (gen/scalar) g: 0.1)",
+            "(col/rgb r: 0.5 ~ (gen/scalar) g: 0.1)",
         );
 
         seeded_unparse_check(
             764,
-            "{3 (gen/select from: '(4 5 6 7))}",
-            "{5 (gen/select from: '(4 5 6 7))}",
+            "3 ~ (gen/select from: '(4 5 6 7))",
+            "5 ~ (gen/select from: '(4 5 6 7))",
         );
 
         seeded_unparse_check(
             764,
-            "(rect position: [500 500] colour: red width: {120 (gen/int min: 80 max:
-400)} height: {140 (gen/int min: 80 max: 670)}) (rect position: [500
-500] colour: red width: {120 (gen/int min: 80 max: 400)} height: {140
-(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red
-width: {120 (gen/int min: 80 max: 400)} height: {140 (gen/int min: 80
-max: 670)})",
-            "(rect position: [500 500] colour: red width: {225 (gen/int min: 80 max:\n400)} height: {466 (gen/int min: 80 max: 670)}) (rect position: [500\n500] colour: red width: {135 (gen/int min: 80 max: 400)} height: {603\n(gen/int min: 80 max: 670)}) (rect position: [500 500] colour: red\nwidth: {192 (gen/int min: 80 max: 400)} height: {624 (gen/int min: 80\nmax: 670)})",
+            "(rect position: [500 500] colour: red width: 120 ~ (gen/int min: 80 max:
+400) height: 140 ~ (gen/int min: 80 max: 670)) (rect position: [500
+500] colour: red width: 120 ~ (gen/int min: 80 max: 400) height: 140 ~
+(gen/int min: 80 max: 670)) (rect position: [500 500] colour: red
+width: 120 ~ (gen/int min: 80 max: 400) height: 140 ~ (gen/int min: 80
+max: 670))",
+            "(rect position: [500 500] colour: red width: 225 ~ (gen/int min: 80 max:\n400) height: 466 ~ (gen/int min: 80 max: 670)) (rect position: [500\n500] colour: red width: 135 ~ (gen/int min: 80 max: 400) height: 603 ~\n(gen/int min: 80 max: 670)) (rect position: [500 500] colour: red\nwidth: 192 ~ (gen/int min: 80 max: 400) height: 624 ~ (gen/int min: 80\nmax: 670))",
         );
 
         seeded_unparse_check(
             764,
-            "{b (gen/select from: '(a b c))}",
-            "{b (gen/select from: '(a b c))}",
+            "b ~ (gen/select from: '(a b c))",
+            "b ~ (gen/select from: '(a b c))",
         );
 
         seeded_unparse_check(
             764,
-            "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col)}",
-            "{(col/rgb r: 0.65 g: 0.17 b: 0.89 alpha: 0.45) (gen/col)}",
+            "(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) ~ (gen/col)",
+            "(col/rgb r: 0.65 g: 0.17 b: 0.89 alpha: 0.45) ~ (gen/col)",
         );
 
         seeded_unparse_check(
             653,
-            "{(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) (gen/col alpha: 1)}",
-            "{(col/rgb r: 0.75 g: 0.59 b: 0.33 alpha: 1.00) (gen/col alpha: 1)}",
+            "(col/rgb r: 1 g: 0 b: 0.4 alpha: 1) ~ (gen/col alpha: 1)",
+            "(col/rgb r: 0.75 g: 0.59 b: 0.33 alpha: 1.00) ~ (gen/col alpha: 1)",
         );
     }
 
@@ -513,26 +510,26 @@ max: 670)})",
     fn test_unparser_vectors() {
         seeded_unparse_check(
             653,
-            "{[[1.00 2.00] [3.00 4.00]] (gen/2d)}",
-            "{[[0.75 0.59] [0.33 0.85]] (gen/2d)}",
+            "[[1.00 2.00] [3.00 4.00]] ~ (gen/2d)",
+            "[[0.75 0.59] [0.33 0.85]] ~ (gen/2d)",
         );
 
         seeded_unparse_check(
             653,
-            "{[[  1.00   2.00  ] [  3.00   4.00  ]] (gen/2d)}",
-            "{[[  0.75   0.59  ] [  0.33   0.85  ]] (gen/2d)}",
+            "[[  1.00   2.00  ] [  3.00   4.00  ]] ~ (gen/2d)",
+            "[[  0.75   0.59  ] [  0.33   0.85  ]] ~ (gen/2d)",
         );
 
         seeded_unparse_check(
             653,
-            "{[[10 20] [30 40]] (gen/2d min: 60 max: 70)}",
-            "{[[67 66] [63 69]] (gen/2d min: 60 max: 70)}",
+            "[[10 20] [30 40]] ~ (gen/2d min: 60 max: 70)",
+            "[[67 66] [63 69]] ~ (gen/2d min: 60 max: 70)",
         );
 
         seeded_unparse_check(
             653,
-            "{ [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] (gen/2d min: 40 max: 90) }",
-            "{ [ [ 77.3 69.69 ] [ 56.680 82.6415 ]] (gen/2d min: 40 max: 90) }",
+            " [ [ 50.1 60.23 ] [ 70.456 80.7890 ]] ~ (gen/2d min: 40 max: 90) ",
+            " [ [ 77.3 69.69 ] [ 56.680 82.6415 ]] ~ (gen/2d min: 40 max: 90) ",
         );
     }
 
@@ -540,8 +537,8 @@ max: 670)})",
     fn test_unparser_single_trait_vectors() {
         seeded_unparse_check(
             764,
-            "{[10 20] (gen/stray-2d from: [10 20] by: [5 5])}",
-            "{[10 22] (gen/stray-2d from: [10 20] by: [5 5])}",
+            "[10 20] ~ (gen/stray-2d from: [10 20] by: [5 5])",
+            "[10 22] ~ (gen/stray-2d from: [10 20] by: [5 5])",
         );
     }
 
@@ -549,24 +546,24 @@ max: 670)})",
     fn test_unparser_multiple_floats() {
         seeded_unparse_check(
             764,
-            "{[0.977 0.416 0.171] (gen/scalar)}",
-            "{[0.454 0.653 0.172] (gen/scalar)}",
+            "[0.977 0.416 0.171] ~ (gen/scalar)",
+            "[0.454 0.653 0.172] ~ (gen/scalar)",
         );
     }
 
     #[test]
     fn test_simplified_unparser() {
         simplify_check("(+ 1 1)", "(+ 1 1)");
-        simplify_check("(+ 6 {3 (gen/int min: 1 max: 50)})", "(+ 6 3)");
+        simplify_check("(+ 6 3 ~ (gen/int min: 1 max: 50))", "(+ 6 3)");
         simplify_check(
-            "(col/rgb r: {0.4 (gen/scalar)} g: 0.1)",
+            "(col/rgb r: 0.4 ~ (gen/scalar) g: 0.1)",
             "(col/rgb r: 0.4 g: 0.1)",
         );
         simplify_check("{b (gen/select from: '(a b c))}", "b");
         simplify_check(
-            "{robocop (gen/select from: col/procedural-fn-presets)}",
+            "robocop ~ (gen/select from: col/procedural-fn-presets)",
             "robocop",
         );
-        simplify_check("{50 (gen/stray from: 50 by: 20)}", "50");
+        simplify_check("50 ~ (gen/stray from: 50 by: 20)", "50");
     }
 }

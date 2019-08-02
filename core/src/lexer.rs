@@ -35,6 +35,7 @@ pub enum Token<'a> {
     Quote,
     SquareBracketEnd,
     SquareBracketStart,
+    Tilde,
     Whitespace(&'a str),
     End,
 }
@@ -55,6 +56,36 @@ pub fn tokenize(s: &str) -> Result<Vec<Token>> {
 
 struct Lexer<'a> {
     input: &'a str,
+}
+
+impl<'a> Token<'a> {
+    pub fn is_whitespace(&self) -> bool {
+        match self {
+            Token::Whitespace(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_newline(&self) -> bool {
+        match self {
+            Token::Newline => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_comment(&self) -> bool {
+        match self {
+            Token::Comment(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_tilde(&self) -> bool {
+        match self {
+            Token::Tilde => true,
+            _ => false,
+        }
+    }
 }
 
 impl<'a> Lexer<'a> {
@@ -80,6 +111,7 @@ impl<'a> Lexer<'a> {
                 ':' => Ok((Token::Colon, 1)),
                 '\'' => Ok((Token::Quote, 1)),
                 '`' => Ok((Token::BackQuote, 1)),
+                '~' => Ok((Token::Tilde, 1)),
                 '"' => eat_string(&self.input),
                 ';' => eat_comment(&self.input),
                 '-' | '0'...'9' => eat_number(&self.input),
@@ -273,6 +305,17 @@ mod tests {
                 Token::Number("1"),
                 Token::Whitespace(" "),
                 Token::Name("foo"),
+                Token::Whitespace(" "),
+                Token::Number("3")
+            ]
+        );
+
+        assert_eq!(
+            tokenize("1 ~ 3").unwrap(),
+            [
+                Token::Number("1"),
+                Token::Whitespace(" "),
+                Token::Tilde,
                 Token::Whitespace(" "),
                 Token::Number("3")
             ]

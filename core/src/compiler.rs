@@ -229,6 +229,12 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
                 genotype.current_gene_index += 1;
             }
         }
+        Node::Tilde(meta) => {
+            if let Some(ref mut gene_info) = meta.gene_info {
+                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
+                genotype.current_gene_index += 1;
+            }
+        }
         Node::Whitespace(meta, _) => {
             if let Some(ref mut gene_info) = meta.gene_info {
                 gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());

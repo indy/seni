@@ -336,7 +336,7 @@ function handleTextureLoaded(gl, image, texture) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
                    gl.LINEAR_MIPMAP_NEAREST);
   gl.generateMipmap(gl.TEXTURE_2D);
-  gl.bindTexture(gl.TEXTURE_2D, null);
+  gl.bindTexture(gl.TEXTURE_2D, null);  /// ?????
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -437,6 +437,7 @@ class GLRenderer {
     return new Promise((resolve, reject) => {
 
       const gl = that.gl;
+      // todo: why is texture attached to that?
       that.texture = gl.createTexture();
       const image = new Image();
 

@@ -40,7 +40,7 @@ pub struct NodeGene {
     // todo: the whole idea of having a gene here seems wrong. maybe a unique id that can be a key into a HashMap?
     pub gene: Option<Gene>, // option because we don't know what gene it is at construction time?
     pub parameter_ast: Vec<Node>,
-    pub parameter_prefix: Vec<Node>, // todo: couldn't this just be a String?
+    pub parameter_prefix: Vec<Node>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -58,6 +58,7 @@ pub enum Node {
     Name(NodeMeta, String, Iname),
     Label(NodeMeta, String, Iname),
     String(NodeMeta, String, Iname),
+    Tilde(NodeMeta),
     Whitespace(NodeMeta, String),
     Comment(NodeMeta, String),
 }
@@ -79,6 +80,12 @@ struct NodeAndRemainder<'a> {
     node: Node,
     loc: NodeLocation,
     tokens: &'a [Token<'a>],
+}
+
+#[derive(PartialEq)]
+enum AlterableCheck {
+    Yes,
+    No,
 }
 
 impl NodeMeta {
@@ -110,15 +117,9 @@ impl Node {
             Node::Name(meta, _, _) => meta.loc.error_here(msg),
             Node::Label(meta, _, _) => meta.loc.error_here(msg),
             Node::String(meta, _, _) => meta.loc.error_here(msg),
+            Node::Tilde(meta) => meta.loc.error_here(msg),
             Node::Whitespace(meta, _) => meta.loc.error_here(msg),
             Node::Comment(meta, _) => meta.loc.error_here(msg),
-        }
-    }
-
-    pub fn is_semantic(&self) -> bool {
-        match *self {
-            Node::Comment(_, _) | Node::Whitespace(_, _) => false,
-            _ => true,
         }
     }
 
@@ -173,6 +174,34 @@ impl Node {
         }
     }
 
+    pub fn is_semantic(&self) -> bool {
+        match *self {
+            Node::Comment(_, _) | Node::Whitespace(_, _) | Node::Tilde(_) => false,
+            _ => true,
+        }
+    }
+
+    pub fn is_tilde(&self) -> bool {
+        match *self {
+            Node::Tilde(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_comment(&self) -> bool {
+        match *self {
+            Node::Comment(_, _) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_whitespace(&self) -> bool {
+        match *self {
+            Node::Whitespace(_, _) => true,
+            _ => false,
+        }
+    }
+
     pub fn is_name(&self) -> bool {
         match self {
             Node::Name(_, _, _) => true,
@@ -196,6 +225,7 @@ impl Node {
             | Node::Name(meta, _, _)
             | Node::Label(meta, _, _)
             | Node::String(meta, _, _)
+            | Node::Tilde(meta)
             | Node::Whitespace(meta, _)
             | Node::Comment(meta, _) => meta.gene_info.is_some(),
         }
@@ -209,6 +239,7 @@ impl Node {
             | Node::FromName(meta, _, _)
             | Node::Name(meta, _, _)
             | Node::Label(meta, _, _)
+            | Node::Tilde(meta)
             | Node::String(meta, _, _)
             | Node::Whitespace(meta, _)
             | Node::Comment(meta, _) => {
@@ -218,6 +249,21 @@ impl Node {
                     false
                 }
             }
+        }
+    }
+
+    pub fn get_location(&self) -> NodeLocation {
+        match self {
+            Node::List(meta, _)
+            | Node::Vector(meta, _)
+            | Node::Float(meta, _, _)
+            | Node::FromName(meta, _, _)
+            | Node::Name(meta, _, _)
+            | Node::Label(meta, _, _)
+            | Node::String(meta, _, _)
+            | Node::Tilde(meta)
+            | Node::Whitespace(meta, _)
+            | Node::Comment(meta, _) => meta.loc,
         }
     }
 }
@@ -462,7 +508,7 @@ pub fn parse(s: &str) -> Result<(Vec<Node>, WordLut)> {
     let word_lut = WordLut::new(tokens);
 
     while !tokens.is_empty() {
-        match eat_token(tokens, loc, None, &word_lut) {
+        match eat_token(tokens, loc, None, &word_lut, AlterableCheck::Yes) {
             Ok(nar) => {
                 res.push(nar.node);
                 tokens = nar.tokens;
@@ -501,7 +547,7 @@ fn eat_list<'a>(
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, loc2, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes) {
                 Ok(nar) => {
                     res.push(nar.node);
                     loc2 = nar.loc;
@@ -537,7 +583,7 @@ fn eat_vector<'a>(
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, loc2, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes) {
                 Ok(nar) => {
                     res.push(nar.node);
                     loc2 = nar.loc;
@@ -604,7 +650,7 @@ fn eat_alterable<'a>(
     }
 
     let default_loc = loc2;
-    let default_expression = eat_token(tokens, loc2, None, word_lut)?;
+    let default_expression = eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes)?;
     tokens = default_expression.tokens;
 
     loc2 = default_expression.loc;
@@ -635,6 +681,7 @@ fn eat_alterable<'a>(
                     Node::Name(_, s, i) => Node::Name(meta, s, i),
                     Node::Label(_, s, i) => Node::Label(meta, s, i),
                     Node::String(_, s, i) => Node::String(meta, s, i),
+                    Node::Tilde(_) => Node::Tilde(meta),
                     Node::Whitespace(_, s) => Node::Whitespace(meta, s),
                     Node::Comment(_, s) => Node::Comment(meta, s),
                 };
@@ -646,7 +693,7 @@ fn eat_alterable<'a>(
                     tokens: &tokens[1..],
                 });
             }
-            _ => match eat_token(tokens, loc2, None, word_lut) {
+            _ => match eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes) {
                 // loc2 ???
                 Ok(nar) => {
                     parameter_ast.push(nar.node);
@@ -691,7 +738,7 @@ fn eat_quoted_form<'a>(
         character: loc.character + 1,
     };
 
-    match eat_token(tokens, loc2, None, word_lut) {
+    match eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes) {
         Ok(nar) => {
             res.push(nar.node);
             tokens = nar.tokens;
@@ -712,70 +759,79 @@ fn eat_token<'a>(
     loc: NodeLocation,
     gene_info: Option<NodeGene>,
     word_lut: &WordLut,
+    check_for_alterable: AlterableCheck,
 ) -> Result<NodeAndRemainder<'a>> {
-    match tokens[0] {
+    let nar = match tokens[0] {
         Token::Name(txt) => {
             let t = txt.to_string();
             let ti = word_lut.get(&t)?;
             if tokens.len() > 1 && tokens[1] == Token::Colon {
-                Ok(NodeAndRemainder {
+                NodeAndRemainder {
                     node: Node::Label(NodeMeta { loc, gene_info }, t, ti),
-                    // length of label + 1 for colon
                     loc: NodeLocation {
                         line: loc.line,
                         character: loc.character + txt.len() + 1,
                     },
                     tokens: &tokens[2..],
-                })
+                }
             } else if tokens.len() > 1 && tokens[1] == Token::Dot {
-                Ok(NodeAndRemainder {
+                NodeAndRemainder {
                     node: Node::FromName(NodeMeta { loc, gene_info }, t, ti),
-                    // length of label + 1 for dot syntax
                     loc: NodeLocation {
                         line: loc.line,
                         character: loc.character + txt.len() + 1,
                     },
                     tokens: &tokens[2..],
-                })
+                }
             } else {
-                Ok(NodeAndRemainder {
+                NodeAndRemainder {
                     node: Node::Name(NodeMeta { loc, gene_info }, t, ti),
                     loc: NodeLocation {
                         line: loc.line,
                         character: loc.character + txt.len(),
                     },
                     tokens: &tokens[1..],
-                })
+                }
             }
         }
         Token::String(txt) => {
             let t = txt.to_string();
             let ti = word_lut.get(&t)?;
-
-            Ok(NodeAndRemainder {
+            NodeAndRemainder {
                 node: Node::String(NodeMeta { loc, gene_info }, t, ti),
                 loc: NodeLocation {
                     line: loc.line,
                     character: loc.character + txt.len(),
                 },
                 tokens: &tokens[1..],
-            })
+            }
         }
         Token::Number(txt) => match txt.parse::<f32>() {
-            Ok(f) => Ok(NodeAndRemainder {
+            Ok(f) => NodeAndRemainder {
                 node: Node::Float(NodeMeta { loc, gene_info }, f, txt.to_string()),
                 loc: NodeLocation {
                     line: loc.line,
                     character: loc.character + txt.len(),
                 },
                 tokens: &tokens[1..],
-            }),
+            },
             Err(_) => {
                 error!("Parser unable to parse float: {}", txt);
-                Err(Error::Parser)
+                return Err(Error::Parser);
             }
         },
-        Token::Newline => Ok(NodeAndRemainder {
+        Token::Tilde => NodeAndRemainder {
+            node: Node::Tilde(NodeMeta {
+                loc,
+                gene_info: None,
+            }),
+            loc: NodeLocation {
+                line: loc.line,
+                character: loc.character + 1,
+            },
+            tokens: &tokens[1..],
+        },
+        Token::Newline => NodeAndRemainder {
             node: Node::Whitespace(
                 NodeMeta {
                     loc,
@@ -788,8 +844,8 @@ fn eat_token<'a>(
                 character: 1,
             },
             tokens: &tokens[1..],
-        }),
-        Token::Whitespace(ws) => Ok(NodeAndRemainder {
+        },
+        Token::Whitespace(ws) => NodeAndRemainder {
             node: Node::Whitespace(
                 NodeMeta {
                     loc,
@@ -802,8 +858,8 @@ fn eat_token<'a>(
                 character: loc.character + ws.len(),
             },
             tokens: &tokens[1..],
-        }),
-        Token::Comment(comment) => Ok(NodeAndRemainder {
+        },
+        Token::Comment(comment) => NodeAndRemainder {
             node: Node::Comment(
                 NodeMeta {
                     loc,
@@ -816,16 +872,88 @@ fn eat_token<'a>(
                 character: loc.character + comment.len(),
             },
             tokens: &tokens[1..],
-        }),
-        Token::Quote => eat_quoted_form(&tokens[1..], loc, gene_info, word_lut),
-        Token::ParenStart => eat_list(&tokens[1..], loc, gene_info, word_lut),
-        Token::SquareBracketStart => eat_vector(&tokens[1..], loc, gene_info, word_lut),
-        Token::CurlyBracketStart => eat_alterable(&tokens[1..], loc, word_lut),
+        },
+        Token::Quote => eat_quoted_form(&tokens[1..], loc, gene_info, word_lut)?,
+        Token::ParenStart => eat_list(&tokens[1..], loc, gene_info, word_lut)?,
+        Token::SquareBracketStart => eat_vector(&tokens[1..], loc, gene_info, word_lut)?,
+        Token::CurlyBracketStart => eat_alterable(&tokens[1..], loc, word_lut)?,
         _ => {
             error!("ParserHandledToken {:?}", tokens[0]);
-            Err(Error::Parser)
+            return Err(Error::Parser);
+        }
+    };
+
+    if check_for_alterable == AlterableCheck::Yes {
+        let mut iter = nar
+            .tokens
+            .iter()
+            .skip_while(|&x| x.is_whitespace() || x.is_comment() || x.is_newline());
+        if let Some(i) = iter.next() {
+            if i.is_tilde() {
+                // the current node is alterable
+                return augment_node_with_alterable(nar, word_lut);
+            }
         }
     }
+
+    // get here if there isn't a tilde following the current token
+    Ok(nar)
+}
+
+fn augment_node_with_alterable<'a>(
+    nar: NodeAndRemainder<'a>,
+    word_lut: &WordLut,
+) -> Result<NodeAndRemainder<'a>> {
+    let mut parameter_prefix: Vec<Node> = vec![];
+    let mut parameter_ast: Vec<Node> = vec![];
+    let mut loc = nar.loc;
+    let mut tokens = nar.tokens;
+
+    loop {
+        match eat_token(tokens, loc, None, word_lut, AlterableCheck::No) {
+            Ok(nar) => {
+                tokens = nar.tokens;
+                loc = nar.loc;
+                if nar.node.is_whitespace() || nar.node.is_comment() || nar.node.is_tilde() {
+                    parameter_prefix.push(nar.node);
+                } else {
+                    // this is the first non whitespace, comment or tilde token.
+                    // i.e. this is the parameter_ast
+                    parameter_ast.push(nar.node);
+                    break;
+                }
+            }
+            Err(e) => return Err(e),
+        }
+    }
+
+    let meta = NodeMeta {
+        loc: nar.node.get_location(),
+        gene_info: Some(NodeGene {
+            gene: None,
+            parameter_ast,
+            parameter_prefix,
+        }),
+    };
+
+    let node_with_meta = match nar.node {
+        Node::List(_, ns) => Node::List(meta, ns),
+        Node::Vector(_, ns) => Node::Vector(meta, ns),
+        Node::Float(_, f, s) => Node::Float(meta, f, s),
+        Node::FromName(_, s, i) => Node::FromName(meta, s, i),
+        Node::Name(_, s, i) => Node::Name(meta, s, i),
+        Node::Label(_, s, i) => Node::Label(meta, s, i),
+        Node::String(_, s, i) => Node::String(meta, s, i),
+        Node::Tilde(_) => Node::Tilde(meta),
+        Node::Whitespace(_, s) => Node::Whitespace(meta, s),
+        Node::Comment(_, s) => Node::Comment(meta, s),
+    };
+
+    Ok(NodeAndRemainder {
+        node: node_with_meta,
+        loc,
+        tokens,
+    })
 }
 
 #[cfg(test)]
@@ -1065,6 +1193,45 @@ mod tests {
                 ),
                 Node::Whitespace(meta_loc(1, 24), " ".to_string()),
                 Node::Name(meta_loc(1, 25), "foo".to_string(), Iname::new(0)),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parser_alterable_tilde() {
+        assert_eq!(
+            ast("hello 5 ~ (gen/scalar) foo"),
+            [
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(1)),
+                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Float(
+                    NodeMeta {
+                        loc: NodeLocation {
+                            line: 1,
+                            character: 7
+                        },
+                        gene_info: Some(NodeGene {
+                            gene: None,
+                            parameter_ast: vec![Node::List(
+                                meta_loc(1, 11),
+                                vec![Node::Name(
+                                    meta_loc(1, 12),
+                                    "gen/scalar".to_string(),
+                                    Iname::from(Native::GenScalar),
+                                )],
+                            )],
+                            parameter_prefix: vec![
+                                Node::Whitespace(meta_loc(1, 8), " ".to_string()),
+                                Node::Tilde(meta_loc(1, 9)),
+                                Node::Whitespace(meta_loc(1, 10), " ".to_string())
+                            ]
+                        })
+                    },
+                    5.0,
+                    "5".to_string(),
+                ),
+                Node::Whitespace(meta_loc(1, 23), " ".to_string()),
+                Node::Name(meta_loc(1, 24), "foo".to_string(), Iname::new(0)),
             ]
         );
     }
