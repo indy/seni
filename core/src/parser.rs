@@ -595,133 +595,6 @@ fn eat_vector<'a>(
     }
 }
 
-fn eat_alterable<'a>(
-    t: &'a [Token<'a>],
-    loc: NodeLocation,
-    word_lut: &WordLut,
-) -> Result<NodeAndRemainder<'a>> {
-    let mut tokens = t;
-
-    let mut loc2 = NodeLocation {
-        line: loc.line,
-        character: loc.character + 1, // the '{'
-    };
-
-    // possible parameter_prefix
-    let mut parameter_prefix: Vec<Node> = Vec::new();
-
-    // hack: temporary for automatic conversion between old and new alterable syntax
-    parameter_prefix.push(Node::Whitespace(
-        NodeMeta {
-            loc: loc2,
-            gene_info: None,
-        },
-        " ".to_string(),
-    ));
-    parameter_prefix.push(Node::Tilde(
-        NodeMeta {
-            loc: loc2,
-            gene_info: None,
-        },
-    ));
-
-    loop {
-        match tokens[0] {
-            Token::Newline => {
-                parameter_prefix.push(Node::Whitespace(
-                    NodeMeta {
-                        loc: loc2,
-                        gene_info: None,
-                    },
-                    "\n".to_string(),
-                ));
-                loc2.line += 1;
-                loc2.character = 1;
-                tokens = &tokens[1..];
-            }
-            Token::Whitespace(ws) => {
-                parameter_prefix.push(Node::Whitespace(
-                    NodeMeta {
-                        loc: loc2,
-                        gene_info: None,
-                    },
-                    ws.to_string(),
-                ));
-                loc2.character += ws.len();
-                tokens = &tokens[1..];
-            }
-            Token::Comment(comment) => {
-                parameter_prefix.push(Node::Comment(
-                    NodeMeta {
-                        loc: loc2,
-                        gene_info: None,
-                    },
-                    comment.to_string(),
-                ));
-                loc2.character += comment.len();
-                tokens = &tokens[1..];
-            }
-            _ => break,
-        }
-    }
-
-    let default_loc = loc2;
-    let default_expression = eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes)?;
-    tokens = default_expression.tokens;
-
-    loc2 = default_expression.loc;
-
-    // parameter ast (incl. whitespace, comments etc)
-    let mut parameter_ast: Vec<Node> = Vec::new();
-    loop {
-        match tokens[0] {
-            Token::CurlyBracketEnd => {
-                // construct the gene_info
-                let gene_info = Some(NodeGene {
-                    gene: None,
-                    parameter_ast,
-                    parameter_prefix,
-                });
-
-                let meta = NodeMeta {
-                    loc: default_loc,
-                    gene_info,
-                };
-
-                // add the correct meta information to the parsed default node
-                let default_with_meta = match default_expression.node {
-                    Node::List(_, ns) => Node::List(meta, ns),
-                    Node::Vector(_, ns) => Node::Vector(meta, ns),
-                    Node::Float(_, f, s) => Node::Float(meta, f, s),
-                    Node::FromName(_, s, i) => Node::FromName(meta, s, i),
-                    Node::Name(_, s, i) => Node::Name(meta, s, i),
-                    Node::Label(_, s, i) => Node::Label(meta, s, i),
-                    Node::String(_, s, i) => Node::String(meta, s, i),
-                    Node::Tilde(_) => Node::Tilde(meta),
-                    Node::Whitespace(_, s) => Node::Whitespace(meta, s),
-                    Node::Comment(_, s) => Node::Comment(meta, s),
-                };
-
-                loc2.character += 1; // closing '}'
-                return Ok(NodeAndRemainder {
-                    node: default_with_meta,
-                    loc: loc2,
-                    tokens: &tokens[1..],
-                });
-            }
-            _ => match eat_token(tokens, loc2, None, word_lut, AlterableCheck::Yes) {
-                // loc2 ???
-                Ok(nar) => {
-                    parameter_ast.push(nar.node);
-                    loc2 = nar.loc;
-                    tokens = nar.tokens;
-                }
-                Err(e) => return Err(e),
-            },
-        }
-    }
-}
-
 fn eat_quoted_form<'a>(
     t: &'a [Token<'a>],
     loc: NodeLocation,
@@ -892,7 +765,6 @@ fn eat_token<'a>(
         Token::Quote => eat_quoted_form(&tokens[1..], loc, gene_info, word_lut)?,
         Token::ParenStart => eat_list(&tokens[1..], loc, gene_info, word_lut)?,
         Token::SquareBracketStart => eat_vector(&tokens[1..], loc, gene_info, word_lut)?,
-        Token::CurlyBracketStart => eat_alterable(&tokens[1..], loc, word_lut)?,
         _ => {
             error!("ParserHandledToken {:?}", tokens[0]);
             return Err(Error::Parser);
@@ -1169,47 +1041,6 @@ mod tests {
                     Node::Float(meta_loc(1, 2), 3.0, "3".to_string())
                 ],
             )]
-        );
-    }
-
-    #[test]
-    fn test_parser_alterable() {
-        assert_eq!(
-            ast("hello { 5 (gen/scalar)} foo"),
-            [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(1)),
-                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
-                Node::Float(
-                    NodeMeta {
-                        loc: NodeLocation {
-                            line: 1,
-                            character: 9
-                        },
-                        gene_info: Some(NodeGene {
-                            gene: None,
-                            parameter_ast: vec![
-                                Node::Whitespace(meta_loc(1, 10), " ".to_string()),
-                                Node::List(
-                                    meta_loc(1, 11),
-                                    vec![Node::Name(
-                                        meta_loc(1, 12),
-                                        "gen/scalar".to_string(),
-                                        Iname::from(Native::GenScalar),
-                                    )],
-                                )
-                            ],
-                            parameter_prefix: vec![Node::Whitespace(
-                                meta_loc(1, 8),
-                                " ".to_string()
-                            )]
-                        })
-                    },
-                    5.0,
-                    "5".to_string(),
-                ),
-                Node::Whitespace(meta_loc(1, 24), " ".to_string()),
-                Node::Name(meta_loc(1, 25), "foo".to_string(), Iname::new(0)),
-            ]
         );
     }
 

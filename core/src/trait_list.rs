@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_trait_list() {
         let trait_list =
-            compile_trait_list("(+ {4 (gen/scalar min: 2 max: 9)}) {6 (gen/scalar min: 2 max: 9)}")
+            compile_trait_list("(+ 4 ~ (gen/scalar min: 2 max: 9)) 6 ~ (gen/scalar min: 2 max: 9)")
                 .unwrap();
         assert_eq!(trait_list.traits.len(), 2);
         trait_single_float(&trait_list.traits[0], 4.0);
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn test_trait_list_2() {
         // this will create 2 genes, each one for a V2D
-        match compile_trait_list("{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}") {
+        match compile_trait_list("[[0.1 0.2] [0.3 0.4]] ~ (gen/2d min: 50 max: 60)") {
             Ok(trait_list) => {
                 assert_eq!(trait_list.traits.len(), 2);
                 trait_multiple_v2d(&trait_list.traits[0], 0.1, 0.2, 0);
@@ -388,8 +388,8 @@ mod tests {
     fn pack_unpack_trait_list() {
         let trait_list = compile_trait_list(
             "(bezier tessellation: 30
-        line-width-start: {50 (gen/scalar min: 30 max: 60)}
-        line-width-end: {10 (gen/scalar min: 5 max: 20)}
+        line-width-start: 50 ~ (gen/scalar min: 30 max: 60)
+        line-width-end: 10 ~ (gen/scalar min: 5 max: 20)
         brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",
@@ -426,8 +426,8 @@ mod tests {
         let trait_list = compile_trait_list(
             "(define aaa 97 bbb 98 ccc 99)
         (bezier tessellation: 30
-        line-width-start: {50 (gen/scalar min: 30 max: 60)}
-        line-width-end: {10 (gen/scalar min: 5 max: 20)}
+        line-width-start: 50 ~ (gen/scalar min: 30 max: 60)
+        line-width-end: 10 ~ (gen/scalar min: 5 max: 20)
         brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))",

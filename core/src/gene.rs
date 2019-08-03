@@ -448,7 +448,7 @@ mod tests {
     #[test]
     fn genotype_from_initial_values_1() {
         let trait_list =
-            compile_trait_list("(+ {4 (gen/scalar min: 2 max: 9)}) {6 (gen/scalar min: 2 max: 9)}")
+            compile_trait_list("(+ 4 ~ (gen/scalar min: 2 max: 9)) 6 ~ (gen/scalar min: 2 max: 9)")
                 .unwrap();
 
         let genotype = Genotype::build_from_initial_values(&trait_list).unwrap();
@@ -461,7 +461,7 @@ mod tests {
     #[test]
     fn genotype_from_initial_values_2() {
         let trait_list =
-            compile_trait_list("{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}").unwrap();
+            compile_trait_list("[[0.1 0.2] [0.3 0.4]] ~ (gen/2d min: 50 max: 60)").unwrap();
 
         let genotype = Genotype::build_from_initial_values(&trait_list).unwrap();
 
@@ -473,7 +473,7 @@ mod tests {
     #[test]
     fn genotype_from_initial_values_3() {
         let trait_list =
-            compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}")
+            compile_trait_list("\"hello\" ~ (gen/select from: '(\"abc\" \"def\" \"ghi\"))")
                 .unwrap();
         let genotype = Genotype::build_from_initial_values(&trait_list).unwrap();
 
@@ -484,7 +484,7 @@ mod tests {
     #[test]
     fn genotype_from_seed_1() {
         let trait_list =
-            compile_trait_list("(+ {4 (gen/scalar min: 2 max: 9)}) {6 (gen/scalar min: 2 max: 9)}")
+            compile_trait_list("(+ 4 ~ (gen/scalar min: 2 max: 9)) 6 ~ (gen/scalar min: 2 max: 9)")
                 .unwrap();
 
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
@@ -497,7 +497,7 @@ mod tests {
     #[test]
     fn genotype_from_seed_2() {
         let trait_list =
-            compile_trait_list("{[[0.1 0.2] [0.3 0.4]] (gen/2d min: 50 max: 60)}").unwrap();
+            compile_trait_list("[[0.1 0.2] [0.3 0.4]] ~ (gen/2d min: 50 max: 60)").unwrap();
 
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
 
@@ -509,7 +509,7 @@ mod tests {
     #[test]
     fn genotype_from_seed_3() {
         let trait_list =
-            compile_trait_list("{\"hello\" (gen/select from: '(\"abc\" \"def\" \"ghi\"))}")
+            compile_trait_list("\"hello\" ~ (gen/select from: '(\"abc\" \"def\" \"ghi\"))")
                 .unwrap();
         let genotype = Genotype::build_from_seed(&trait_list, 432).unwrap();
 
@@ -556,7 +556,7 @@ mod tests {
 
     #[test]
     fn gen_select_preamble_variable() {
-        let s = "{transformers (gen/select from: col/procedural-fn-presets)}";
+        let s = "transformers ~ (gen/select from: col/procedural-fn-presets)";
         let res = compile_and_execute(s).unwrap();
 
         is_keyword(&res, Keyword::Transformers);
@@ -581,7 +581,7 @@ mod tests {
     #[test]
     fn gen_select_variable() {
         let s = "(define a 2.3 b 3.4 c 4.5 d 5.6)
-                 (+ 10.0 {a (gen/select from: '(a b c d))})";
+                 (+ 10.0 a ~ (gen/select from: '(a b c d)))";
         let res = compile_and_execute(s).unwrap();
         is_float(&res, 12.3);
 
@@ -618,7 +618,7 @@ mod tests {
 
     #[test]
     fn gen_select_natives_xx() {
-        let s = "({rect (gen/select from: '(rect circle circle-slice))} position: [100 100])";
+        let s = "(rect ~ (gen/select from: '(rect circle circle-slice)) position: [100 100])";
         {
             let (program, _genotype) = program_with_seeded_genotype(s, 7).unwrap();
             assert_native_opcode_in_program(&program, Native::Rect);
@@ -636,7 +636,7 @@ mod tests {
     #[test]
     fn gen_select_custom_globals() {
         let s = "(define aa 2.3 bb 3.4 cc 4.5 dd 5.6)
-                 (+ 10.0 {aa (gen/select from: '(aa bb cc dd))})";
+                 (+ 10.0 aa ~ (gen/select from: '(aa bb cc dd)))";
         let res = compile_and_execute(s).unwrap();
         is_float(&res, 12.3);
 
@@ -661,7 +661,7 @@ mod tests {
 
     #[test]
     fn gen_select_explicit_list() {
-        let s = "{1.23 (gen/select from: '(1.1 2.2 3.3 4.4))}";
+        let s = "1.23 ~ (gen/select from: '(1.1 2.2 3.3 4.4))";
         let res = compile_and_execute(s).unwrap();
 
         is_float(&res, 1.23);
@@ -677,7 +677,7 @@ mod tests {
 
     #[test]
     fn genotype_col() {
-        let s = "{(col/rgb r: 0.1) (gen/col alpha: 0.3)}";
+        let s = "(col/rgb r: 0.1) ~ (gen/col alpha: 0.3)";
 
         let res = compile_and_execute(s).unwrap();
         is_col(&res, &Colour::new(ColourFormat::Rgb, 0.1, 0.0, 0.0, 1.0));
@@ -693,23 +693,23 @@ mod tests {
     #[test]
     fn genotype_compile_xxx() {
         geno_test(
-            "(+ {3 (gen/scalar min: 10 max: 20)} {4 (gen/scalar min: 100 max: 105)})",
+            "(+ 3 ~ (gen/scalar min: 10 max: 20) 4 ~ (gen/scalar min: 100 max: 105))",
             432,
             2,
             7.0,
             120.97017,
         );
-        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 432, 1, 9.0, 74.0);
+        geno_test("(+ 6 3 ~ (gen/int min: 1 max: 100))", 432, 1, 9.0, 74.0);
         geno_test(
-            "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
+            "(+ 6 3 ~ (gen/scalar min: 1 max: 100))",
             432,
             1,
             9.0,
             74.09584,
         );
-        geno_test("(+ 6 {3 (gen/int min: 1 max: 100)})", 874, 1, 9.0, 81.0);
+        geno_test("(+ 6 3 ~ (gen/int min: 1 max: 100))", 874, 1, 9.0, 81.0);
         geno_test(
-            "(+ 6 {3 (gen/scalar min: 1 max: 100)})",
+            "(+ 6 3 ~ (gen/scalar min: 1 max: 100))",
             874,
             1,
             9.0,
@@ -719,15 +719,15 @@ mod tests {
 
     #[test]
     fn genotype_compile_stray() {
-        geno_test("{3 (gen/stray from: 3 by: 0.5)}", 432, 1, 3.0, 3.1777358);
-        geno_test("{3 (gen/stray-int from: 3 by: 0.5)}", 432, 1, 3.0, 3.0);
+        geno_test("3 ~ (gen/stray from: 3 by: 0.5)", 432, 1, 3.0, 3.1777358);
+        geno_test("3 ~ (gen/stray-int from: 3 by: 0.5)", 432, 1, 3.0, 3.0);
     }
 
     #[test]
     fn genotype_compile_stray_2d() {
         // genotype has a length of 2
         geno_test_2d(
-            "{[100 200] (gen/stray-2d from: [100 200] by: [10 10])}",
+            "[100 200] ~ (gen/stray-2d from: [100 200] by: [10 10])",
             7524,
             2,
             (100.0, 200.0),
@@ -739,7 +739,7 @@ mod tests {
     fn genotype_compile_vectors() {
         // gen/2d in this expr will produce a genotype with 2 genes, each gene will be a V2D
         {
-            let expr = "{[[0.1 0.2] [0.3 0.4] [0.5 0.6]] (gen/2d)}";
+            let expr = "[[0.1 0.2] [0.3 0.4] [0.5 0.6]] ~ (gen/2d)";
             let seed = 752;
 
             // assert the default case [0.1 0.2] [0.3 0.4] [0.5 0.6]:
@@ -767,7 +767,7 @@ mod tests {
         }
 
         {
-            let expr = "{[[0.1 0.2] [0.3 0.4] [0.5 0.6]] (gen/2d min: 50 max: 60)}";
+            let expr = "[[0.1 0.2] [0.3 0.4] [0.5 0.6]] ~ (gen/2d min: 50 max: 60)";
             let seed = 752;
 
             // assert the default case [0.1 0.2] [0.3 0.4]:
@@ -797,7 +797,7 @@ mod tests {
 
     #[test]
     fn genotype_compile_multiple_floats() {
-        let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
+        let expr = "[0.977 0.416 0.171] ~ (gen/scalar)";
         let seed = 922;
 
         let res = compile_and_execute(expr).unwrap();
@@ -825,7 +825,7 @@ mod tests {
 
     #[test]
     fn next_generation_test() {
-        let expr = "{[0.977 0.416 0.171] (gen/scalar)}";
+        let expr = "[0.977 0.416 0.171] ~ (gen/scalar)";
 
         let (ast, word_lut) = parse(expr).unwrap();
         let trait_list = TraitList::compile(&ast, &word_lut).unwrap();

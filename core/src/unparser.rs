@@ -559,7 +559,7 @@ max: 670))",
             "(col/rgb r: 0.4 ~ (gen/scalar) g: 0.1)",
             "(col/rgb r: 0.4 g: 0.1)",
         );
-        simplify_check("{b (gen/select from: '(a b c))}", "b");
+        simplify_check("b ~ (gen/select from: '(a b c))", "b");
         simplify_check(
             "robocop ~ (gen/select from: col/procedural-fn-presets)",
             "robocop",
