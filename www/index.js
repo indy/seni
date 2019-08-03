@@ -418,8 +418,6 @@ class GLRenderer {
     setupGLState(gl);
 
     this.glVertexBuffer = gl.createBuffer();
-    this.glColourBuffer = gl.createBuffer();
-    this.glTextureBuffer = gl.createBuffer();
 
     this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
@@ -505,8 +503,6 @@ class GLRenderer {
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
 
     const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
 
     const bytesin32bit = 4;
 
@@ -525,20 +521,15 @@ class GLRenderer {
 
       gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+
       gl.vertexAttribPointer(shader.positionAttribute,
                              vertexItemSize,
                              gl.FLOAT, false, totalSize * bytesin32bit,
                              0);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
       gl.vertexAttribPointer(shader.colourAttribute,
                              colourItemSize,
                              gl.FLOAT, false, totalSize * bytesin32bit,
                              vertexItemSize * bytesin32bit);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
       gl.vertexAttribPointer(shader.textureAttribute,
                              textureItemSize,
                              gl.FLOAT, false, totalSize * bytesin32bit,
@@ -596,8 +587,6 @@ class GLRenderer {
 
 
     const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
 
     // x, y, u, v
     const jsData = [
@@ -617,13 +606,11 @@ class GLRenderer {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
     gl.vertexAttribPointer(shader.positionAttribute,
                            vertexItemSize,
                            gl.FLOAT, false, totalSize * 4,
                            0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shader.textureAttribute,
                            textureItemSize,
                            gl.FLOAT, false, totalSize * 4,
