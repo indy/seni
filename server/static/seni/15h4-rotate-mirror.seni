@@ -5,30 +5,30 @@
 (define
   coords []
   colours []
-  make-colour (col/build-procedural a: {[0.062 0.117 0.209] (gen/stray-3d from: [0.062 0.117 0.209] by: [0.1 0.1 0.1])}
-                                    b: {[0.764 0.639 0.638] (gen/stray-3d from: [0.764 0.639 0.638] by: [0.1 0.1 0.1])}
-                                    c: {[0.613 0.181 0.155] (gen/stray-3d from: [0.613 0.181 0.155] by: [0.1 0.1 0.1])}
-                                    d: {[0.695 0.726 0.761] (gen/stray-3d from: [0.695 0.726 0.761] by: [0.1 0.1 0.1])})
+  make-colour (col/build-procedural a: [0.062 0.117 0.209] ~ (gen/stray-3d from: [0.062 0.117 0.209] by: [0.1 0.1 0.1])
+                                    b: [0.764 0.639 0.638] ~ (gen/stray-3d from: [0.764 0.639 0.638] by: [0.1 0.1 0.1])
+                                    c: [0.613 0.181 0.155] ~ (gen/stray-3d from: [0.613 0.181 0.155] by: [0.1 0.1 0.1])
+                                    d: [0.695 0.726 0.761] ~ (gen/stray-3d from: [0.695 0.726 0.761] by: [0.1 0.1 0.1]))
 
-  focalpoint ({focal/build-point (gen/select from: '(focal/build-point
-                                                     focal/build-hline
-                                                     focal/build-vline))}
-              position: [{82 (gen/stray-int from: 82 by: 50)}
-                         {268 (gen/stray-int from: 268 by: 50)}]
-              distance: {488 (gen/stray-int from: 488 by: 100)}))
+  focalpoint (focal/build-point ~ (gen/select from: '(focal/build-point
+                                                    focal/build-hline
+                                                    focal/build-vline))
+                                position: [82 ~ (gen/stray-int from: 82 by: 50)
+                                              268 ~ (gen/stray-int from: 268 by: 50)]
+                                distance: 488 ~ (gen/stray-int from: 488 by: 100)))
 
-(fence (t num: {63 (gen/int min: 50 max: 70)})
+(fence (t num: 63 ~ (gen/int min: 50 max: 70))
       (define
         p1 (interp/bezier t: t
-                          coords: [{[26.352 71.412] (gen/stray-2d from: [26.352 71.412] by: [25 25])}
-                                   {[23.830 24.871] (gen/stray-2d from: [23.830 24.871] by: [25 25])}
-                                   {[-133.484 -181.749] (gen/stray-2d from: [-133.484 -181.749] by: [25 25])}
-                                   {[267.624 -253.808] (gen/stray-2d from: [267.624 -253.808] by: [25 25])}])
+                          coords: [[26.352 71.412] ~ (gen/stray-2d from: [26.352 71.412] by: [25 25])
+                                   [23.830 24.871] ~ (gen/stray-2d from: [23.830 24.871] by: [25 25])
+                                   [-133.484 -181.749] ~ (gen/stray-2d from: [-133.484 -181.749] by: [25 25])
+                                   [267.624 -253.808] ~ (gen/stray-2d from: [267.624 -253.808] by: [25 25])])
         p2 (interp/bezier t: t
-                          coords: [{[-8.177 249.445] (gen/stray-2d from: [-8.177 249.445] by: [25 25])}
-                                   {[102.280 -277.847] (gen/stray-2d from: [102.280 -277.847] by: [25 25])}
-                                   {[-45.873 -253.028] (gen/stray-2d from: [-45.873 -253.028] by: [25 25])}
-                                   {[180.791 -209.762] (gen/stray-2d from: [180.791 -209.762] by: [25 25])}])
+                          coords: [[-8.177 249.445] ~ (gen/stray-2d from: [-8.177 249.445] by: [25 25])
+                                   [102.280 -277.847] ~ (gen/stray-2d from: [102.280 -277.847] by: [25 25])
+                                   [-45.873 -253.028] ~ (gen/stray-2d from: [-45.873 -253.028] by: [25 25])
+                                   [180.791 -209.762] ~ (gen/stray-2d from: [180.791 -209.762] by: [25 25])])
         c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
         c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
       (++ coords p1)
@@ -40,10 +40,10 @@
 
 (on-matrix-stack
  (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
- (scale scalar: {0.996 (gen/scalar min: 0.8 max: 2)})
- (rotate angle: {88.202 (gen/scalar min: 0 max: 360)})
+ (scale scalar: 0.996 ~ (gen/scalar min: 0.8 max: 2))
+ (rotate angle: 88.202 ~ (gen/scalar min: 0 max: 360))
  (repeat/rotate-mirrored fn: (address-of draw)
-                         copies: {28 (gen/int min: 23 max: 30)}))
+                         copies: 28 ~ (gen/int min: 23 max: 30)))
 
 (fn (draw)
     (poly coords: coords colours: colours))

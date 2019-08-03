@@ -3,32 +3,32 @@
 
 (define
   title "164f-ridge"
-  initial-seed (prng/range seed: {647 (gen/int max: 1000)})
-  coords1 {[[324.891 492.858]
-            [118.865 -150.050]
-            [-78.174 430.003]
-            [-106.175 -273.875]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[200.574 -295.107]
-            [151.529 -163.817]
-            [-330.532 370.136]
-            [-437.938 326.509]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[380.423 -150.379]
-            [-7.496 -162.827]
-            [24.690 -285.145]
-            [-367.290 300.672]]
-           (gen/2d min: -500 max: 500)}
+  initial-seed (prng/range seed: 647 ~ (gen/int max: 1000))
+  coords1 [[324.891 492.858]
+           [118.865 -150.050]
+           [-78.174 430.003]
+           [-106.175 -273.875]] ~
+  (gen/2d min: -500 max: 500)
+  coords2 [[200.574 -295.107]
+           [151.529 -163.817]
+           [-330.532 370.136]
+           [-437.938 326.509]] ~
+  (gen/2d min: -500 max: 500)
+  coords3 [[380.423 -150.379]
+           [-7.496 -162.827]
+           [24.690 -285.145]
+           [-367.290 300.672]] ~
+  (gen/2d min: -500 max: 500)
 
-  col-fn-1 (col/procedural-fn a: {[0.206 0.911 0.116] (gen/scalar)}
-                              b: {[0.644 0.421 0.096] (gen/scalar)}
-                              c: {[0.117 0.948 0.505] (gen/scalar)}
-                              d: {[0.983 0.724 0.861] (gen/scalar)}
+  col-fn-1 (col/procedural-fn a: [0.206 0.911 0.116] ~ (gen/scalar)
+                              b: [0.644 0.421 0.096] ~ (gen/scalar)
+                              c: [0.117 0.948 0.505] ~ (gen/scalar)
+                              d: [0.983 0.724 0.861] ~ (gen/scalar)
                               alpha: 0.08)
-  col-fn-2 (col/procedural-fn a: {[0.180 0.800 0.953] (gen/scalar)}
-                              b: {[0.011 0.808 0.461] (gen/scalar)}
-                              c: {[0.842 0.772 0.687] (gen/scalar)}
-                              d: {[0.425 0.514 0.252] (gen/scalar)}
+  col-fn-2 (col/procedural-fn a: [0.180 0.800 0.953] ~ (gen/scalar)
+                              b: [0.011 0.808 0.461] ~ (gen/scalar)
+                              c: [0.842 0.772 0.687] ~ (gen/scalar)
+                              d: [0.425 0.514 0.252] ~ (gen/scalar)
                               alpha: 0.08))
 
 (fn (wash variation: 200
@@ -83,7 +83,7 @@
         (circle-slice tessellation: 30
                       position: [0 0]
                       colour: (col/lighten from: colour
-                                           value: (* {145 (gen/int min: 20 max: 600)} (srng)))
+                                           value: (* 145 ~ (gen/int min: 20 max: 600) (srng)))
                       angle-start: 0
                       angle-end: 320
                       width: (outer-exterior)
@@ -94,7 +94,7 @@
         (circle-slice tessellation: 10
                       position: [0 0]
                       colour: (col/lighten from: colour
-                                           value: (* {35 (gen/int min: 10 max: 400)} (srng)))
+                                           value: (* 35 ~ (gen/int min: 10 max: 400) (srng)))
                       angle-start: 0
                       angle-end: 320
                       width: (inner-exterior)
@@ -105,7 +105,7 @@
     (circle-slice tessellation: 10
                   position: [0 0]
                   colour: (col/lighten from: colour
-                                       value: (* {60 (gen/int min: 5 max: 200)} (srng)))
+                                       value: (* 60 ~ (gen/int min: 5 max: 200) (srng)))
                   angle-start: 0
                   angle-end: 360
                   radius: 30)))
@@ -122,23 +122,23 @@
 (fn (fg1)
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) 0])
-    (scale scalar: {1.671 (gen/scalar min: 1.2 max: 1.7)})
-    (rotate angle: {23 (gen/int max: 360)})
+    (scale scalar: 1.671 ~ (gen/scalar min: 1.2 max: 1.7))
+    (rotate angle: 23 ~ (gen/int max: 360))
     (repeat/rotate-mirrored draw: flowery
-                            copies: {8 (gen/int min: 1 max: 10)})))
+                            copies: 8 ~ (gen/int min: 1 max: 10))))
 
 
 
 (fn (bg2)
   (define
-    seed-radius {6.707 (gen/scalar min: 6 max: 8)}
+    seed-radius 6.707 ~ (gen/scalar min: 6 max: 8)
     scale-factor 4
-    phi (/ (sqrt {5.013 (gen/scalar min: 4 max: 6)}) {9.132 (gen/scalar min: 8 max: 10)})
+    phi (/ (sqrt 5.013 ~ (gen/scalar min: 4 max: 6)) 9.132 ~ (gen/scalar min: 8 max: 10))
     seeds 200
-    focalpoint ({focal/build-vline (gen/select from: ['focal/build-point 'focal/build-hline 'focal/build-vline])}
-                position: [{838 (gen/int max: canvas/width)}
-                           {847 (gen/int max: canvas/height)}]
-                distance: {542 (gen/int min: (/ canvas/width 2) max: canvas/width)}))
+    focalpoint (focal/build-vline ~ (gen/select from: ['focal/build-point 'focal/build-hline 'focal/build-vline])
+                                  position: [838 ~ (gen/int max: canvas/width)
+                                                 847 ~ (gen/int max: canvas/height)]
+                                  distance: 542 ~ (gen/int min: (/ canvas/width 2) max: canvas/width)))
 
   (on-matrix-stack
     (translate vector: [500 0])

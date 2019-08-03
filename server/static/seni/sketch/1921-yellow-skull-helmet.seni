@@ -14,26 +14,26 @@
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define r (col/e0 from: colour)
-    angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
+    angle (+ 3.38 ~ (gen/scalar min: 0 max: 8) (* r math/PI)))
   (if (> r 0)
-      (line from: [(* {-9 (gen/scalar min: -15 max: 15)} (math/cos from: angle))
-                   (* {-13 (gen/scalar min: -15 max: 15)} (math/sin from: angle))]
-            to: [(* {-12 (gen/scalar min: -15 max: 15)} (math/cos from: angle))
-                 (* {0 (gen/scalar min: -15 max: 15)} (math/sin from: angle))]
-            width: (- {5.1 (gen/scalar min: 0.1 max: 8)} r)
-            brush: {brush/f (gen/select from: brush/*)}
-            brush-subtype: {8 (gen/int min: 0 max: 10)}
+      (line from: [(* -9 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+                   (* -13 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+            to: [(* -12 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+                 (* 0 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+            width: (- 5.1 ~ (gen/scalar min: 0.1 max: 8) r)
+            brush: brush/f ~ (gen/select from: brush/*)
+            brush-subtype: 8 ~ (gen/int min: 0 max: 10)
             colour: (col/rgb r: r g: 0 b: 0 alpha: 0.07))))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define b (col/e2 from: colour)
-    angle (+ {1.39 (gen/scalar min: 0 max: 8)} (* b math/PI)))
+    angle (+ 1.39 ~ (gen/scalar min: 0 max: 8) (* b math/PI)))
   (if (> b 0)
-      (line from: [(* {-1 (gen/scalar min: -15 max: 15)} (math/cos from: angle))
-                   (* {3 (gen/scalar min: -15 max: 15)} (math/sin from: angle))]
-            to: [(* {10 (gen/scalar min: -15 max: 15)} (math/cos from: angle))
-                 (* {4 (gen/scalar min: -15 max: 15)} (math/sin from: angle))]
-            width: (- {2.0 (gen/scalar min: 0.1 max: 3)} b)
-            brush: {brush/e (gen/select from: brush/*)}
-            brush-subtype: {0 (gen/int min: 0 max: 10)}
+      (line from: [(* -1 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+                   (* 3 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+            to: [(* 10 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+                 (* 4 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+            width: (- 2.0 ~ (gen/scalar min: 0.1 max: 3) b)
+            brush: brush/e ~ (gen/select from: brush/*)
+            brush-subtype: 0 ~ (gen/int min: 0 max: 10)
             colour: (col/rgb r: b g: b b: 0 alpha: 0.07))))

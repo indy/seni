@@ -17,18 +17,18 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/build-point position: [{525 (gen/stray-int from: 525 by: 100)}
-                                           {348 (gen/stray-int from: 348 by: 100)}]
-                                distance: {750 (gen/stray-int from: 750 by: 40)}
+  focal-bg-a (focal/build-point position: [525 ~ (gen/stray-int from: 525 by: 100)
+                                               348 ~ (gen/stray-int from: 348 by: 100)]
+                                distance: 750 ~ (gen/stray-int from: 750 by: 40)
                                 falloff: linear)
-  focal-bg-b (focal/build-point position: [{542 (gen/stray-int from: 542 by: 100)}
-                                           {765 (gen/stray-int from: 765 by: 10)}]
-                                distance: {891 (gen/stray-int from: 891 by: 50)}
+  focal-bg-b (focal/build-point position: [542 ~ (gen/stray-int from: 542 by: 100)
+                                               765 ~ (gen/stray-int from: 765 by: 10)]
+                                distance: 891 ~ (gen/stray-int from: 891 by: 50)
                                 falloff: linear)
-  col-fn-bg (col/build-bezier a: {(col/rgb r: 0.093 g: 0.208 b: 0.298 alpha: 0.247) (gen/col)}
-                              b: {(col/rgb r: 0.422 g: 0.034 b: 0.083 alpha: 0.373) (gen/col)}
-                              c: {(col/rgb r: 0.279 g: 0.904 b: 0.485 alpha: 0.503) (gen/col)}
-                              d: {(col/rgb r: 0.299 g: 0.192 b: 0.862 alpha: 0.987) (gen/col)}))
+  col-fn-bg (col/build-bezier a: (col/rgb r: 0.093 g: 0.208 b: 0.298 alpha: 0.247) ~ (gen/col)
+                              b: (col/rgb r: 0.422 g: 0.034 b: 0.083 alpha: 0.373) ~ (gen/col)
+                              c: (col/rgb r: 0.279 g: 0.904 b: 0.485 alpha: 0.503) ~ (gen/col)
+                              d: (col/rgb r: 0.299 g: 0.192 b: 0.862 alpha: 0.987) ~ (gen/col)))
 
 
 
@@ -40,28 +40,28 @@
       alpha (interp/value from: interest t: combined-interest))
     (on-matrix-stack
       (translate vector: position)
-      (rotate angle: (* combined-interest {334 (gen/stray-int from: 334 by: 30)}))
+      (rotate angle: (* combined-interest 334 ~ (gen/stray-int from: 334 by: 30)))
       (circle position: [0 0]
               colour: (col/set-alpha from: (col/value from: col-fn-bg t: interest-a) value: alpha)
-              width: {41 (gen/stray-int from: 41 by: 20)}
-              height: {461 (gen/stray-int from: 461 by: 50)}
+              width: 41 ~ (gen/stray-int from: 41 by: 20)
+              height: 461 ~ (gen/stray-int from: 461 by: 50)
               tessellation: 20)))
 
-(grid n: {35 (gen/stray-int from: 35 by: 5)}
+(grid n: 35 ~ (gen/stray-int from: 35 by: 5)
       fun: (address-of draw-element-bg))
 
 ;; render the foreground
 (define
-  focal-fg-a (focal/build-point position: {[311 396] (gen/int min: 0 max: 1000)}
-                                distance: {453 (gen/int min: 0 max: 500)}
+  focal-fg-a (focal/build-point position: [311 396] ~ (gen/int min: 0 max: 1000)
+                                distance: 453 ~ (gen/int min: 0 max: 500)
                                 falloff: linear)
-  focal-fg-b (focal/build-point position: {[157 178] (gen/int min: 0 max: 1000)}
-                                distance: {386 (gen/int min: 0 max: 600)}
+  focal-fg-b (focal/build-point position: [157 178] ~ (gen/int min: 0 max: 1000)
+                                distance: 386 ~ (gen/int min: 0 max: 600)
                                 falloff: linear)
-  col-fn-fg (col/build-bezier a: {(col/rgb r: 0.762 g: 0.048 b: 0.407 alpha: 0.093) (gen/col)}
-                              b: {(col/rgb r: 0.474 g: 0.751 b: 0.507 alpha: 0.657) (gen/col)}
-                              c: {(col/rgb r: 0.179 g: 0.398 b: 0.683 alpha: 0.380) (gen/col)}
-                              d: {(col/rgb r: 0.425 g: 0.207 b: 0.393 alpha: 0.825) (gen/col)}))
+  col-fn-fg (col/build-bezier a: (col/rgb r: 0.762 g: 0.048 b: 0.407 alpha: 0.093) ~ (gen/col)
+                              b: (col/rgb r: 0.474 g: 0.751 b: 0.507 alpha: 0.657) ~ (gen/col)
+                              c: (col/rgb r: 0.179 g: 0.398 b: 0.683 alpha: 0.380) ~ (gen/col)
+                              d: (col/rgb r: 0.425 g: 0.207 b: 0.393 alpha: 0.825) ~ (gen/col)))
 
 (fn (draw-element-fg position: [0 0])
     (define
@@ -71,12 +71,12 @@
       alpha (interp/value from: interest t: combined-interest))
     (on-matrix-stack
       (translate vector: position)
-      (rotate angle: (* combined-interest {151 (gen/stray-int from: 151 by: 30)}))
+      (rotate angle: (* combined-interest 151 ~ (gen/stray-int from: 151 by: 30)))
       (circle position: [0 0]
               colour: (col/set-alpha from: (col/value from: col-fn-fg t: interest-a) value: alpha)
-              width: {13 (gen/stray-int from: 13 by: 7)}
-              height: {263 (gen/stray-int from: 263 by: 50)}
+              width: 13 ~ (gen/stray-int from: 13 by: 7)
+              height: 263 ~ (gen/stray-int from: 263 by: 50)
               tessellation: 20)))
 
-(grid n: {36 (gen/int min: 30 max: 40)}
+(grid n: 36 ~ (gen/int min: 30 max: 40)
       fun: (address-of draw-element-fg))

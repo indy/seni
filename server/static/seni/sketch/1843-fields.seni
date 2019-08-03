@@ -32,14 +32,14 @@
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)
       (rect position: (offset-position position: position sc: 8)
-            width: (* {27 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+            width: (* 27 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
             height: 3
             colour: main-col)))
 
 (fn (v-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)
       (rect position: (offset-position position: position sc: 8)
-            height: (* {27 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+            height: (* 27 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
             width: 3
             colour: main-col)))
 
@@ -61,26 +61,26 @@
         draw-fn: (address-of bg-circles)
         focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
         focal-b: (focal/build-point position: [-200 -200] distance: 400 mapping: ease/slow-in-out transform-position: 0)
-        size: {6 (gen/int min: 1 max: 10)})
+        size: 6 ~ (gen/int min: 1 max: 10))
 
 ;  (grid density: 50
 ;        draw-fn: (address-of bg)
 ;        focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
 ;        focal-b: (focal/build-point position: [-200 -200] distance: 400 mapping: ease/slow-in-out transform-position: 0)
-;        size: {6 (gen/int min: 1 max: 10)})
+                                        ;        size: 6 ~ (gen/int min: 1 max: 10))
 
   (grid density: 50
         draw-fn: (address-of h-rects)
         focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
         focal-b: (focal/build-point position: [-200 -200] distance: 800 mapping: ease/slow-in-out transform-position: 0)
-        size: {6 (gen/int min: 1 max: 10)})
+        size: 6 ~ (gen/int min: 1 max: 10))
 
 
   (grid density: 50
         draw-fn: (address-of v-rects)
         focal-a: (focal/build-point position: [0 0] distance: 400 transform-position: 0)
         focal-b: (focal/build-point position: [-200 -200] distance: 800 mapping: ease/slow-in-out transform-position: 0)
-        size: {6 (gen/int min: 1 max: 10)})
+        size: 6 ~ (gen/int min: 1 max: 10))
 
   ;  (rect position: [0 0]
   ;        width: 50

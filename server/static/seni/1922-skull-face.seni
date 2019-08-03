@@ -1,8 +1,8 @@
 (define
   texture "skull-a.png"
-  rng (prng/build seed: {342 (gen/scalar min: 1 max: 5000)} min: 0 max: 10)
-  pass-0-colour (col/hsluv h: {134 (gen/scalar max: 360)} s: {90 (gen/scalar max: 100)} l: 100 alpha: 0.07)
-  pass-1-colour (col/hsluv h: {296 (gen/scalar max: 360)} s: {30 (gen/scalar max: 100)} l: 100 alpha: 0.07)
+  rng (prng/build seed: 342 ~ (gen/scalar min: 1 max: 5000) min: 0 max: 10)
+  pass-0-colour (col/hsluv h: 134 ~ (gen/scalar max: 360) s: 90 ~ (gen/scalar max: 100) l: 100 alpha: 0.07)
+  pass-1-colour (col/hsluv h: 296 ~ (gen/scalar max: 360) s: 30 ~ (gen/scalar max: 100) l: 100 alpha: 0.07)
   per-pixel-funcs [(address-of pass-0)
                    (address-of pass-1)])
 
@@ -17,21 +17,21 @@
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
     a (colour.col/e0)
-    angle (+ {0.37 (gen/scalar min: 0 max: 8)} (* a math/PI)))
-  (line from: [(* {6.00 (gen/stray from: 6.00 by: 1.00)} (angle.math/cos)) (* {13.00 (gen/stray from: 13.00 by: 1.00)} (angle.math/sin))]
-        to: [(* {-5.00 (gen/stray from: -5.00 by: 1.00)} (angle.math/cos)) (* {-6.00 (gen/stray from: -6.00 by: 1.00)} (angle.math/sin))]
-        width: (- {1.90 (gen/stray from: 1.90 by: 0.50)} a)
-        brush: {brush/g (gen/select from: brush/*)}
+    angle (+ 0.37 ~ (gen/scalar min: 0 max: 8) (* a math/PI)))
+  (line from: [(* 6.00 ~ (gen/stray from: 6.00 by: 1.00) (angle.math/cos)) (* 13.00 ~ (gen/stray from: 13.00 by: 1.00) (angle.math/sin))]
+        to: [(* -5.00 ~ (gen/stray from: -5.00 by: 1.00) (angle.math/cos)) (* -6.00 ~ (gen/stray from: -6.00 by: 1.00) (angle.math/sin))]
+        width: (- 1.90 ~ (gen/stray from: 1.90 by: 0.50) a)
+        brush: brush/g ~ (gen/select from: brush/*)
         brush-subtype: (rng.prng/value)
         colour: (pass-0-colour.col/set-e2 value: (* a 100))))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
     b (colour.col/e2)
-    angle (+ {6.12 (gen/scalar min: 0 max: 8)} (* b math/PI)))
-  (line from: [(* {-2.00 (gen/stray from: -2.00 by: 1.00)} (angle.math/cos)) (* {11.00 (gen/stray from: 11.00 by: 1.00)} (angle.math/sin))]
-        to: [(* {14.00 (gen/stray from: 14.00 by: 1.00)} (angle.math/cos)) (* {4.00 (gen/stray from: 4.00 by: 1.00)} (angle.math/sin))]
-        width: (- {3.20 (gen/stray from: 3.20 by: 0.50)} b)
-        brush: {brush/b (gen/select from: brush/*)}
+    angle (+ 6.12 ~ (gen/scalar min: 0 max: 8) (* b math/PI)))
+  (line from: [(* -2.00 ~ (gen/stray from: -2.00 by: 1.00) (angle.math/cos)) (* 11.00 ~ (gen/stray from: 11.00 by: 1.00) (angle.math/sin))]
+        to: [(* 14.00 ~ (gen/stray from: 14.00 by: 1.00) (angle.math/cos)) (* 4.00 ~ (gen/stray from: 4.00 by: 1.00) (angle.math/sin))]
+        width: (- 3.20 ~ (gen/stray from: 3.20 by: 0.50) b)
+        brush: brush/b ~ (gen/select from: brush/*)
         brush-subtype: (rng.prng/value)
         colour: (pass-1-colour.col/set-e2 value: (* b 100))))

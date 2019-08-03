@@ -4,7 +4,7 @@
 (define
   coords []
   colours []
-  num-elements {78 (gen/int min: 5 max: 100)})
+  num-elements 78 ~ (gen/int min: 5 max: 100))
 
 (fn (setup)
   (define

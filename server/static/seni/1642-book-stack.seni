@@ -1,25 +1,25 @@
 (meta linear-colour-space: 1)
 
-(wash colour:  {(col/rgb r: 0.876 g: 0.917 b: 0.040 alpha: 0.443) (gen/col)})
-(tri-hsl alpha: {0.691 (gen/stray from: 0.691 by: 0.2)})
-(tri-lab alpha: {0.112 (gen/stray from: 0.112 by: 0.1)})
+(wash colour:  (col/rgb r: 0.876 g: 0.917 b: 0.040 alpha: 0.443) ~ (gen/col))
+(tri-hsl alpha: 0.691 ~ (gen/stray from: 0.691 by: 0.2))
+(tri-lab alpha: 0.112 ~ (gen/stray from: 0.112 by: 0.1))
 
 (fn (tri-lab alpha: 1)
   (define
     w 86.6
     h 50
     r (prng/build min: -1 max: 1 seed: 231)
-    colour-scale {271 (gen/stray-int from: 271 by: 10)}
+    colour-scale 271 ~ (gen/stray-int from: 271 by: 10)
     colour-offset (prng/build min: -1 max: 1)
     li (interp/build from: [0 1]
-                  to: [{14 (gen/stray-int from: 14 by: 10)}
-                       {68 (gen/stray-int from: 68 by: 10)}])
+                     to: [14 ~ (gen/stray-int from: 14 by: 10)
+                             68 ~ (gen/stray-int from: 68 by: 10)])
     rma (interp/build from: [0 canvas/width]
-                   to: [{-39 (gen/stray-int from: -39 by: 10)}
-                        {87 (gen/stray-int from: 87 by: 10)}])
+                      to: [-39 ~ (gen/stray-int from: -39 by: 10)
+                               87 ~ (gen/stray-int from: 87 by: 10)])
     rmb (interp/build from: [0 canvas/height]
-                   to: [{2 (gen/stray-int from: 2 by: 10)}
-                        {68 (gen/stray-int from: 68 by: 10)}]))
+                      to: [2 ~ (gen/stray-int from: 2 by: 10)
+                             68 ~ (gen/stray-int from: 68 by: 10)]))
 
   (loop (y from: 0 upto: canvas/height inc: 30)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
@@ -61,14 +61,14 @@
   (define
     w 86.6
     h 50
-    colour-scale {842 (gen/stray-int from: 842 by: 60)}
+    colour-scale 842 ~ (gen/stray-int from: 842 by: 60)
     colour-offset (prng/build min: -1 max: 1)
     fn-h (interp/build from: [0 canvas/width]
-                    to: [{15 (gen/stray-int from: 15 by: 10)}
-                         {181 (gen/stray-int from: 181 by: 10)}])
+                       to: [15 ~ (gen/stray-int from: 15 by: 10)
+                               181 ~ (gen/stray-int from: 181 by: 10)])
     fn-l (interp/build from: [0 canvas/height]
-                    to: [{0.225 (gen/stray from: 0.225 by: 0.2)}
-                         {0.981 (gen/stray from: 0.981 by: 0.1)}]))
+                       to: [0.225 ~ (gen/stray from: 0.225 by: 0.2)
+                                  0.981 ~ (gen/stray from: 0.981 by: 0.1)]))
   (loop (y from: 0 upto: canvas/height inc: 30)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define

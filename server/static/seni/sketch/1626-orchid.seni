@@ -9,15 +9,15 @@
 ;; some other functions like path/* take functions
 
 (curves-to-curve seed: 123
-                 source-pos: [{273 (gen/scalar min: 0 max: 1000)}
-                              {183 (gen/scalar min: 0 max: 1000)}]
-                 source-size: {9 (gen/scalar min: 5 max: 50)}
-                 dest-curve: {[[896 166]
-                               [82 15]
-                               [21 481]
-                               [861 931]]
-                              (gen/2d min: 0 max: 1000)}
-                 num-curves: {40 (gen/scalar min: 3 max: 50)})
+                 source-pos: [273 ~ (gen/scalar min: 0 max: 1000)
+                                  183 ~ (gen/scalar min: 0 max: 1000)]
+                 source-size: 9 ~ (gen/scalar min: 5 max: 50)
+                 dest-curve: [[896 166]
+                              [82 15]
+                              [21 481]
+                              [861 931]] ~
+                 (gen/2d min: 0 max: 1000)
+                 num-curves: 40 ~ (gen/scalar min: 3 max: 50))
                                         ;(curves-to-area)
 
 ;; pass in a function to curves-to-curve that accepts:

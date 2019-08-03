@@ -13,22 +13,22 @@
 (rotate angle: 90)
 
 (stroked-bezier-rect position: [0 0]
-                     width: {801 (gen/int min: 500 max: canvas/width)}
-                     height: {613 (gen/int min: 500 max: canvas/height)}
+                     width: 801 ~ (gen/int min: 500 max: canvas/width)
+                     height: 613 ~ (gen/int min: 500 max: canvas/height)
 
-                     iterations: {30 (gen/int min: 5 max: 100)}
-                     overlap: {10 (gen/int min: 0 max: 50)}
+                     iterations: 30 ~ (gen/int min: 5 max: 100)
+                     overlap: 10 ~ (gen/int min: 0 max: 50)
 
-                     tessellation: {45 (gen/int min: 4 max: 90)}
+                     tessellation: 45 ~ (gen/int min: 4 max: 90)
 
-                     stroke-tessellation: {3 (gen/int min: 3 max: 20)}
-                     stroke-noise: {97 (gen/int min: 0 max: 100)}
+                     stroke-tessellation: 3 ~ (gen/int min: 3 max: 20)
+                     stroke-noise: 97 ~ (gen/int min: 0 max: 100)
 
-                     colour: (col/rgb r: {0.072 (gen/scalar max: 0.3)}
-                                      g: {0.194 (gen/scalar max: 0.3)}
-                                      b: {0.298 (gen/scalar max: 0.3)}
+                     colour: (col/rgb r: 0.072 ~ (gen/scalar max: 0.3)
+                                      g: 0.194 ~ (gen/scalar max: 0.3)
+                                      b: 0.298 ~ (gen/scalar max: 0.3)
                                       alpha: 0.9)
-                     colour-volatility: {121 (gen/int min: 0 max: 140)}
+                     colour-volatility: 121 ~ (gen/int min: 0 max: 140)
 
-                     volatility: {46 (gen/int min: 0 max: 50)}
-                     seed: {299 (gen/int min: 0 max: 3433)})
+                     volatility: 46 ~ (gen/int min: 0 max: 50)
+                     seed: 299 ~ (gen/int min: 0 max: 3433))

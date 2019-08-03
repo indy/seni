@@ -2,32 +2,32 @@
 
 
 (define
-  coords1 {[[-191.644 73.790]
-            [395.937 295.903]
-            [353.429 -314.465]
-            [-177.884 431.673]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[-444.875 218.669]
-            [-65.040 -463.065]
-            [32.543 -83.763]
-            [-355.876 -41.990]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[-479.267 281.277]
-            [190.163 -112.842]
-            [-140.530 381.657]
-            [-450.709 17.208]]
-           (gen/2d min: -500 max: 500)}
+  coords1 [[-191.644 73.790]
+           [395.937 295.903]
+           [353.429 -314.465]
+           [-177.884 431.673]] ~
+  (gen/2d min: -500 max: 500)
+  coords2 [[-444.875 218.669]
+           [-65.040 -463.065]
+           [32.543 -83.763]
+           [-355.876 -41.990]] ~
+  (gen/2d min: -500 max: 500)
+  coords3 [[-479.267 281.277]
+           [190.163 -112.842]
+           [-140.530 381.657]
+           [-450.709 17.208]] ~
+  (gen/2d min: -500 max: 500)
 
-  col-fn-1 (col/build-procedural preset: {robocop (gen/select from: col/procedural-fn-presets)}
+  col-fn-1 (col/build-procedural preset: robocop ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-2 (col/build-procedural preset: {hotline-miami (gen/select from: col/procedural-fn-presets)}
+  col-fn-2 (col/build-procedural preset: hotline-miami ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-3 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
+  col-fn-3 (col/build-procedural preset: mars ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
 
-  num-copies {27 (gen/int min: 1 max: 28)}
+  num-copies 27 ~ (gen/int min: 1 max: 28)
   squish (interp/build from: [0 (- num-copies 1)]
-                       to: [{1.7 (gen/scalar max: 2)} {1.87 (gen/scalar max: 2)}]))
+                       to: [1.7 ~ (gen/scalar max: 2) 1.87 ~ (gen/scalar max: 2)]))
 
 (fn (draw angle: 0 copy: 0)
   (scale vector: [(interp/value from: squish t: copy)

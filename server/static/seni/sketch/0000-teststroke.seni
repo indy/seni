@@ -5,56 +5,56 @@
 
 (define rng (prng/irange min: 0 max: 9 seed: 54))
 
-(boxy x1: {811 (gen/int min: 0 max: 1000)}
-      y1: {55 (gen/int min: 0 max: 1000)}
-      x2: {500 (gen/int min: 0 max: 1000)}
-      y2: {753 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.198 g: 0.663 b: 0.779 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {224 (gen/int min: 0 max: 1000)}
-      y1: {349 (gen/int min: 0 max: 1000)}
-      x2: {165 (gen/int min: 0 max: 1000)}
-      y2: {512 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.130 g: 0.984 b: 0.963 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {930 (gen/int min: 0 max: 1000)}
-      y1: {438 (gen/int min: 0 max: 1000)}
-      x2: {103 (gen/int min: 0 max: 1000)}
-      y2: {483 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.614 g: 0.537 b: 0.141 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {338 (gen/int min: 0 max: 1000)}
-      y1: {504 (gen/int min: 0 max: 1000)}
-      x2: {985 (gen/int min: 0 max: 1000)}
-      y2: {203 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.216 g: 0.798 b: 0.043 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {669 (gen/int min: 0 max: 1000)}
-      y1: {945 (gen/int min: 0 max: 1000)}
-      x2: {435 (gen/int min: 0 max: 1000)}
-      y2: {116 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.048 g: 0.065 b: 0.458 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {572 (gen/int min: 0 max: 1000)}
-      y1: {113 (gen/int min: 0 max: 1000)}
-      x2: {637 (gen/int min: 0 max: 1000)}
-      y2: {462 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.738 g: 0.682 b: 0.183 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {343 (gen/int min: 0 max: 1000)}
-      y1: {327 (gen/int min: 0 max: 1000)}
-      x2: {986 (gen/int min: 0 max: 1000)}
-      y2: {416 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.140 g: 0.727 b: 0.598 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {582 (gen/int min: 0 max: 1000)}
-      y1: {962 (gen/int min: 0 max: 1000)}
-      x2: {152 (gen/int min: 0 max: 1000)}
-      y2: {864 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.111 g: 0.932 b: 0.477 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {246 (gen/int min: 0 max: 1000)}
-      y1: {867 (gen/int min: 0 max: 1000)}
-      x2: {228 (gen/int min: 0 max: 1000)}
-      y2: {185 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.720 g: 0.493 b: 0.658 alpha: 0.800) (gen/col alpha: 0.8)})
-(boxy x1: {979 (gen/int min: 0 max: 1000)}
-      y1: {148 (gen/int min: 0 max: 1000)}
-      x2: {989 (gen/int min: 0 max: 1000)}
-      y2: {386 (gen/int min: 0 max: 1000)}
-      colour: {(col/rgb r: 0.827 g: 0.850 b: 0.940 alpha: 0.800) (gen/col alpha: 0.8)})
+(boxy x1: 811 ~ (gen/int min: 0 max: 1000)
+      y1: 55 ~ (gen/int min: 0 max: 1000)
+      x2: 500 ~ (gen/int min: 0 max: 1000)
+      y2: 753 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.198 g: 0.663 b: 0.779 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 224 ~ (gen/int min: 0 max: 1000)
+      y1: 349 ~ (gen/int min: 0 max: 1000)
+      x2: 165 ~ (gen/int min: 0 max: 1000)
+      y2: 512 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.130 g: 0.984 b: 0.963 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 930 ~ (gen/int min: 0 max: 1000)
+      y1: 438 ~ (gen/int min: 0 max: 1000)
+      x2: 103 ~ (gen/int min: 0 max: 1000)
+      y2: 483 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.614 g: 0.537 b: 0.141 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 338 ~ (gen/int min: 0 max: 1000)
+      y1: 504 ~ (gen/int min: 0 max: 1000)
+      x2: 985 ~ (gen/int min: 0 max: 1000)
+      y2: 203 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.216 g: 0.798 b: 0.043 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 669 ~ (gen/int min: 0 max: 1000)
+      y1: 945 ~ (gen/int min: 0 max: 1000)
+      x2: 435 ~ (gen/int min: 0 max: 1000)
+      y2: 116 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.048 g: 0.065 b: 0.458 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 572 ~ (gen/int min: 0 max: 1000)
+      y1: 113 ~ (gen/int min: 0 max: 1000)
+      x2: 637 ~ (gen/int min: 0 max: 1000)
+      y2: 462 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.738 g: 0.682 b: 0.183 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 343 ~ (gen/int min: 0 max: 1000)
+      y1: 327 ~ (gen/int min: 0 max: 1000)
+      x2: 986 ~ (gen/int min: 0 max: 1000)
+      y2: 416 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.140 g: 0.727 b: 0.598 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 582 ~ (gen/int min: 0 max: 1000)
+      y1: 962 ~ (gen/int min: 0 max: 1000)
+      x2: 152 ~ (gen/int min: 0 max: 1000)
+      y2: 864 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.111 g: 0.932 b: 0.477 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 246 ~ (gen/int min: 0 max: 1000)
+      y1: 867 ~ (gen/int min: 0 max: 1000)
+      x2: 228 ~ (gen/int min: 0 max: 1000)
+      y2: 185 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.720 g: 0.493 b: 0.658 alpha: 0.800) ~ (gen/col alpha: 0.8))
+(boxy x1: 979 ~ (gen/int min: 0 max: 1000)
+      y1: 148 ~ (gen/int min: 0 max: 1000)
+      x2: 989 ~ (gen/int min: 0 max: 1000)
+      y2: 386 ~ (gen/int min: 0 max: 1000)
+      colour: (col/rgb r: 0.827 g: 0.850 b: 0.940 alpha: 0.800) ~ (gen/col alpha: 0.8))
 
 (fn (box-stroke x1: 0 y1: 0 x2: 100 y2: 100 colour: red)
   (loop (x from: x1 to: x2 inc: 50)

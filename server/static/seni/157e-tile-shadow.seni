@@ -3,7 +3,7 @@
 (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
       width: canvas/width
       height: canvas/height
-      colour: {white (gen/col)})
+      colour: white ~ (gen/col))
 
 (loop (y from: 1 to: (- num-squares 1))
   (loop (x from: 1 to: (- num-squares 1))
@@ -20,17 +20,17 @@
                colour: colour)))
 
 (define make-colour
-  (col/build-procedural a: {[0.80 0.50 0.40] (gen/scalar)}
-                        b: {[0.20 0.40 0.20] (gen/scalar)}
-                        c: {[2.00 1.00 1.00] (gen/scalar)}
-                        d: {[0.00 0.25 0.25] (gen/scalar)}))
+  (col/build-procedural a: [0.80 0.50 0.40] ~ (gen/scalar)
+                        b: [0.20 0.40 0.20] ~ (gen/scalar)
+                        c: [2.00 1.00 1.00] ~ (gen/scalar)
+                        d: [0.00 0.25 0.25] ~ (gen/scalar)))
 
 (define
-  focalpoint ({focal/build-point (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
-              position: [{500 (gen/int max: canvas/width)}
-                         {500 (gen/int max: canvas/height)}]
-              distance: {800 (gen/int min: (/ canvas/width 2) max: canvas/width)})
-  num-squares-to-render {7 (gen/int min: 4 max: 10)}
+  focalpoint (focal/build-point ~ (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))
+                                position: [500 ~ (gen/int max: canvas/width)
+                                               500 ~ (gen/int max: canvas/height)]
+                                distance: 800 ~ (gen/int min: (/ canvas/width 2) max: canvas/width))
+  num-squares-to-render 7 ~ (gen/int min: 4 max: 10)
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ canvas/width num-squares))

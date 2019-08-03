@@ -1,28 +1,28 @@
 (define
-  coords1 [{[-47.875 -37.276] (gen/stray-2d from: [-3.718 -69.162] by: [100 100])}
-           {[429.906 -15.030] (gen/stray-2d from: [463.301 -57.804] by: [100 100])}
-           {[405.204 -376.580] (gen/stray-2d from: [456.097 -315.570] by: [100 100])}
-           {[409.143 -467.557] (gen/stray-2d from: [318.683 -384.297] by: [100 100])}]
+  coords1 [[-47.875 -37.276] ~ (gen/stray-2d from: [-3.718 -69.162] by: [100 100])
+           [429.906 -15.030] ~ (gen/stray-2d from: [463.301 -57.804] by: [100 100])
+           [405.204 -376.580] ~ (gen/stray-2d from: [456.097 -315.570] by: [100 100])
+           [409.143 -467.557] ~ (gen/stray-2d from: [318.683 -384.297] by: [100 100])]
 
-  coords2 [{[455.272 66.857] (gen/stray-2d from: [424.112 19.779] by: [100 100])}
-           {[101.691 182.209] (gen/stray-2d from: [2.641 246.678] by: [100 100])}
-           {[-385.542 -139.347] (gen/stray-2d from: [-449.001 -79.842] by: [100 100])}
-           {[-20.085 266.726] (gen/stray-2d from: [37.301 206.818] by: [100 100])}]
+  coords2 [[455.272 66.857] ~ (gen/stray-2d from: [424.112 19.779] by: [100 100])
+           [101.691 182.209] ~ (gen/stray-2d from: [2.641 246.678] by: [100 100])
+           [-385.542 -139.347] ~ (gen/stray-2d from: [-449.001 -79.842] by: [100 100])
+           [-20.085 266.726] ~ (gen/stray-2d from: [37.301 206.818] by: [100 100])]
 
-  coords3 [{[159.648 -198.132] (gen/stray-2d from: [83.331 -282.954] by: [100 100])}
-           {[144.472 -306.030] (gen/stray-2d from: [92.716 -393.120] by: [100 100])}
-           {[390.309 -334.568] (gen/stray-2d from: [426.686 -420.284] by: [100 100])}
-           {[-47.481 366.715] (gen/stray-2d from: [-29.734 335.671] by: [100 100])}]
+  coords3 [[159.648 -198.132] ~ (gen/stray-2d from: [83.331 -282.954] by: [100 100])
+           [144.472 -306.030] ~ (gen/stray-2d from: [92.716 -393.120] by: [100 100])
+           [390.309 -334.568] ~ (gen/stray-2d from: [426.686 -420.284] by: [100 100])
+           [-47.481 366.715] ~ (gen/stray-2d from: [-29.734 335.671] by: [100 100])]
 
-  col-fn-1 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+  col-fn-1 (col/build-procedural preset: chrome ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-2 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
+  col-fn-2 (col/build-procedural preset: knight-rider ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-3 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
+  col-fn-3 (col/build-procedural preset: mars ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
 
-  num-copies {26 (gen/int min: 25 max: 30)}
-  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar min: 1.0 max: 1.5)} {0.85 (gen/scalar min: 0.3 max: 1)}]))
+  num-copies 26 ~ (gen/int min: 25 max: 30)
+  squish (interp/build from: [0 (- num-copies 1)] to: [1.2 ~ (gen/scalar min: 1.0 max: 1.5) 0.85 ~ (gen/scalar min: 0.3 max: 1)]))
 
 (fn (draw angle: 0 copy: 0)
   (scale vector: [(interp/value from: squish t: copy) (interp/value from: squish t: copy)])

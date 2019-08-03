@@ -3,7 +3,7 @@
 
 (define
   texture "skull-b.png"
-  rng (prng/build seed: {3208 (gen/scalar min: 1 max: 5000)} min: 0 max: 10)
+  rng (prng/build seed: 3208 ~ (gen/scalar min: 1 max: 5000) min: 0 max: 10)
   per-pixel-funcs [(address-of pass-1)
                    (address-of pass-2)])
 
@@ -16,19 +16,19 @@
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (per-pixel-1 a: (col/e0 from: colour)
-               width: {11.8 (gen/scalar min: 11 max: 13)}
-               from: [{13 (gen/scalar min: 10 max: 15)}
-                      {-6 (gen/scalar min: -10 max: -3)}]
-               to: [{5 (gen/scalar min: 3 max: 9)}
-                    {6 (gen/scalar min: 2 max: 8)}]))
+               width: 11.8 ~ (gen/scalar min: 11 max: 13)
+               from: [13 ~ (gen/scalar min: 10 max: 15)
+                         -6 ~ (gen/scalar min: -10 max: -3)]
+               to: [5 ~ (gen/scalar min: 3 max: 9)
+                      6 ~ (gen/scalar min: 2 max: 8)]))
 
 (fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (per-pixel-2 a: (col/e0 from: colour)
-               width: {1.3 (gen/scalar min: 0.1 max: 4)}
-               from: [{5 (gen/scalar min: 2 max: 8)}
-                      {8 (gen/scalar min: 5 max: 11)}]
-               to: [{-6 (gen/scalar min: -10 max: -4)}
-                    {-11 (gen/scalar min: -13 max: -8)}]))
+               width: 1.3 ~ (gen/scalar min: 0.1 max: 4)
+               from: [5 ~ (gen/scalar min: 2 max: 8)
+                        8 ~ (gen/scalar min: 5 max: 11)]
+               to: [-6 ~ (gen/scalar min: -10 max: -4)
+                       -11 ~ (gen/scalar min: -13 max: -8)]))
 
 (fn (per-pixel-1 a: 0 width: 0 from: [0 0] to: [0 0])
   (line from: [(* (x from: from) (math/cos from: (* a math/PI)))
@@ -36,17 +36,17 @@
         to: [(* (x from: to) (math/cos from: (* a math/PI)))
              (* (y from: to) (math/sin from: (* a math/PI)))]
         width: (- width a)
-        brush: {brush/c (gen/select from: brush/*)}
+        brush: brush/c ~ (gen/select from: brush/*)
         brush-subtype: (prng/value from: rng)
         colour: (col/rgb r: a g: a b: a alpha: 0.2)))
 
 (fn (per-pixel-2 a: 0 width: 0 from: [0 0] to: [0 0])
-  (define th {0 (gen/scalar min: 0 max: 6)})
+    (define th 0 ~ (gen/scalar min: 0 max: 6))
   (line from: [(* (x from: from) (math/cos from: (+ th (* a math/PI))))
                (* (y from: from) (math/sin from: (+ th (* a math/PI))))]
         to: [(* (x from: to) (math/cos from: (+ th (* a math/PI))))
              (* (y from: to) (math/sin from: (+ th (* a math/PI))))]
         width: (- width a)
-        brush: {brush/c (gen/select from: brush/*)}
+        brush: brush/c ~ (gen/select from: brush/*)
         brush-subtype: (prng/value from: rng)
         colour: (col/rgb r: a g: a b: a alpha: 0.2)))

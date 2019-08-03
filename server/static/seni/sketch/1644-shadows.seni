@@ -7,13 +7,13 @@
   radii [])
 
 (define
-  random-axis-position (prng/range seed: {494 (gen/int min: 0 max: 999)}
+  random-axis-position (prng/range seed: 494 ~ (gen/int min: 0 max: 999)
                                    min: -500
                                    max: 500)
   col-fn (col/procedural-fn preset: "chrome")
-  random-radius (prng/range seed: {435 (gen/int min: 0 max: 999)}
+  random-radius (prng/range seed: 435 ~ (gen/int min: 0 max: 999)
                             min: 2
-                            max: {26 (gen/int min: 3 max: 40)}))
+                            max: 26 ~ (gen/int min: 3 max: 40)))
 
 (loop (x to: 800)
   (++ positions [(random-axis-position)
@@ -48,11 +48,11 @@
                  radius: 10
                  obj: [])
   (define
-    shadow-mult {1.030 (gen/scalar min: 1 max: 1.05)}
+    shadow-mult 1.030 ~ (gen/scalar min: 1 max: 1.05)
     pos (vector/multiply vector: position scalar: shadow-mult)
     col: (col/set-alpha from: (col/darken from: colour
-                                            value: {46 (gen/int min: 0 max: 100)})
-                        value: {0.849 (gen/scalar min: 0.2 max: 1)}))
+                                          value: 46 ~ (gen/int min: 0 max: 100))
+                        value: 0.849 ~ (gen/scalar min: 0.2 max: 1)))
   (draw-shape position: pos
               colour: col
               radius: radius))

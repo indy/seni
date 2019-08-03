@@ -11,12 +11,12 @@
   (define
     a (col/e0 from: colour)
     angle (* a math/PI))
-  (if (> a {0.7 (gen/scalar min: 0.1 max: 0.9)})
-      (line from: [(* {4 (gen/scalar min: -5 max: 5)} (math/cos from: angle))
-                   (* {-1 (gen/scalar min: -5 max: 5)} (math/sin from: angle))]
-            to: [(* {-5 (gen/scalar min: -5 max: 5)} (math/cos from: angle))
-                 (* {-1 (gen/scalar min: -5 max: 5)} (math/sin from: angle))]
-            width: (- {3.8 (gen/scalar min: 0.1 max: 15)} a)
+  (if (> a 0.7 ~ (gen/scalar min: 0.1 max: 0.9))
+      (line from: [(* 4 ~ (gen/scalar min: -5 max: 5) (math/cos from: angle))
+                   (* -1 ~ (gen/scalar min: -5 max: 5) (math/sin from: angle))]
+            to: [(* -5 ~ (gen/scalar min: -5 max: 5) (math/cos from: angle))
+                 (* -1 ~ (gen/scalar min: -5 max: 5) (math/sin from: angle))]
+            width: (- 3.8 ~ (gen/scalar min: 0.1 max: 15) a)
             colour: (col/rgb r: a g: 0 b: 0 alpha: 0.2)
             brush: brush/a
             brush-subtype: 2)

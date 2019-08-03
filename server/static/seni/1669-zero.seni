@@ -13,8 +13,8 @@
              fn: (address-of drawer))
 
 (bezier tessellation: 30
-        line-width-start: {50 (gen/scalar min: 30 max: 60)}
-        line-width-end: {10 (gen/scalar min: 5 max: 20)}
+        line-width-start: 50 ~ (gen/scalar min: 30 max: 60)
+        line-width-end: 10 ~ (gen/scalar min: 5 max: 20)
         brush: brush/c
         coords: [[0 500] [200 900] [400 100] [600 500]]
         colour: (col/rgb r: 1 g: 0.3 b: 0 alpha: 1))
@@ -48,8 +48,8 @@
 ;; ;; create a bunch of positions around the origin
 ;; (define
 ;;   random-axis-position (prng/build seed: 42 min: -500 max: 500)
-;;   col-fn (col/build-procedural preset: {mars
-;;                                      (gen/select from: col/procedural-fn-presets)})
+;;   col-fn (col/build-procedural preset: mars ~
+;;                                      (gen/select from: col/procedural-fn-presets))
 ;;   random-radius (prng/build seed: 42 min: 2 max: 30))
 
 ;; (loop (x to: 180)
@@ -66,8 +66,8 @@
 ;;     [x y colour radius] obj)
 ;;   (circle position: [x y]
 ;;           colour: (col/set-alpha from: colour
-;;                                  value: {0.0167 (gen/scalar min: 0 max: 0.4)})
-;;           radius: (* radius {6 (gen/int min: 1 max: 8)})
+;;                                  value: 0.0167 ~ (gen/scalar min: 0 max: 0.4))
+;;           radius: (* radius 6 ~ (gen/int min: 1 max: 8))
 ;;           tessellation: 20))
 
 ;; (fn (draw-body obj: [])
@@ -81,11 +81,11 @@
 ;; (fn (draw-shadow obj: [])
 ;;   (define
 ;;     [x y colour radius] obj
-;;     offset {1.03 (gen/scalar min: 1 max: 2)})
+;;     offset 1.03 ~ (gen/scalar min: 1 max: 2))
 ;;   (circle position: [(* x offset) (* y offset)]
 ;;           colour: (col/set-alpha from: (col/darken from: colour
-;;                                                      value: {27 (gen/int min: 0 max: 100)})
-;;                                  value: {0.236 (gen/scalar max: 0.5)})
+;;                                                      value: 27 ~ (gen/int min: 0 max: 100))
+;;                                  value: 0.236 ~ (gen/scalar max: 0.5))
 ;;           radius: radius
 ;;           tessellation: 20))
 

@@ -10,8 +10,8 @@ use std::path::Path;
 use std::time::Instant;
 
 use core::{
-    bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse, BitmapInfo,
-    Context, Packable, Program, VMProfiling, Vm,
+    bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse,
+    BitmapInfo, Context, Packable, Program, VMProfiling, Vm,
 };
 
 type Result<T> = ::std::result::Result<T, Box<::std::error::Error>>;
@@ -82,6 +82,8 @@ fn run(matches: &ArgMatches) -> Result<()> {
         // this should always pass as SCRIPT is required
         info!("Using script file: {}", script);
 
+        let script = Path::new(script);
+
         if matches.is_present("profiling") {
             settings.set("profiling", true)?;
         }
@@ -102,7 +104,7 @@ fn run(matches: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-fn read_script_file(filename: &str) -> Result<String> {
+fn read_script_file(filename: &Path) -> Result<String> {
     trace!("read_script_file");
 
     let mut f = File::open(filename)?;
@@ -169,7 +171,7 @@ fn load_bitmaps(program: &Program, context: &mut Context, asset_prefix: &String)
     Ok(())
 }
 
-fn run_script(script: &str, settings: &config::Config) -> Result<()> {
+fn run_script(script: &Path, settings: &config::Config) -> Result<()> {
     trace!("run_script");
 
     // --------------------------------------------------------------------------------
@@ -243,13 +245,13 @@ fn run_script(script: &str, settings: &config::Config) -> Result<()> {
     Ok(())
 }
 
-fn run_script_with_seed(_script: &str, _seed: u32, _settings: &config::Config) -> Result<()> {
+fn run_script_with_seed(_script: &Path, _seed: u32, _settings: &config::Config) -> Result<()> {
     trace!("run_script_with_seed");
 
     Ok(())
 }
 
-fn print_packed_trait_list(script: &str) -> Result<()> {
+fn print_packed_trait_list(script: &Path) -> Result<()> {
     trace!("print_packed_trait_list");
 
     let source = read_script_file(script)?;

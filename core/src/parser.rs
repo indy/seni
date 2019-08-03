@@ -609,6 +609,22 @@ fn eat_alterable<'a>(
 
     // possible parameter_prefix
     let mut parameter_prefix: Vec<Node> = Vec::new();
+
+    // hack: temporary for automatic conversion between old and new alterable syntax
+    parameter_prefix.push(Node::Whitespace(
+        NodeMeta {
+            loc: loc2,
+            gene_info: None,
+        },
+        " ".to_string(),
+    ));
+    parameter_prefix.push(Node::Tilde(
+        NodeMeta {
+            loc: loc2,
+            gene_info: None,
+        },
+    ));
+
     loop {
         match tokens[0] {
             Token::Newline => {

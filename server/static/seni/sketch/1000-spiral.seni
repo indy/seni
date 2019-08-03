@@ -27,18 +27,18 @@
   r (interp/fn from: [0 1000] to: [0 math/TAU]))
 
 (loop (x from: 0 upto: 1000 steps: 600)
-  (rect position: [x (+ (interp/cos amplitude: {44 (gen/int min: 1 max: 1000)}
-                                    frequency: {9.183 (gen/scalar min: 0.1 max: 10)}
+      (rect position: [x (+ (interp/cos amplitude: 44 ~ (gen/int min: 1 max: 1000)
+                                        frequency: 9.183 ~ (gen/scalar min: 0.1 max: 10)
                                     t: (r val: x))
                         500)]
-        width: {192 (gen/int min: 10 max: 300)}
-        height: {242 (gen/int min: 10 max: 300)}
-        colour: (col/lab l: (+ {70.163 (gen/scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {62 (gen/int min: 1 max: 100)}
-                                           frequency: {0.960 (gen/scalar min: 0.1 max: 10)}
+            width: 192 ~ (gen/int min: 10 max: 300)
+            height: 242 ~ (gen/int min: 10 max: 300)
+            colour: (col/lab l: (+ 70.163 ~ (gen/scalar min: -50 max: 100)
+                                   (interp/cos amplitude: 62 ~ (gen/int min: 1 max: 100)
+                                               frequency: 0.960 ~ (gen/scalar min: 0.1 max: 10)
                                            t: (r val: x)))
-                         a: {29.366 (gen/scalar min: -50 max: 100)}
-                         b: {83.957 (gen/scalar min: -50 max: 100)})))
+                             a: 29.366 ~ (gen/scalar min: -50 max: 100)
+                             b: 83.957 ~ (gen/scalar min: -50 max: 100))))
 
 
 
@@ -50,18 +50,18 @@
   r (interp/fn from: [0 1000] to: [0 math/TAU]))
 
 (loop (x from: 0 upto: 1000 steps: 600)
-  (rect position: [x (+ (interp/cos amplitude: {160 (gen/int min: 1 max: 1000)}
-                                    frequency: {5.629 (gen/scalar min: 0.1 max: 10)}
+      (rect position: [x (+ (interp/cos amplitude: 160 ~ (gen/int min: 1 max: 1000)
+                                        frequency: 5.629 ~ (gen/scalar min: 0.1 max: 10)
                                     t: (r val: x))
                         500)]
-        width: {254 (gen/int min: 10 max: 300)}
-        height: {153 (gen/int min: 10 max: 300)}
-        colour: (col/lab l: (+ {92.673 (gen/scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {99 (gen/int min: 1 max: 100)}
-                                           frequency: {5.346 (gen/scalar min: 0.1 max: 10)}
+            width: 254 ~ (gen/int min: 10 max: 300)
+            height: 153 ~ (gen/int min: 10 max: 300)
+            colour: (col/lab l: (+ 92.673 ~ (gen/scalar min: -50 max: 100)
+                                   (interp/cos amplitude: 99 ~ (gen/int min: 1 max: 100)
+                                               frequency: 5.346 ~ (gen/scalar min: 0.1 max: 10)
                                            t: (r val: x)))
-                         a: {-25.618 (gen/scalar min: -50 max: 100)}
-                         b: {12.205 (gen/scalar min: -50 max: 100)})))
+                             a: -25.618 ~ (gen/scalar min: -50 max: 100)
+                             b: 12.205 ~ (gen/scalar min: -50 max: 100))))
 
 
 --------------------------------------------------------------------------------
@@ -71,18 +71,18 @@
   r (interp/fn from: [0 1000] to: [0 math/TAU]))
 
 (loop (x from: 0 upto: 1000 steps: 2400)
-  (rect position: [x (+ (interp/cos amplitude: {243 (gen/int min: 1 max: 1000)}
-                                    frequency: {7.739 (gen/scalar min: 0.1 max: 10)}
+      (rect position: [x (+ (interp/cos amplitude: 243 ~ (gen/int min: 1 max: 1000)
+                                        frequency: 7.739 ~ (gen/scalar min: 0.1 max: 10)
                                     t: (r val: x))
                         500)]
-        width: {254 (gen/int min: 10 max: 300)}
-        height: {253 (gen/int min: 10 max: 300)}
-        colour: (col/lab l: (+ {92.673 (gen/scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {78 (gen/int min: 1 max: 100)}
-                                           frequency: {5.346 (gen/scalar min: 0.1 max: 10)}
+            width: 254 ~ (gen/int min: 10 max: 300)
+            height: 253 ~ (gen/int min: 10 max: 300)
+            colour: (col/lab l: (+ 92.673 ~ (gen/scalar min: -50 max: 100)
+                                   (interp/cos amplitude: 78 ~ (gen/int min: 1 max: 100)
+                                               frequency: 5.346 ~ (gen/scalar min: 0.1 max: 10)
                                            t: (r val: x)))
-                         a: {56.155 (gen/scalar min: -50 max: 100)}
-                         b: {94.189 (gen/scalar min: -50 max: 100)})))
+                             a: 56.155 ~ (gen/scalar min: -50 max: 100)
+                             b: 94.189 ~ (gen/scalar min: -50 max: 100))))
 
 
 
@@ -94,19 +94,19 @@
 
 (on-matrix-stack
   (translate vector: [500 500])
-  (rotate angle: {0 (gen/scalar min: 0 max: 360)})
+  (rotate angle: 0 ~ (gen/scalar min: 0 max: 360))
   (loop (x from: -500 upto: 500 steps: 1000)
-    (rect position: [x (interp/cos amplitude: {356 (gen/int min: 1 max: 1000)}
-                                   frequency: {3.599 (gen/scalar min: 0.1 max: 10)}
+        (rect position: [x (interp/cos amplitude: 356 ~ (gen/int min: 1 max: 1000)
+                                       frequency: 3.599 ~ (gen/scalar min: 0.1 max: 10)
                                    t: (r val: x))]
-          width: {288 (gen/int min: 10 max: 300)}
-          height: {79 (gen/int min: 10 max: 300)}
-          colour: (col/lab l: (+ {34.020 (gen/scalar min: -50 max: 100)}
-                                 (interp/cos amplitude: {70 (gen/int min: 1 max: 100)}
-                                             frequency: {7.097 (gen/scalar min: 0.1 max: 10)}
+              width: 288 ~ (gen/int min: 10 max: 300)
+              height: 79 ~ (gen/int min: 10 max: 300)
+              colour: (col/lab l: (+ 34.020 ~ (gen/scalar min: -50 max: 100)
+                                     (interp/cos amplitude: 70 ~ (gen/int min: 1 max: 100)
+                                                 frequency: 7.097 ~ (gen/scalar min: 0.1 max: 10)
                                              t: (r val: x)))
-                           a: {97.216 (gen/scalar min: -50 max: 100)}
-                           b: {86.719 (gen/scalar min: -50 max: 100)})))
+                               a: 97.216 ~ (gen/scalar min: -50 max: 100)
+                               b: 86.719 ~ (gen/scalar min: -50 max: 100))))
   )
 
 
@@ -120,15 +120,15 @@
   r (interp/fn from: [0 1000] to: [0 math/TAU]))
 
 (loop (x from: 0 upto: 1000 steps: 2400)
-  (rect position: [x (+ (interp/cos amplitude: {282 (gen/int min: 1 max: 1000)}
-                                    frequency: {8.582 (gen/scalar min: 0.1 max: 10)}
+      (rect position: [x (+ (interp/cos amplitude: 282 ~ (gen/int min: 1 max: 1000)
+                                        frequency: 8.582 ~ (gen/scalar min: 0.1 max: 10)
                                     t: (r val: x))
                         500)]
-        width: {292 (gen/int min: 10 max: 300)}
-        height: {283 (gen/int min: 10 max: 300)}
-        colour: (col/lab l: (+ {-34.850 (gen/scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {98 (gen/int min: 1 max: 100)}
-                                           frequency: {3.185 (gen/scalar min: 0.1 max: 10)}
+            width: 292 ~ (gen/int min: 10 max: 300)
+            height: 283 ~ (gen/int min: 10 max: 300)
+            colour: (col/lab l: (+ -34.850 ~ (gen/scalar min: -50 max: 100)
+                                   (interp/cos amplitude: 98 ~ (gen/int min: 1 max: 100)
+                                               frequency: 3.185 ~ (gen/scalar min: 0.1 max: 10)
                                            t: (r val: x)))
-                         a: {68.792 (gen/scalar min: -50 max: 100)}
-                         b: {66.426 (gen/scalar min: -50 max: 100)})))
+                             a: 68.792 ~ (gen/scalar min: -50 max: 100)
+                             b: 66.426 ~ (gen/scalar min: -50 max: 100))))

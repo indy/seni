@@ -11,13 +11,13 @@
   box-dim (/ canvas/width steps)
   half-box-dim (/ box-dim 2)
   remap (interp/fn from: [0 steps] to: [0 1])
-  col-fn-2 (col/bezier-fn a: {red (gen/col)}
-                          b: {blue (gen/col)}
-                          c: {white (gen/col)}
-                          d: {green (gen/col)})
-  col-fn-1 (col/quadratic-fn a: {red (gen/col)}
-                             b: {blue (gen/col)}
-                             c: {white (gen/col)})
+  col-fn-2 (col/bezier-fn a: red ~ (gen/col)
+                          b: blue ~ (gen/col)
+                          c: white ~ (gen/col)
+                          d: green ~ (gen/col))
+  col-fn-1 (col/quadratic-fn a: red ~ (gen/col)
+                             b: blue ~ (gen/col)
+                             c: white ~ (gen/col))
   )
 
 (loop (y from: 0 to: steps)

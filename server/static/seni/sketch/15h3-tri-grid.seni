@@ -2,23 +2,23 @@
 
 
 (define seed 329)
-(wash colour:  {(col/rgb r: 0.331 g: 0.588 b: 0.516 alpha: 0.100) (gen/col)})
-(tri-hsl alpha: {0.393 (gen/scalar)})
-(tri-lab alpha: {0.265 (gen/scalar)})
+(wash colour:  (col/rgb r: 0.331 g: 0.588 b: 0.516 alpha: 0.100) ~ (gen/col))
+(tri-hsl alpha: 0.393 ~ (gen/scalar))
+(tri-lab alpha: 0.265 ~ (gen/scalar))
 
 (fn (tri-lab alpha: 1)
   (define
     w 86.6
     h 50.0
     r (prng/build min: -1 max: 1 seed: seed)
-    colour-scale {65 (gen/int max: 900)}
+    colour-scale 65 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1 seed: seed)
     li (interp/build from: [0 1]
-                     to: [{107 (gen/int min: 0 max: 120)} {107 (gen/int min: 0 max: 120)}])
+                     to: [107 ~ (gen/int min: 0 max: 120) 107 ~ (gen/int min: 0 max: 120)])
     rma (interp/build from: [0 canvas/width]
-                      to: [{7 (gen/int min: -100 max: 100)} {-42 (gen/int min: -100 max: 100)}])
+                      to: [7 ~ (gen/int min: -100 max: 100) -42 ~ (gen/int min: -100 max: 100)])
     rmb (interp/build from: [0 canvas/height]
-                      to: [{35 (gen/int min: -120 max: 120)} {-21 (gen/int min: -120 max: 120)}]))
+                      to: [35 ~ (gen/int min: -120 max: 120) -21 ~ (gen/int min: -120 max: 120)]))
 
   (loop (y from: 0 upto: canvas/height inc: 100)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
@@ -60,12 +60,12 @@
   (define
     w 86.6
     h 50.0
-    colour-scale {180 (gen/int max: 900)}
+    colour-scale 180 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1 seed: seed)
     fn-h (interp/build from: [0 canvas/width]
-                       to: [{60 (gen/int max: 360)} {140 (gen/int max: 360)}])
+                       to: [60 ~ (gen/int max: 360) 140 ~ (gen/int max: 360)])
     fn-l (interp/build from: [0 canvas/height]
-                       to: [{0.227 (gen/scalar min: 0.2 max: 0.5)} {0.873 (gen/scalar min: 0.4 max: 1.0)}]))
+                       to: [0.227 ~ (gen/scalar min: 0.2 max: 0.5) 0.873 ~ (gen/scalar min: 0.4 max: 1.0)]))
   (loop (y from: 0 upto: canvas/height inc: 100)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define

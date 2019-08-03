@@ -1,36 +1,36 @@
 (meta linear-colour-space: 1)
 
 (define
-  coords1 [{[348.427 279.760] (gen/stray-2d from: [348.427 279.760] by: [10 10])}
-           {[277.085 -128.082] (gen/stray-2d from: [277.085 -128.082] by: [10 10])}
-           {[46.746 -76.157] (gen/stray-2d from: [46.746 -76.157] by: [10 10])}
-           {[450.194 286.473] (gen/stray-2d from: [450.194 286.473] by: [10 10])}]
+  coords1 [[348.427 279.760] ~ (gen/stray-2d from: [348.427 279.760] by: [10 10])
+           [277.085 -128.082] ~ (gen/stray-2d from: [277.085 -128.082] by: [10 10])
+           [46.746 -76.157] ~ (gen/stray-2d from: [46.746 -76.157] by: [10 10])
+           [450.194 286.473] ~ (gen/stray-2d from: [450.194 286.473] by: [10 10])]
 
-  coords2 [{[-392.432 -302.484] (gen/stray-2d from: [-392.432 -302.484] by: [10 10])}
-           {[-470.910 366.850] (gen/stray-2d from: [-470.910 366.850] by: [10 10])}
-           {[-50.447 -483.185] (gen/stray-2d from: [-50.447 -483.185] by: [10 10])}
-           {[482.907 92.257] (gen/stray-2d from: [482.907 92.257] by: [10 10])}]
+  coords2 [[-392.432 -302.484] ~ (gen/stray-2d from: [-392.432 -302.484] by: [10 10])
+           [-470.910 366.850] ~ (gen/stray-2d from: [-470.910 366.850] by: [10 10])
+           [-50.447 -483.185] ~ (gen/stray-2d from: [-50.447 -483.185] by: [10 10])
+           [482.907 92.257] ~ (gen/stray-2d from: [482.907 92.257] by: [10 10])]
 
-  coords3 [{[-93.748 49.329] (gen/stray-2d from: [-93.748 49.329] by: [10 10])}
-           {[151.727 -322.909] (gen/stray-2d from: [151.727 -322.909] by: [10 10])}
-           {[-421.354 235.607] (gen/stray-2d from: [-421.354 235.607] by: [10 10])}
-           {[4.363 -40.959] (gen/stray-2d from: [4.363 -40.959] by: [10 10])}]
+  coords3 [[-93.748 49.329] ~ (gen/stray-2d from: [-93.748 49.329] by: [10 10])
+           [151.727 -322.909] ~ (gen/stray-2d from: [151.727 -322.909] by: [10 10])
+           [-421.354 235.607] ~ (gen/stray-2d from: [-421.354 235.607] by: [10 10])
+           [4.363 -40.959] ~ (gen/stray-2d from: [4.363 -40.959] by: [10 10])]
 
 
-  col-fn-1 (col/build-procedural a: {[0.486 0.027 0.535] (gen/stray-3d from: [0.486 0.027 0.535] by: [0.1 0.1 0.1])}
-                                 b: {[0.353 0.901 0.712] (gen/stray-3d from: [0.353 0.901 0.712] by: [0.1 0.1 0.1])}
-                                 c: {[0.057 0.027 0.131] (gen/stray-3d from: [0.057 0.027 0.131] by: [0.1 0.1 0.1])}
-                                 d: {[0.027 0.080 0.730] (gen/stray-3d from: [0.027 0.080 0.730] by: [0.1 0.1 0.1])}
+  col-fn-1 (col/build-procedural a: [0.486 0.027 0.535] ~ (gen/stray-3d from: [0.486 0.027 0.535] by: [0.1 0.1 0.1])
+                                 b: [0.353 0.901 0.712] ~ (gen/stray-3d from: [0.353 0.901 0.712] by: [0.1 0.1 0.1])
+                                 c: [0.057 0.027 0.131] ~ (gen/stray-3d from: [0.057 0.027 0.131] by: [0.1 0.1 0.1])
+                                 d: [0.027 0.080 0.730] ~ (gen/stray-3d from: [0.027 0.080 0.730] by: [0.1 0.1 0.1])
                                  alpha: 0.08)
-  col-fn-2 (col/build-procedural a: {[0.564 0.598 0.396] (gen/stray-3d from: [0.564 0.598 0.396] by: [0.1 0.1 0.1])}
-                                 b: {[0.960 0.160 0.760] (gen/stray-3d from: [0.960 0.160 0.760] by: [0.1 0.1 0.1])}
-                                 c: {[0.169 0.125 0.258] (gen/stray-3d from: [0.169 0.125 0.258] by: [0.1 0.1 0.1])}
-                                 d: {[0.852 0.121 0.579] (gen/stray-3d from: [0.852 0.121 0.579] by: [0.1 0.1 0.1])}
+  col-fn-2 (col/build-procedural a: [0.564 0.598 0.396] ~ (gen/stray-3d from: [0.564 0.598 0.396] by: [0.1 0.1 0.1])
+                                 b: [0.960 0.160 0.760] ~ (gen/stray-3d from: [0.960 0.160 0.760] by: [0.1 0.1 0.1])
+                                 c: [0.169 0.125 0.258] ~ (gen/stray-3d from: [0.169 0.125 0.258] by: [0.1 0.1 0.1])
+                                 d: [0.852 0.121 0.579] ~ (gen/stray-3d from: [0.852 0.121 0.579] by: [0.1 0.1 0.1])
                                  alpha: 0.08)
-  col-fn-3 (col/build-procedural a: {[0.855 0.451 0.754] (gen/stray-3d from: [0.855 0.451 0.754] by: [0.1 0.1 0.1])}
-                                 b: {[0.475 0.520 0.623] (gen/stray-3d from: [0.475 0.520 0.623] by: [0.1 0.1 0.1])}
-                                 c: {[0.839 0.740 0.371] (gen/stray-3d from: [0.839 0.740 0.371] by: [0.1 0.1 0.1])}
-                                 d: {[0.717 0.631 0.202] (gen/stray-3d from: [0.717 0.631 0.202] by: [0.1 0.1 0.1])}
+  col-fn-3 (col/build-procedural a: [0.855 0.451 0.754] ~ (gen/stray-3d from: [0.855 0.451 0.754] by: [0.1 0.1 0.1])
+                                 b: [0.475 0.520 0.623] ~ (gen/stray-3d from: [0.475 0.520 0.623] by: [0.1 0.1 0.1])
+                                 c: [0.839 0.740 0.371] ~ (gen/stray-3d from: [0.839 0.740 0.371] by: [0.1 0.1 0.1])
+                                 d: [0.717 0.631 0.202] ~ (gen/stray-3d from: [0.717 0.631 0.202] by: [0.1 0.1 0.1])
                                  alpha: 0.08))
 
 (fn (draw)
@@ -43,12 +43,12 @@
                           (col/value from: col-fn-3 t: t)])))
 
 (fn (render)
-    (wash colour: {(col/rgb r: 0.914 g: 0.278 b: 0.557 alpha: 0.901) (gen/col)})
+    (wash colour: (col/rgb r: 0.914 g: 0.278 b: 0.557 alpha: 0.901) ~ (gen/col))
     (on-matrix-stack
      (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
      (scale scalar: 2)
      (repeat/rotate-mirrored fn: (address-of draw)
-                             copies: {14 (gen/int min: 12 max: 18)})))
+                             copies: 14 ~ (gen/int min: 12 max: 18))))
 
 (render)
 

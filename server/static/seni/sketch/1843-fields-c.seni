@@ -3,19 +3,19 @@
 
 ;; sketch/1843-fields.seni
 (define
-  rng (prng/build seed: {745 (gen/int min: 1 max: 9999)} min: -1 max: 1)
-  foc-a ({focal/build-hline (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
-         position: {[-201 -65] (gen/scalar min: -500 max: 500)}
-         distance: {434 (gen/scalar min: 100 max: 600)}
+  rng (prng/build seed: 745 ~ (gen/int min: 1 max: 9999) min: -1 max: 1)
+  foc-a (focal/build-hline ~ (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))
+                           position: [-201 -65] ~ (gen/scalar min: -500 max: 500)
+                           distance: 434 ~ (gen/scalar min: 100 max: 600)
          transform-position: 0)
-  foc-b ({focal/build-point (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))}
-         position: {[-366 -150] (gen/scalar min: -500 max: 500)}
-         distance: {481 (gen/scalar min: 100 max: 600)}
+  foc-b (focal/build-point ~ (gen/select from: '(focal/build-point focal/build-hline focal/build-vline))
+                           position: [-366 -150] ~ (gen/scalar min: -500 max: 500)
+                           distance: 481 ~ (gen/scalar min: 100 max: 600)
          mapping: ease/slow-in-out
          transform-position: 0)
-  col-h {77 (gen/scalar min: 0 max: 360)}
-  col-s {31 (gen/scalar min: 0 max: 100)}
-  col-l {64 (gen/scalar min: 0 max: 100)}
+  col-h 77 ~ (gen/scalar min: 0 max: 360)
+  col-s 31 ~ (gen/scalar min: 0 max: 100)
+  col-l 64 ~ (gen/scalar min: 0 max: 100)
   bg-col (col/hsluv h: col-h
                     s: (math/clamp from: (- col-s 50) min: 0 max: 100)
                     l: (math/clamp from: (- col-l 10) min: 0 max: 100)
@@ -44,7 +44,7 @@
 
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define
-    ww (* {60 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+    ww (* 60 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
     check (focal/value from: focal-a position: position)
     pos (offset-position position: position sc: 8))
   (if (> check 0)
@@ -55,7 +55,7 @@
 
 (fn (v-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (define
-    hh (* {85 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+    hh (* 85 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
     check (focal/value from: focal-a position: position)
     pos (offset-position position: position sc: 8))
   (if (> check 0)

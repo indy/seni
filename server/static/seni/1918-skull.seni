@@ -15,10 +15,10 @@
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define a (colour.col/e0)
-    angle (+ {2.58 (gen/stray from: 2.58 by: 2.00)} (* a math/PI)))
-  (line from: [(* {2.00 (gen/stray from: 2.00 by: 2.00)} (angle.math/cos)) (* {8.00 (gen/stray from: 8.00 by: 2.00)} (angle.math/sin))]
-        to: [(* {-7.00 (gen/stray from: -7.00 by: 2.00)} (angle.math/cos)) (* {6.00 (gen/stray from: 6.00 by: 2.00)} (angle.math/sin))]
-        width: (- {8.70 (gen/stray from: 8.70 by: 2.00)} a)
+    angle (+ 2.58 ~ (gen/stray from: 2.58 by: 2.00) (* a math/PI)))
+  (line from: [(* 2.00 ~ (gen/stray from: 2.00 by: 2.00) (angle.math/cos)) (* 8.00 ~ (gen/stray from: 8.00 by: 2.00) (angle.math/sin))]
+        to: [(* -7.00 ~ (gen/stray from: -7.00 by: 2.00) (angle.math/cos)) (* 6.00 ~ (gen/stray from: 6.00 by: 2.00) (angle.math/sin))]
+        width: (- 8.70 ~ (gen/stray from: 8.70 by: 2.00) a)
         brush: brush/d
         brush-subtype: 1
         colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))
@@ -26,10 +26,10 @@
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
     b (colour.col/e2)
-    angle (+ {3.30 (gen/stray from: 3.30 by: 2.00)} (* b math/PI)))
-  (line from: [(* {11.00 (gen/stray from: 11.00 by: 2.00)} (angle.math/cos)) (* {9.00 (gen/stray from: 9.00 by: 2.00)} (angle.math/sin))]
-        to: [(* {-3.00 (gen/stray from: -3.00 by: 2.00)} (angle.math/cos)) (* {-9.00 (gen/stray from: -9.00 by: 2.00)} (angle.math/sin))]
-        width: (- {0.90 (gen/stray from: 0.90 by: 2.00)} b)
+    angle (+ 3.30 ~ (gen/stray from: 3.30 by: 2.00) (* b math/PI)))
+  (line from: [(* 11.00 ~ (gen/stray from: 11.00 by: 2.00) (angle.math/cos)) (* 9.00 ~ (gen/stray from: 9.00 by: 2.00) (angle.math/sin))]
+        to: [(* -3.00 ~ (gen/stray from: -3.00 by: 2.00) (angle.math/cos)) (* -9.00 ~ (gen/stray from: -9.00 by: 2.00) (angle.math/sin))]
+        width: (- 0.90 ~ (gen/stray from: 0.90 by: 2.00) b)
         brush: brush/d
         brush-subtype: 1
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))

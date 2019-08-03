@@ -6,15 +6,15 @@
   r (interp/build from: [0 1000] to: [0 math/TAU]))
 
 (fence (x from: 0 to: 1000 num: 1600)
-  (rect position: [x (+ (interp/cos amplitude: {160 (gen/int min: 1 max: 1000)}
-                                    frequency: {5.629 (gen/scalar min: 0.1 max: 10)}
+       (rect position: [x (+ (interp/cos amplitude: 160 ~ (gen/int min: 1 max: 1000)
+                                         frequency: 5.629 ~ (gen/scalar min: 0.1 max: 10)
                                     t: (interp/value from: r t: x))
                         500)]
-        width: {254 (gen/int min: 10 max: 300)}
-        height: {153 (gen/int min: 10 max: 300)}
-        colour: (col/lab l: (+ {92.673 (gen/scalar min: -50 max: 100)}
-                               (interp/cos amplitude: {99 (gen/int min: 1 max: 100)}
-                                           frequency: {5.346 (gen/scalar min: 0.1 max: 10)}
+             width: 254 ~ (gen/int min: 10 max: 300)
+             height: 153 ~ (gen/int min: 10 max: 300)
+             colour: (col/lab l: (+ 92.673 ~ (gen/scalar min: -50 max: 100)
+                                    (interp/cos amplitude: 99 ~ (gen/int min: 1 max: 100)
+                                                frequency: 5.346 ~ (gen/scalar min: 0.1 max: 10)
                                            t: (interp/value from: r t: x)))
-                         a: {-25.618 (gen/scalar min: -50 max: 100)}
-                         b: {12.205 (gen/scalar min: -50 max: 100)})))
+                              a: -25.618 ~ (gen/scalar min: -50 max: 100)
+                              b: 12.205 ~ (gen/scalar min: -50 max: 100))))

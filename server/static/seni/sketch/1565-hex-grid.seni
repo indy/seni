@@ -2,16 +2,16 @@
 
 
 (define
-  scalefactor {1.7 (gen/scalar min: 0.5 max: 3)}
-  hex-size {21 (gen/int min: 10 max: 100)}
+  scalefactor 1.7 ~ (gen/scalar min: 0.5 max: 3)
+  hex-size 21 ~ (gen/int min: 10 max: 100)
 
-  background {(col/rgb r: 0.93 g: 0.32 b: 0.92 alpha: 0.83) (gen/col)}
-  colour-a {(col/rgb r: 0.63 g: 0.45 b: 0.98 alpha: 0.02) (gen/col)}
-  colour-b {(col/rgb r: 0.01 g: 0.96 b: 0.86 alpha: 0.59) (gen/col)}
+  background (col/rgb r: 0.93 g: 0.32 b: 0.92 alpha: 0.83) ~ (gen/col)
+  colour-a (col/rgb r: 0.63 g: 0.45 b: 0.98 alpha: 0.02) ~ (gen/col)
+  colour-b (col/rgb r: 0.01 g: 0.96 b: 0.86 alpha: 0.59) ~ (gen/col)
 
-  focalpoint (focal/build-point position: [{480 (gen/int max: canvas/width)}
-                                           {595 (gen/int max: canvas/height)}]
-                                distance: {864 (gen/int min: 200 max: canvas/width)})
+  focalpoint (focal/build-point position: [480 ~ (gen/int max: canvas/width)
+                                               595 ~ (gen/int max: canvas/height)]
+                                distance: 864 ~ (gen/int min: 200 max: canvas/width))
 
   centre [(/ canvas/width 2) (/ canvas/height 2)])
 
@@ -62,7 +62,7 @@
       colour: background)
 
 (translate vector: centre)
-(rotate angle: {201 (gen/scalar max: 360)})
+(rotate angle: 201 ~ (gen/scalar max: 360))
 (scale scalar: scalefactor)
 
 (hex-grid from: [-700 -700]

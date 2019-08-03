@@ -4,20 +4,20 @@
 (on-matrix-stack
   (scale scalar: 1.1)
   (rotate angle: 3)
-  (wash colour: {(col/rgb r: 0.567 g: 0.142 b: 0.461 alpha: 0.151) (gen/col)}))
+  (wash colour: (col/rgb r: 0.567 g: 0.142 b: 0.461 alpha: 0.151) ~ (gen/col)))
 
 (on-matrix-stack
   (scale scalar: 1.05)
-  (tri-hsl alpha: {0.361 (gen/scalar)})
-  (tri-lab alpha: {0.174 (gen/scalar)}))
+  (tri-hsl alpha: 0.361 ~ (gen/scalar))
+  (tri-lab alpha: 0.174 ~ (gen/scalar)))
 
 (define
   ra (prng/build seed: 42
-                 min: {-8.272 (gen/scalar min: -20 max: -1)}
-                 max: {14.468 (gen/scalar min: 1 max: 20)})
-  sc {0.721 (gen/scalar min: 0.2 max: 2)}
-  w {50 (gen/int min: 20 max: 200)}
-  h {48 (gen/int min: 20 max: 200)})
+                 min: -8.272 ~ (gen/scalar min: -20 max: -1)
+                 max: 14.468 ~ (gen/scalar min: 1 max: 20))
+  sc 0.721 ~ (gen/scalar min: 0.2 max: 2)
+  w 50 ~ (gen/int min: 20 max: 200)
+  h 48 ~ (gen/int min: 20 max: 200))
 
 (fn (left x: 0 y: 0 w: 0 h: 0 colour: red)
   (poly coords: [[(- x w) (+ y h h)]
@@ -67,17 +67,17 @@
   (define
     y 400
     r (prng/build min: 0 max: 1 seed: 231)
-    colour-scale {758 (gen/int max: 900)}
+    colour-scale 758 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1)
     li (interp/build from: [0 1]
-                     to: [{89 (gen/int min: 0 max: 120)}
-                          {36 (gen/int min: 0 max: 120)}])
+                     to: [89 ~ (gen/int min: 0 max: 120)
+                             36 ~ (gen/int min: 0 max: 120)])
     rma (interp/build from: [0 canvas/width]
-                      to: [{15 (gen/int min: -100 max: 100)}
-                           {9 (gen/int min: -100 max: 100)}])
+                      to: [15 ~ (gen/int min: -100 max: 100)
+                              9 ~ (gen/int min: -100 max: 100)])
     rmb (interp/build from: [0 canvas/height]
-                      to: [{94 (gen/int min: -120 max: 120)}
-                           {32 (gen/int min: -120 max: 120)}]))
+                      to: [94 ~ (gen/int min: -120 max: 120)
+                              32 ~ (gen/int min: -120 max: 120)]))
 
   (loop (y from: 0 upto: canvas/height inc: (* 2 h))
     !(loop (x from: 0 to: canvas/width inc: (* 4 w))
@@ -96,14 +96,14 @@
 
 (fn (tri-hsl alpha: 1)
   (define
-    colour-scale {504 (gen/int max: 900)}
+    colour-scale 504 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1)
     fn-h (interp/build from: [0 canvas/width]
-                       to: [{311 (gen/int max: 360)}
-                            {177 (gen/int max: 360)}])
+                       to: [311 ~ (gen/int max: 360)
+                                177 ~ (gen/int max: 360)])
     fn-l (interp/build from: [0 canvas/height]
-                       to: [{0.284 (gen/scalar min: 0.2 max: 0.5)}
-                            {0.904 (gen/scalar min: 0.4 max: 1)}]))
+                       to: [0.284 ~ (gen/scalar min: 0.2 max: 0.5)
+                                  0.904 ~ (gen/scalar min: 0.4 max: 1)]))
 
   !(loop (y from: 0 upto: canvas/height inc: (* 2 h))
      (loop (x from: 0 to: canvas/width inc: (* 4 w))

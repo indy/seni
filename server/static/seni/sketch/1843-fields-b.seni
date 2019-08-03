@@ -3,17 +3,17 @@
 
 ;; sketch/1843-fields.seni
 (define
-  rng (prng/build seed: {123 (gen/int min: 1 max: 9999)} min: -1 max: 1)
-  foc-a (focal/build-point position: {[0 0] (gen/scalar min: -500 max: 500)}
-                           distance: {400 (gen/scalar min: 100 max: 600)}
+  rng (prng/build seed: 123 ~ (gen/int min: 1 max: 9999) min: -1 max: 1)
+  foc-a (focal/build-point position: [0 0] ~ (gen/scalar min: -500 max: 500)
+                           distance: 400 ~ (gen/scalar min: 100 max: 600)
                            transform-position: 0)
-  foc-b (focal/build-point position: {[-100 -100] (gen/scalar min: -500 max: 500)}
-                           distance: {400 (gen/scalar min: 100 max: 600)}
+  foc-b (focal/build-point position: [-100 -100] ~ (gen/scalar min: -500 max: 500)
+                           distance: 400 ~ (gen/scalar min: 100 max: 600)
                            mapping: ease/slow-in-out
                            transform-position: 0)
-  col-h {90 (gen/scalar min: 0 max: 360)}
-  col-s {90 (gen/scalar min: 0 max: 100)}
-  col-l {90 (gen/scalar min: 0 max: 100)}
+  col-h 90 ~ (gen/scalar min: 0 max: 360)
+  col-s 90 ~ (gen/scalar min: 0 max: 100)
+  col-l 90 ~ (gen/scalar min: 0 max: 100)
   bg-col (col/hsluv h: col-h
                     s: (math/clamp from: (- col-s 50) min: 0 max: 100)
                     l: (math/clamp from: (- col-l 10) min: 0 max: 100)
@@ -36,14 +36,14 @@
 (fn (h-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)
       (rect position: (offset-position position: position sc: 8)
-            width: (* {27 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+            width: (* 27 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
             height: 3
             colour: main-col)))
 
 (fn (v-rects position: [500 500] size: 20 focal-a: 0 focal-b: 0)
   (if (> (focal/value from: focal-a position: position) 0)
       (rect position: (offset-position position: position sc: 8)
-            height: (* {27 (gen/scalar min: 10 max: 200)} (focal/value from: focal-b position: position))
+            height: (* 27 ~ (gen/scalar min: 10 max: 200) (focal/value from: focal-b position: position))
             width: 3
             colour: main-col)))
 

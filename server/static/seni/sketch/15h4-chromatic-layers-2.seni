@@ -2,36 +2,36 @@
 
 
 (define
-  coords1 {[[425.692 624.319]
-            [757.931 206.374]
-            [320.989 231.681]
-            [838.482 51.730]]
-           (gen/2d min: 0 max: 1000)}
-  coords2 {[[748.893 971.865]
-            [853.089 491.361]
-            [584.135 611.006]
-            [907.612 201.262]]
-           (gen/2d min: 0 max: 1000)}
-  coords3 {[[76.081 359.724]
-            [651.684 894.998]
-            [414.302 657.882]
-            [425.567 506.843]]
-           (gen/2d min: 0 max: 1000)}
+  coords1 [[425.692 624.319]
+           [757.931 206.374]
+           [320.989 231.681]
+           [838.482 51.730]] ~
+  (gen/2d min: 0 max: 1000)
+  coords2 [[748.893 971.865]
+           [853.089 491.361]
+           [584.135 611.006]
+           [907.612 201.262]] ~
+  (gen/2d min: 0 max: 1000)
+  coords3 [[76.081 359.724]
+           [651.684 894.998]
+           [414.302 657.882]
+           [425.567 506.843]] ~
+  (gen/2d min: 0 max: 1000)
 
-  col-fn-1 (col/build-procedural a: {[0.756 0.784 0.233] (gen/scalar)}
-                                 b: {[0.028 0.525 0.228] (gen/scalar)}
-                                 c: {[0.234 0.974 0.743] (gen/scalar)}
-                                 d: {[0.588 0.482 0.091] (gen/scalar)}
+  col-fn-1 (col/build-procedural a: [0.756 0.784 0.233] ~ (gen/scalar)
+                                 b: [0.028 0.525 0.228] ~ (gen/scalar)
+                                 c: [0.234 0.974 0.743] ~ (gen/scalar)
+                                 d: [0.588 0.482 0.091] ~ (gen/scalar)
                                  alpha: 0.08)
-  col-fn-2 (col/build-procedural a: {[0.751 0.772 0.181] (gen/scalar)}
-                                 b: {[0.267 0.819 0.062] (gen/scalar)}
-                                 c: {[0.720 0.757 0.280] (gen/scalar)}
-                                 d: {[0.817 0.924 0.250] (gen/scalar)}
+  col-fn-2 (col/build-procedural a: [0.751 0.772 0.181] ~ (gen/scalar)
+                                 b: [0.267 0.819 0.062] ~ (gen/scalar)
+                                 c: [0.720 0.757 0.280] ~ (gen/scalar)
+                                 d: [0.817 0.924 0.250] ~ (gen/scalar)
                                  alpha: 0.08)
-  col-fn-3 (col/build-procedural a: {[0.300 0.521 0.518] (gen/scalar)}
-                                 b: {[0.160 0.790 0.850] (gen/scalar)}
-                                 c: {[0.976 0.272 0.628] (gen/scalar)}
-                                 d: {[0.112 0.594 0.377] (gen/scalar)}
+  col-fn-3 (col/build-procedural a: [0.300 0.521 0.518] ~ (gen/scalar)
+                                 b: [0.160 0.790 0.850] ~ (gen/scalar)
+                                 c: [0.976 0.272 0.628] ~ (gen/scalar)
+                                 d: [0.112 0.594 0.377] ~ (gen/scalar)
                                  alpha: 0.08))
 
 (fence (t num: 500)

@@ -5,23 +5,23 @@
 (render-main)
 
 (define
-  num-squares-to-render {15 (gen/int min: 2 max: 20)}
-  gap-size {30 (gen/int min: 5 max: 50)}
+  num-squares-to-render 15 ~ (gen/int min: 2 max: 20)
+  gap-size 30 ~ (gen/int min: 5 max: 50)
 
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
 
-  base-colour (col/rgb r: {1.0 (gen/scalar)}
-                       g: {0.0 (gen/scalar)}
-                       b: {0.3 (gen/scalar)}
+  base-colour (col/rgb r: 1.0 ~ (gen/scalar)
+                       g: 0.0 ~ (gen/scalar)
+                       b: 0.3 ~ (gen/scalar)
                        alpha: 1.0)
-  colour-volatility {20 (gen/int min: 2 max: 40)}
+  colour-volatility 20 ~ (gen/int min: 2 max: 40)
 
-  focal-point (focal/build-point position: [{500 (gen/int max: canvas/width)}
-                                      {800 (gen/int max: canvas/height)}]
-                           distance: {300 (gen/int max: canvas/width)})
-  focal-power {50 (gen/scalar max: 200)})
+  focal-point (focal/build-point position: [500 ~ (gen/int max: canvas/width)
+                                                800 ~ (gen/int max: canvas/height)]
+                                 distance: 300 ~ (gen/int max: canvas/width))
+  focal-power 50 ~ (gen/scalar max: 200))
 
 (fn (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
     (rect position: [(/ canvas/width 2) (/ canvas/height 2)]

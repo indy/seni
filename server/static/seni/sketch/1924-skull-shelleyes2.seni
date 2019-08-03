@@ -2,30 +2,30 @@
 
 
 (define
-  coords1 [{[-0.909 -67.488] (gen/stray-2d from: [-3.718 -69.162] by: [5 5])}
-           {[463.196 -58.200] (gen/stray-2d from: [463.301 -57.804] by: [5 5])}
-           {[459.015 -314.827] (gen/stray-2d from: [456.097 -315.570] by: [5 5])}
-           {[316.072 -384.943] (gen/stray-2d from: [318.683 -384.297] by: [5 5])}]
+  coords1 [[-0.909 -67.488] ~ (gen/stray-2d from: [-3.718 -69.162] by: [5 5])
+           [463.196 -58.200] ~ (gen/stray-2d from: [463.301 -57.804] by: [5 5])
+           [459.015 -314.827] ~ (gen/stray-2d from: [456.097 -315.570] by: [5 5])
+           [316.072 -384.943] ~ (gen/stray-2d from: [318.683 -384.297] by: [5 5])]
 
-  coords2 [{[419.593 20.183] (gen/stray-2d from: [424.112 19.779] by: [5 5])}
-           {[-1.009 242.716] (gen/stray-2d from: [2.641 246.678] by: [5 5])}
-           {[-448.081 -79.601] (gen/stray-2d from: [-449.001 -79.842] by: [5 5])}
-           {[39.524 206.841] (gen/stray-2d from: [37.301 206.818] by: [5 5])}]
+  coords2 [[419.593 20.183] ~ (gen/stray-2d from: [424.112 19.779] by: [5 5])
+           [-1.009 242.716] ~ (gen/stray-2d from: [2.641 246.678] by: [5 5])
+           [-448.081 -79.601] ~ (gen/stray-2d from: [-449.001 -79.842] by: [5 5])
+           [39.524 206.841] ~ (gen/stray-2d from: [37.301 206.818] by: [5 5])]
 
-  coords3 [{[82.885 -278.131] (gen/stray-2d from: [83.331 -282.954] by: [5 5])}
-           {[97.258 -394.818] (gen/stray-2d from: [92.716 -393.120] by: [5 5])}
-           {[430.912 -417.325] (gen/stray-2d from: [426.686 -420.284] by: [5 5])}
-           {[-29.734 335.671] (gen/stray-2d from: [-29.734 335.671] by: [5 5])}]
+  coords3 [[82.885 -278.131] ~ (gen/stray-2d from: [83.331 -282.954] by: [5 5])
+           [97.258 -394.818] ~ (gen/stray-2d from: [92.716 -393.120] by: [5 5])
+           [430.912 -417.325] ~ (gen/stray-2d from: [426.686 -420.284] by: [5 5])
+           [-29.734 335.671] ~ (gen/stray-2d from: [-29.734 335.671] by: [5 5])]
 
-  col-fn-1 (col/build-procedural preset: {transformers (gen/select from: col/procedural-fn-presets)}
+  col-fn-1 (col/build-procedural preset: transformers ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-2 (col/build-procedural preset: {mars (gen/select from: col/procedural-fn-presets)}
+  col-fn-2 (col/build-procedural preset: mars ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
-  col-fn-3 (col/build-procedural preset: {knight-rider (gen/select from: col/procedural-fn-presets)}
+  col-fn-3 (col/build-procedural preset: knight-rider ~ (gen/select from: col/procedural-fn-presets)
                                  alpha: 0.08)
 
-  num-copies {28 (gen/int min: 25 max: 30)}
-  squish (interp/build from: [0 (- num-copies 1)] to: [{1.2 (gen/scalar min: 1.0 max: 1.5)} {0.45 (gen/scalar min: 0.3 max: 1)}]))
+  num-copies 28 ~ (gen/int min: 25 max: 30)
+  squish (interp/build from: [0 (- num-copies 1)] to: [1.2 ~ (gen/scalar min: 1.0 max: 1.5) 0.45 ~ (gen/scalar min: 0.3 max: 1)]))
 
 (fn (draw angle: 0 copy: 0)
   (scale vector: [(interp/value from: squish t: copy) (interp/value from: squish t: copy)])
@@ -59,12 +59,12 @@
   (define
     a (col/e0 from: colour)
     angle (* a math/PI))
-  (if (< a {0.7 (gen/scalar min: 0.1 max: 0.9)})
-      (line from: [(* {4 (gen/scalar min: -5 max: 5)} (math/cos from: angle))
-                   (* {3 (gen/scalar min: -5 max: 5)} (math/sin from: angle))]
-            to: [(* {-5 (gen/scalar min: -5 max: 5)} (math/cos from: angle))
-                 (* {-1 (gen/scalar min: -5 max: 5)} (math/sin from: angle))]
-            width: (- {3.8 (gen/scalar min: 0.1 max: 15)} a)
+  (if (< a 0.7 ~ (gen/scalar min: 0.1 max: 0.9))
+      (line from: [(* 4 ~ (gen/scalar min: -5 max: 5) (math/cos from: angle))
+                   (* 3 ~ (gen/scalar min: -5 max: 5) (math/sin from: angle))]
+            to: [(* -5 ~ (gen/scalar min: -5 max: 5) (math/cos from: angle))
+                 (* -1 ~ (gen/scalar min: -5 max: 5) (math/sin from: angle))]
+            width: (- 3.8 ~ (gen/scalar min: 0.1 max: 15) a)
             colour: (col/rgb r: a g: 0 b: 0 alpha: 0.2)
             brush: brush/a
             brush-subtype: 2)

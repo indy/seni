@@ -1,6 +1,6 @@
 (meta linear-colour-space: 1)
-                                        ;
-apply a full-canvas dark texture
+
+; apply a full-canvas dark texture
 (stroked-bezier-rect position: [(/ canvas/width 2) (/ canvas/height 2)]
                      overlap: 90
                      iterations: 80
@@ -17,20 +17,20 @@ apply a full-canvas dark texture
 
 ;; the coords that the bezier path will take
 (define
-  coords {[[0 500] [333 100] [666 900] [999 500]]
-          (gen/2d min: 0 max: 1000)}
+  coords [[0 500] [333 100] [666 900] [999 500]] ~
+  (gen/2d min: 0 max: 1000)
 
   ;; as the bezier path progresses, change the circle's LAB a component
   remap-a (interp/build from: [0 1]
-                        to: [{-80 (gen/scalar min: -100 max: 100)}
-                             { 80 (gen/scalar min: -100 max: 100)}])
+                        to: [-80 ~ (gen/scalar min: -100 max: 100)
+                                 80 ~ (gen/scalar min: -100 max: 100)])
 
   ;; as the bezier path progresses, change the circle's LAB b component
   remap-b (interp/build from: [0 1]
-                        to: [{-100 (gen/scalar min: -100 max: 100)}
-                             { 100 (gen/scalar min: -100 max: 100)}]))
+                        to: [-100 ~ (gen/scalar min: -100 max: 100)
+                                  100 ~ (gen/scalar min: -100 max: 100)]))
 
-(define tessellation {20 (gen/int min: 3 max: 20)})
+(define tessellation 20 ~ (gen/int min: 3 max: 20))
 
 
 
@@ -83,7 +83,7 @@ apply a full-canvas dark texture
 
 
 
-(define steps {20 (gen/int min: 5 max: 50)})
+(define steps 20 ~ (gen/int min: 5 max: 50))
 
 
 (define random3 (prng/build min: -1 max: 1 seed: 423))

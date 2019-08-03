@@ -1,6 +1,6 @@
 (define
 
-  [col1 col2 col3 col4 col5] (col/palette index: {0 (gen/scalar min: 0 max: 200)})
+  [col1 col2 col3 col4 col5] (col/palette index: 0 ~ (gen/scalar min: 0 max: 200))
 
   hslcol1 (col/convert from: col1 format: HSLuv)
   hslcol2 (col/convert from: col2 format: HSLuv)
@@ -22,15 +22,15 @@
 
 (on-matrix-stack
   (scale scalar: 1.05)
-  (tri-hsl alpha: {0.118 (gen/scalar)})
-  (tri-lab alpha: {0.062 (gen/scalar)}))
+  (tri-hsl alpha: 0.118 ~ (gen/scalar))
+  (tri-lab alpha: 0.062 ~ (gen/scalar)))
 
 (define
   ra (prng/build seed: 42
-                 min: {-5.472 (gen/stray from: -4 by: 4)}
-                 max: {3.869 (gen/stray from: 4 by: 4)})
-  sc {0.801 (gen/scalar min: 0.8 max: 1.1)}
-  wh {5 (gen/int min: 5 max: 20)}
+                 min: -5.472 ~ (gen/stray from: -4 by: 4)
+                 max: 3.869 ~ (gen/stray from: 4 by: 4))
+  sc 0.801 ~ (gen/scalar min: 0.8 max: 1.1)
+  wh 5 ~ (gen/int min: 5 max: 20)
   w wh
   h wh)
 

@@ -7,8 +7,8 @@
 ;; create a bunch of positions around the origin
 (define
   random-axis-position (prng/range seed: 42 min: -500 max: 500)
-  col-fn (col/procedural-fn preset: {"robocop"
-                                     (gen/select from: col/procedural-fn-presets)})
+  col-fn (col/procedural-fn preset: "robocop" ~
+  (gen/select from: col/procedural-fn-presets))
   random-radius (prng/range seed: 42 min: 2 max: 30))
 
 (loop (x to: 800)

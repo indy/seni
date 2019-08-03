@@ -2,37 +2,37 @@
 
 
 (define
-  coords1 {[[364.374 334.649]
-            [327.287 3.772]
-            [-437.339 313.889]
-            [362.336 -342.336]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[-451.526 -76.492]
-            [160.407 41.342]
-            [-268.480 380.469]
-            [384.760 287.207]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[-13.962 -65.145]
-            [-23.172 53.983]
-            [-454.547 271.014]
-            [483.553 -416.440]]
-           (gen/2d min: -500 max: 500)}
+  coords1 [[364.374 334.649]
+           [327.287 3.772]
+           [-437.339 313.889]
+           [362.336 -342.336]] ~
+  (gen/2d min: -500 max: 500)
+  coords2 [[-451.526 -76.492]
+           [160.407 41.342]
+           [-268.480 380.469]
+           [384.760 287.207]] ~
+  (gen/2d min: -500 max: 500)
+  coords3 [[-13.962 -65.145]
+           [-23.172 53.983]
+           [-454.547 271.014]
+           [483.553 -416.440]] ~
+  (gen/2d min: -500 max: 500)
 
 
-  col-fn-1 (col/build-procedural a: {[0.966 0.475 0.087] (gen/scalar)}
-                              b: {[0.428 0.679 0.838] (gen/scalar)}
-                              c: {[0.032 0.972 0.111] (gen/scalar)}
-                              d: {[0.762 0.543 0.101] (gen/scalar)}
+  col-fn-1 (col/build-procedural a: [0.966 0.475 0.087] ~ (gen/scalar)
+                                 b: [0.428 0.679 0.838] ~ (gen/scalar)
+                                 c: [0.032 0.972 0.111] ~ (gen/scalar)
+                                 d: [0.762 0.543 0.101] ~ (gen/scalar)
                               alpha: 0.08)
-  col-fn-2 (col/build-procedural a: {[0.724 0.168 0.124] (gen/scalar)}
-                              b: {[0.938 0.396 0.463] (gen/scalar)}
-                              c: {[0.292 0.700 0.868] (gen/scalar)}
-                              d: {[0.038 0.013 0.689] (gen/scalar)}
+  col-fn-2 (col/build-procedural a: [0.724 0.168 0.124] ~ (gen/scalar)
+                                 b: [0.938 0.396 0.463] ~ (gen/scalar)
+                                 c: [0.292 0.700 0.868] ~ (gen/scalar)
+                                 d: [0.038 0.013 0.689] ~ (gen/scalar)
                               alpha: 0.08)
-  col-fn-3 (col/build-procedural a: {[0.451 0.981 0.641] (gen/scalar)}
-                              b: {[0.221 0.974 0.078] (gen/scalar)}
-                              c: {[0.306 0.915 0.208] (gen/scalar)}
-                              d: {[0.592 0.705 0.294] (gen/scalar)}
+  col-fn-3 (col/build-procedural a: [0.451 0.981 0.641] ~ (gen/scalar)
+                                 b: [0.221 0.974 0.078] ~ (gen/scalar)
+                                 c: [0.306 0.915 0.208] ~ (gen/scalar)
+                                 d: [0.592 0.705 0.294] ~ (gen/scalar)
                               alpha: 0.08))
 
 (fn (draw)
@@ -45,12 +45,12 @@
                     (col/value from: col-fn-3 t: t)])))
 
 (fn (render)
-  (wash colour: {(col/rgb r: 0.22 g: 0.24 b: 0.50 alpha: 0.97) (gen/col)})
+    (wash colour: (col/rgb r: 0.22 g: 0.24 b: 0.50 alpha: 0.97) ~ (gen/col))
   (on-matrix-stack
     (translate vector: [(/ canvas/width 1) (/ canvas/height 2)])
     (scale scalar: 2)
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {10 (gen/int min: 1 max: 10)})))
+                            copies: 10 ~ (gen/int min: 1 max: 10))))
 
 (render)
 

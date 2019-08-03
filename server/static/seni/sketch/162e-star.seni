@@ -2,27 +2,27 @@
 
 
 (define
-  coords1 {[[-380.559 -302.062]
-            [-285.454 -474.428]
-            [342.392 234.727]
-            [110.418 -159.441]]
-           (gen/2d min: -500 max: 500)}
-  coords2 {[[-93.395 -113.432]
-            [363.150 -29.463]
-            [-164.617 308.666]
-            [16.711 61.422]]
-           (gen/2d min: -500 max: 500)}
-  coords3 {[[31.337 -75.713]
-            [-380.814 96.363]
-            [-77.547 -11.253]
-            [-274.251 -349.727]]
-           (gen/2d min: -500 max: 500)}
+  coords1 [[-380.559 -302.062]
+           [-285.454 -474.428]
+           [342.392 234.727]
+           [110.418 -159.441]] ~
+  (gen/2d min: -500 max: 500)
+  coords2 [[-93.395 -113.432]
+           [363.150 -29.463]
+           [-164.617 308.666]
+           [16.711 61.422]] ~
+  (gen/2d min: -500 max: 500)
+  coords3 [[31.337 -75.713]
+           [-380.814 96.363]
+           [-77.547 -11.253]
+           [-274.251 -349.727]] ~
+  (gen/2d min: -500 max: 500)
 
-  col-1 (col/build-procedural preset: {robocop (gen/select from: col/procedural-fn-presets)}
+  col-1 (col/build-procedural preset: robocop ~ (gen/select from: col/procedural-fn-presets)
                               alpha: 0.08)
-  col-2 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+  col-2 (col/build-procedural preset: chrome ~ (gen/select from: col/procedural-fn-presets)
                               alpha: 0.08)
-  col-3 (col/build-procedural preset: {chrome (gen/select from: col/procedural-fn-presets)}
+  col-3 (col/build-procedural preset: chrome ~ (gen/select from: col/procedural-fn-presets)
                               alpha: 0.08))
 
 (fn (draw)
@@ -38,6 +38,6 @@
     (on-matrix-stack
      (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
      (repeat/rotate-mirrored fn: (address-of draw)
-                             copies: {6 (gen/int min: 1 max: 8)})))
+                             copies: 6 ~ (gen/int min: 1 max: 8))))
 
 (render)

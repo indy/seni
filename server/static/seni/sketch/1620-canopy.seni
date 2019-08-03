@@ -36,44 +36,44 @@
 
 ;; render the background grid
 (define
-  focal-bg-a (focal/build-point position: [{409 (gen/int min: 400 max: 600)}
-                                     {137 (gen/int min: 100 max: 400)}]
-                          distance: {847 (gen/int min: 700 max: 1000)}
+  focal-bg-a (focal/build-point position: [409 ~ (gen/int min: 400 max: 600)
+                                               137 ~ (gen/int min: 100 max: 400)]
+                                distance: 847 ~ (gen/int min: 700 max: 1000)
                           falloff: "linear")
-  focal-bg-b (focal/build-point position: [{496 (gen/int min: 400 max: 600)}
-                                     {695 (gen/int min: 600 max: 900)}]
-                          distance: {930 (gen/int min: 700 max: 1000)}
+  focal-bg-b (focal/build-point position: [496 ~ (gen/int min: 400 max: 600)
+                                               695 ~ (gen/int min: 600 max: 900)]
+                                distance: 930 ~ (gen/int min: 700 max: 1000)
                           falloff: "linear")
-  col-fn-bg (col/bezier-fn a: {(col/rgb r: 0.872 g: 0.820 b: 0.603 alpha: 0.450) (gen/col)}
-                           b: {(col/rgb r: 0.102 g: 0.945 b: 0.788 alpha: 0.088) (gen/col)}
-                           c: {(col/rgb r: 0.798 g: 0.148 b: 0.819 alpha: 0.493) (gen/col)}
-                           d: {(col/rgb r: 0.078 g: 0.981 b: 0.991 alpha: 0.588) (gen/col)}))
+  col-fn-bg (col/bezier-fn a: (col/rgb r: 0.872 g: 0.820 b: 0.603 alpha: 0.450) ~ (gen/col)
+                           b: (col/rgb r: 0.102 g: 0.945 b: 0.788 alpha: 0.088) ~ (gen/col)
+                           c: (col/rgb r: 0.798 g: 0.148 b: 0.819 alpha: 0.493) ~ (gen/col)
+                           d: (col/rgb r: 0.078 g: 0.981 b: 0.991 alpha: 0.588) ~ (gen/col)))
 
-(grid n: {30 (gen/int min: 30 max: 40)}
+(grid n: 30 ~ (gen/int min: 30 max: 40)
       fun: (make-draw-element focal-fn-a: focal-bg-a
                               focal-fn-b: focal-bg-b
-                              rotate-factor: {384 (gen/int min: 300 max: 400)}
-                              width: {35 (gen/int min: 30 max: 60)}
-                              height: {423 (gen/int min: 400 max: 500)}
+                              rotate-factor: 384 ~ (gen/int min: 300 max: 400)
+                              width: 35 ~ (gen/int min: 30 max: 60)
+                              height: 423 ~ (gen/int min: 400 max: 500)
                               col-fn: col-fn-bg))
 
 ;; render the foreground
 (define
-  focal-fg-a (focal/build-point position: {[902 918] (gen/int min: 0 max: 1000)}
-                          distance: {245 (gen/int min: 0 max: 500)}
+  focal-fg-a (focal/build-point position: [902 918] ~ (gen/int min: 0 max: 1000)
+                                distance: 245 ~ (gen/int min: 0 max: 500)
                           falloff: "linear")
-  focal-fg-b (focal/build-point position: {[2 846] (gen/int min: 0 max: 1000)}
-                          distance: {29 (gen/int min: 0 max: 600)}
+  focal-fg-b (focal/build-point position: [2 846] ~ (gen/int min: 0 max: 1000)
+                                distance: 29 ~ (gen/int min: 0 max: 600)
                           falloff: "linear")
-  col-fn-fg (col/bezier-fn a: {(col/rgb r: 0.377 g: 0.011 b: 0.136 alpha: 0.501) (gen/col)}
-                           b: {(col/rgb r: 0.907 g: 0.934 b: 0.034 alpha: 0.711) (gen/col)}
-                           c: {(col/rgb r: 0.087 g: 0.013 b: 0.871 alpha: 0.463) (gen/col)}
-                           d: {(col/rgb r: 0.379 g: 0.107 b: 0.537 alpha: 0.431) (gen/col)}))
+  col-fn-fg (col/bezier-fn a: (col/rgb r: 0.377 g: 0.011 b: 0.136 alpha: 0.501) ~ (gen/col)
+                           b: (col/rgb r: 0.907 g: 0.934 b: 0.034 alpha: 0.711) ~ (gen/col)
+                           c: (col/rgb r: 0.087 g: 0.013 b: 0.871 alpha: 0.463) ~ (gen/col)
+                           d: (col/rgb r: 0.379 g: 0.107 b: 0.537 alpha: 0.431) ~ (gen/col)))
 
-(grid n: {37 (gen/int min: 30 max: 40)}
+(grid n: 37 ~ (gen/int min: 30 max: 40)
       fun: (make-draw-element focal-fn-a: focal-fg-a
                               focal-fn-b: focal-fg-b
-                              rotate-factor: {78 (gen/int min: 1 max: 200)}
-                              width: {22 (gen/int min: 10 max: 30)}
-                              height: {178 (gen/int min: 100 max: 300)}
+                              rotate-factor: 78 ~ (gen/int min: 1 max: 200)
+                              width: 22 ~ (gen/int min: 10 max: 30)
+                              height: 178 ~ (gen/int min: 100 max: 300)
                               col-fn: col-fn-fg))

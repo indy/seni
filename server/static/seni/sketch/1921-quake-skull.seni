@@ -20,7 +20,7 @@
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define r (col/e0 from: colour)
-    angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
+    angle (+ 3.38 ~ (gen/scalar min: 0 max: 8) (* r math/PI)))
   (if (= r 0)
       (on-matrix-stack
         (rotate angle: 50)
@@ -31,7 +31,7 @@
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define r (col/e0 from: colour)
-    angle (+ {3.38 (gen/scalar min: 0 max: 8)} (* r math/PI)))
+    angle (+ 3.38 ~ (gen/scalar min: 0 max: 8) (* r math/PI)))
   (if (> r 0)
       (on-matrix-stack
         (rotate angle: 30)

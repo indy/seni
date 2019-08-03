@@ -1,7 +1,7 @@
 (define
   texture "skull-b.png"
-  brush {brush/b (gen/select from: brush/*)}
-  brush-subtype {5 (gen/int min: 1 max: 7)})
+  brush brush/b ~ (gen/select from: brush/*)
+  brush-subtype 5 ~ (gen/int min: 1 max: 7))
 
 (define per-pixel-funcs [(address-of pass-0)
                          (address-of pass-1)])
@@ -16,12 +16,12 @@
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
     a (colour.col/e0)
-    angle (+ {6.37 (gen/stray from: 6.37 by: 2.00)} (* a math/PI)))
-  (line from: [(* {7.00 (gen/stray from: 7.00 by: 2.00)} (angle.math/cos))
-               (* {12.00 (gen/stray from: 12.00 by: 2.00)} (angle.math/sin))]
-        to: [(* {4.00 (gen/stray from: 4.00 by: 2.00)} (angle.math/cos))
-             (* {-13.00 (gen/stray from: -13.00 by: 2.00)} (angle.math/sin))]
-        width: (- {12.50 (gen/stray from: 12.50 by: 2.00)} a)
+    angle (+ 6.37 ~ (gen/stray from: 6.37 by: 2.00) (* a math/PI)))
+  (line from: [(* 7.00 ~ (gen/stray from: 7.00 by: 2.00) (angle.math/cos))
+               (* 12.00 ~ (gen/stray from: 12.00 by: 2.00) (angle.math/sin))]
+        to: [(* 4.00 ~ (gen/stray from: 4.00 by: 2.00) (angle.math/cos))
+             (* -13.00 ~ (gen/stray from: -13.00 by: 2.00) (angle.math/sin))]
+        width: (- 12.50 ~ (gen/stray from: 12.50 by: 2.00) a)
         brush
         brush-subtype
         colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))
@@ -29,12 +29,12 @@
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
     b (colour.col/e2)
-    angle (+ {6.82 (gen/stray from: 6.82 by: 2)} (* b math/PI)))
-  (line to: [(* {14.00 (gen/stray from: 14.00 by: 2.00)} (angle.math/cos))
-               (* {8.00 (gen/stray from: 8.00 by: 2.00)} (angle.math/sin))]
-        from: [(* {10.00 (gen/stray from: 10.00 by: 2.00)} (angle.math/cos))
-             (* {1.00 (gen/stray from: 1.00 by: 2.00)} (angle.math/sin))]
-        width: (- {2.40 (gen/stray from: 2.40 by: 2.00)} b)
+    angle (+ 6.82 ~ (gen/stray from: 6.82 by: 2) (* b math/PI)))
+  (line to: [(* 14.00 ~ (gen/stray from: 14.00 by: 2.00) (angle.math/cos))
+             (* 8.00 ~ (gen/stray from: 8.00 by: 2.00) (angle.math/sin))]
+        from: [(* 10.00 ~ (gen/stray from: 10.00 by: 2.00) (angle.math/cos))
+               (* 1.00 ~ (gen/stray from: 1.00 by: 2.00) (angle.math/sin))]
+        width: (- 2.40 ~ (gen/stray from: 2.40 by: 2.00) b)
         brush
         brush-subtype
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))

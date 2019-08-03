@@ -7,8 +7,8 @@
 ;; create a bunch of positions around the origin
 (define
   random-axis-position (prng/range seed: 42 min: -500 max: 500)
-  col-fn (col/procedural-fn preset: {"mars"
-                                     (gen/select from: col/procedural-fn-presets)})
+  col-fn (col/procedural-fn preset: "mars" ~
+                            (gen/select from: col/procedural-fn-presets))
   random-radius (prng/range seed: 42 min: 2 max: 30))
 
 (loop (x to: 800)
@@ -25,8 +25,8 @@
     [x y colour radius] obj)
   (circle position: [x y]
           colour: (col/set-alpha from: colour
-                                 value: {0.267 (gen/scalar min: 0 max: 0.4)})
-          radius: (* radius {6 (gen/int min: 1 max: 8)})
+                                 value: 0.267 ~ (gen/scalar min: 0 max: 0.4))
+          radius: (* radius 6 ~ (gen/int min: 1 max: 8))
           tessellation: 20))
 
 (fn (draw-body obj: [])
@@ -40,11 +40,11 @@
 (fn (draw-shadow obj: [])
   (define
     [x y colour radius] obj
-    offset {1.116 (gen/scalar min: 1 max: 2)})
+    offset 1.116 ~ (gen/scalar min: 1 max: 2))
   (circle position: [(* x offset) (* y offset)]
           colour: (col/set-alpha from: (col/darken from: colour
-                                                     value: {27 (gen/int min: 0 max: 100)})
-                                 value: {0.236 (gen/scalar max: 0.5)})
+                                                   value: 27 ~ (gen/int min: 0 max: 100))
+                                 value: 0.236 ~ (gen/scalar max: 0.5))
           radius: radius
           tessellation: 20))
 

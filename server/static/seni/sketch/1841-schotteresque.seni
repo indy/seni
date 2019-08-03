@@ -4,27 +4,27 @@
 (render-main)
 
 (define
-  num-squares-to-render {38 (gen/int min: 14 max: 40)}
-  gap-size {5 (gen/int min: 0 max: 10)}
+  num-squares-to-render 38 ~ (gen/int min: 14 max: 40)
+  gap-size 5 ~ (gen/int min: 0 max: 10)
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  focal-point ({focal/build-point (gen/select from: '(focal/build-point
-                                                      focal/build-hline
-                                                      focal/build-vline))}
-               position: [{1000 (gen/select from: '(0 500 1000))}
-                          {1000 (gen/select from: '(0 500 1000))}]
-               distance: {755 (gen/scalar min: 300 max: 1300)})
-  focal-sat ({focal/build-vline (gen/select from: '(focal/build-point
-                                                    focal/build-hline
-                                                    focal/build-vline))}
-               position: {[779 505] (gen/scalar min: 0 max: 1000)}
-               distance: {645 (gen/scalar min: 300 max: 1300)})
-  focal-hue ({focal/build-vline (gen/select from: '(focal/build-point
-                                                    focal/build-hline
-                                                    focal/build-vline))}
-               position: {[702 745] (gen/scalar min: 0 max: 1000)}
-               distance: {1148 (gen/scalar min: 300 max: 1300)})
+  focal-point (focal/build-point ~ (gen/select from: '(focal/build-point
+                                                     focal/build-hline
+                                                     focal/build-vline))
+                                 position: [1000 ~ (gen/select from: '(0 500 1000))
+                                                 1000 ~ (gen/select from: '(0 500 1000))]
+                                 distance: 755 ~ (gen/scalar min: 300 max: 1300))
+  focal-sat (focal/build-vline ~ (gen/select from: '(focal/build-point
+                                                   focal/build-hline
+                                                   focal/build-vline))
+                               position: [779 505] ~ (gen/scalar min: 0 max: 1000)
+                               distance: 645 ~ (gen/scalar min: 300 max: 1300))
+  focal-hue (focal/build-vline ~ (gen/select from: '(focal/build-point
+                                                   focal/build-hline
+                                                   focal/build-vline))
+                               position: [702 745] ~ (gen/scalar min: 0 max: 1000)
+                               distance: 1148 ~ (gen/scalar min: 300 max: 1300))
   rng-fn (prng/build min: -1 max: 1 seed: 454)
   interp-h (interp/build to: [0 360])
   interp-s (interp/build to: [0 100])
@@ -43,14 +43,14 @@
                            l: (interp/value from: interp-l t: volatility))
     half-size+ (/ square-size 2)
     half-size- (* half-size+ -1)
-    thickness {3.0 (gen/scalar min: 0.9 max: 3.0)}
+    thickness 3.0 ~ (gen/scalar min: 0.9 max: 3.0)
     half-thickness (/ thickness 2))
 
   (on-matrix-stack
     ;; displace the box according to volatility
-   (rotate angle: (* (prng/value from: rng-fn) volatility {22.575 (gen/scalar min: 0 max: 200)}))
-   (translate vector: [(* (prng/value from: rng-fn) volatility {36.817 (gen/scalar min: 0 max: 100)})
-                       (* (prng/value from: rng-fn) volatility {61.290 (gen/scalar min: 0 max: 100)})])
+   (rotate angle: (* (prng/value from: rng-fn) volatility 22.575 ~ (gen/scalar min: 0 max: 200)))
+   (translate vector: [(* (prng/value from: rng-fn) volatility 36.817 ~ (gen/scalar min: 0 max: 100))
+                       (* (prng/value from: rng-fn) volatility 61.290 ~ (gen/scalar min: 0 max: 100))])
     ;; draw a box around the origin
     (line from: [(+ half-size- half-thickness) half-size-]
           to: [(- half-size+ half-thickness) half-size-]
@@ -75,8 +75,8 @@
 
 (fn (render-main)
   (define
-    x-sub {5 (gen/int min: 1 max: 8)}
-    y-sub {7 (gen/int min: 1 max: 8)})
+    x-sub 5 ~ (gen/int min: 1 max: 8)
+    y-sub 7 ~ (gen/int min: 1 max: 8))
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (loop (y from: y-sub to: (- num-squares y-sub))

@@ -3,30 +3,30 @@
 (define
   coords []
   colours []
-  make-colour (col/build-procedural a: {[0.687 0.399 0.476] (gen/stray-3d from: [0.687 0.399 0.476] by: [0.1 0.1 0.1])}
-                                    b: {[0.778 0.405 0.253] (gen/stray-3d from: [0.778 0.405 0.253] by: [0.1 0.1 0.1])}
-                                    c: {[0.436 0.590 0.885] (gen/stray-3d from: [0.436 0.590 0.885] by: [0.1 0.1 0.1])}
-                                    d: {[0.517 0.439 0.391] (gen/stray-3d from: [0.517 0.439 0.391] by: [0.1 0.1 0.1])})
+  make-colour (col/build-procedural a: [0.687 0.399 0.476] ~ (gen/stray-3d from: [0.687 0.399 0.476] by: [0.1 0.1 0.1])
+                                    b: [0.778 0.405 0.253] ~ (gen/stray-3d from: [0.778 0.405 0.253] by: [0.1 0.1 0.1])
+                                    c: [0.436 0.590 0.885] ~ (gen/stray-3d from: [0.436 0.590 0.885] by: [0.1 0.1 0.1])
+                                    d: [0.517 0.439 0.391] ~ (gen/stray-3d from: [0.517 0.439 0.391] by: [0.1 0.1 0.1]))
 
-  focalpoint ({focal/build-vline (gen/select from: '(focal/build-point
-                                                     focal/build-hline
-                                                     focal/build-vline))}
-              position: [{-148 (gen/stray-int from: -148 by: 40)}
-                         {239 (gen/stray-int from: 239 by: 40)}]
-              distance: {458 (gen/stray-int from: 458 by: 50)}))
+  focalpoint (focal/build-vline ~ (gen/select from: '(focal/build-point
+                                                    focal/build-hline
+                                                    focal/build-vline))
+                                position: [-148 ~ (gen/stray-int from: -148 by: 40)
+                                                239 ~ (gen/stray-int from: 239 by: 40)]
+                                distance: 458 ~ (gen/stray-int from: 458 by: 50)))
 
-(fence (t num: {63 (gen/int min: 5 max: 100)})
+(fence (t num: 63 ~ (gen/int min: 5 max: 100))
   (define
     p1 (interp/bezier t: t
-                      coords: [{[-139.592 -150.389] (gen/stray-2d from: [-139.592 -150.389] by: [10 10])}
-                               {[166.582 -132.939] (gen/stray-2d from: [166.582 -132.939] by: [10 10])}
-                               {[8.370 -108.305] (gen/stray-2d from: [8.370 -108.305] by: [10 10])}
-                               {[204.349 -212.830] (gen/stray-2d from: [204.349 -212.830] by: [10 10])}])
+                      coords: [[-139.592 -150.389] ~ (gen/stray-2d from: [-139.592 -150.389] by: [10 10])
+                               [166.582 -132.939] ~ (gen/stray-2d from: [166.582 -132.939] by: [10 10])
+                               [8.370 -108.305] ~ (gen/stray-2d from: [8.370 -108.305] by: [10 10])
+                               [204.349 -212.830] ~ (gen/stray-2d from: [204.349 -212.830] by: [10 10])])
     p2 (interp/bezier t: t
-                      coords: [{[6.482 -255.821] (gen/stray-2d from: [6.482 -255.821] by: [10 10])}
-                               {[-11.347 100.004] (gen/stray-2d from: [-11.347 100.004] by: [10 10])}
-                               {[201.458 -218.061] (gen/stray-2d from: [201.458 -218.061] by: [10 10])}
-                               {[168.957 84.215] (gen/stray-2d from: [168.957 84.215] by: [10 10])}])
+                      coords: [[6.482 -255.821] ~ (gen/stray-2d from: [6.482 -255.821] by: [10 10])
+                               [-11.347 100.004] ~ (gen/stray-2d from: [-11.347 100.004] by: [10 10])
+                               [201.458 -218.061] ~ (gen/stray-2d from: [201.458 -218.061] by: [10 10])
+                               [168.957 84.215] ~ (gen/stray-2d from: [168.957 84.215] by: [10 10])])
     c1 (col/value from: make-colour t: (focal/value from: focalpoint position: p1))
     c2 (col/value from: make-colour t: (focal/value from: focalpoint position: p2)))
   (++ coords p1)
@@ -43,6 +43,6 @@
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (scale vector: [1.7 1.7])
     (repeat/rotate-mirrored fn: (address-of draw)
-                            copies: {7 (gen/int min: 5 max: 14)})))
+                            copies: 7 ~ (gen/int min: 5 max: 14))))
 
 (render)

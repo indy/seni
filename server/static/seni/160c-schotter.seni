@@ -9,17 +9,17 @@
 (render-main)
 
 (define
-  num-squares-to-render {25 (gen/int min: 14 max: 40)}
-  gap-size {2 (gen/int min: 0 max: 10)}
+  num-squares-to-render 25 ~ (gen/int min: 14 max: 40)
+  gap-size 2 ~ (gen/int min: 0 max: 10)
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  focal-point ({focal/build-hline (gen/select from: '(focal/build-point
-                                                      focal/build-hline
-                                                      focal/build-vline))}
-               position: [{500 (gen/select from: '(0 500 1000))}
-                          {0 (gen/select from: '(0 500 1000))}]
-               distance: {1300 (gen/scalar min: 300 max: 1300)})
+  focal-point (focal/build-hline ~ (gen/select from: '(focal/build-point
+                                                     focal/build-hline
+                                                     focal/build-vline))
+                                 position: [500 ~ (gen/select from: '(0 500 1000))
+                                                0 ~ (gen/select from: '(0 500 1000))]
+                                 distance: 1300 ~ (gen/scalar min: 300 max: 1300))
   rng-fn (prng/build min: -1 max: 1 seed: 454)
   box-colour (col/rgb r: 0.2 g: 0.2 b: 0.2 alpha: 0.7))
 
@@ -28,14 +28,14 @@
   (define
     half-size+ (/ square-size 2)
     half-size- (* half-size+ -1)
-    thickness {1.2 (gen/scalar min: 0.9 max: 3.0)}
+    thickness 1.2 ~ (gen/scalar min: 0.9 max: 3.0)
     half-thickness (/ thickness 2))
 
   (on-matrix-stack
     ;; displace the box according to volatility
-   (rotate angle: (* (prng/value from: rng-fn) volatility {135.923 (gen/scalar min: 0 max: 200)}))
-   (translate vector: [(* (prng/value from: rng-fn) volatility {1.826 (gen/scalar min: 0 max: 100)})
-                       (* (prng/value from: rng-fn) volatility {29.980 (gen/scalar min: 0 max: 100)})])
+   (rotate angle: (* (prng/value from: rng-fn) volatility 135.923 ~ (gen/scalar min: 0 max: 200)))
+   (translate vector: [(* (prng/value from: rng-fn) volatility 1.826 ~ (gen/scalar min: 0 max: 100))
+                       (* (prng/value from: rng-fn) volatility 29.980 ~ (gen/scalar min: 0 max: 100))])
     ;; draw a box around the origin
     (line from: [(+ half-size- half-thickness) half-size-]
           to: [(- half-size+ half-thickness) half-size-]
@@ -60,8 +60,8 @@
 
 (fn (render-main)
   (define
-    x-sub {7 (gen/int min: 1 max: 8)}
-    y-sub {1 (gen/int min: 1 max: 8)})
+    x-sub 7 ~ (gen/int min: 1 max: 8)
+    y-sub 1 ~ (gen/int min: 1 max: 8))
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
     (loop (y from: y-sub to: (- num-squares y-sub))

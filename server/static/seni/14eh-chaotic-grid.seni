@@ -1,14 +1,14 @@
 (meta linear-colour-space: 1)
 
 (define
-  num-squares-to-render {15 (gen/int min: 2 max: 20)}
-  gap-size {30 (gen/int min: 5 max: 50)}
+  num-squares-to-render 15 ~ (gen/int min: 2 max: 20)
+  gap-size 30 ~ (gen/int min: 5 max: 50)
   num-squares (+ 2 num-squares-to-render)
   num-gaps (+ num-squares 1)
   square-size (/ (- canvas/width (* gap-size num-gaps)) num-squares)
-  base-colour (col/rgb r: {1.0 (gen/scalar)}
-                       g: {0.0 (gen/scalar)}
-                       b: {0.3 (gen/scalar)}
+  base-colour (col/rgb r: 1.0 ~ (gen/scalar)
+                       g: 0.0 ~ (gen/scalar)
+                       b: 0.3 ~ (gen/scalar)
                        alpha: 1.0)
   background-colour (col/rgb r: 1.0 g: 1.0 b: 0.9))
 
@@ -23,17 +23,17 @@
       x-pos (map-to-position at: x)
       y-pos (map-to-position at: y)
       distance-from-centre (math/distance
-                            vec1: [{500 (gen/int min:0 max: canvas/width)}
-                                   {800 (gen/int min:0 max: canvas/height)}]
+                            vec1: [500 ~ (gen/int min:0 max: canvas/width)
+                                       800 ~ (gen/int min:0 max: canvas/height)]
                             vec2: [x-pos y-pos])
       volatility (math/clamp from: (/ (- (/ canvas/width 2)
                                           distance-from-centre)
-                                       {12 (gen/int min:5 max: 50)})
+                                      12 ~ (gen/int min:5 max: 50))
                              min: 0
                              max: 50))
 
     (stroked-bezier-rect position: [x-pos y-pos]
-                         colour-volatility: {20 (gen/int min: 2 max: 40)}
+                         colour-volatility: 20 ~ (gen/int min: 2 max: 40)
                          volatility: volatility
                          seed: (+ x (* y num-squares))
                          width: square-size

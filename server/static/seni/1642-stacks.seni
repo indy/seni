@@ -1,25 +1,25 @@
 (meta linear-colour-space: 1)
 
-(wash colour:  {(col/rgb r: 0.596 g: 0.316 b: 0.625 alpha: 0.010) (gen/col)})
-(tri-hsl alpha: {0.997 (gen/scalar)})
-(tri-lab alpha: {0.931 (gen/scalar)})
+(wash colour:  (col/rgb r: 0.596 g: 0.316 b: 0.625 alpha: 0.010) ~ (gen/col))
+(tri-hsl alpha: 0.997 ~ (gen/scalar))
+(tri-lab alpha: 0.931 ~ (gen/scalar))
 
 (fn (tri-lab alpha: 1)
   (define
     w 86.6
     h 50
     r (prng/build min: 0 max: 1 seed: 231)
-    colour-scale {721 (gen/int max: 900)}
+    colour-scale 721 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1)
     li (interp/build from: [0 1]
-                     to: [{119 (gen/int min: 0 max: 120)}
-                          {12 (gen/int min: 0 max: 120)}])
+                     to: [119 ~ (gen/int min: 0 max: 120)
+                              12 ~ (gen/int min: 0 max: 120)])
     rma (interp/build from: [0 canvas/width]
-                      to: [{84 (gen/int min: -100 max: 100)}
-                           {-13 (gen/int min: -100 max: 100)}])
+                      to: [84 ~ (gen/int min: -100 max: 100)
+                              -13 ~ (gen/int min: -100 max: 100)])
     rmb (interp/build from: [0 canvas/height]
-                      to: [{95 (gen/int min: -120 max: 120)}
-                           {-38 (gen/int min: -120 max: 120)}]))
+                      to: [95 ~ (gen/int min: -120 max: 120)
+                              -38 ~ (gen/int min: -120 max: 120)]))
 
   (loop (y from: 0 upto: canvas/height inc: 30)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
@@ -61,14 +61,14 @@
   (define
     w 86.6
     h 50
-    colour-scale {644 (gen/int max: 900)}
+    colour-scale 644 ~ (gen/int max: 900)
     colour-offset (prng/build min: -1 max: 1)
     fn-h (interp/build from: [0 canvas/width]
-                       to: [{244 (gen/int max: 360)}
-                            {357 (gen/int max: 360)}])
+                       to: [244 ~ (gen/int max: 360)
+                                357 ~ (gen/int max: 360)])
     fn-l (interp/build from: [0 canvas/height]
-                       to: [{0.427 (gen/scalar min: 0.2 max: 0.5)}
-                            {0.462 (gen/scalar min: 0.4 max: 1)}]))
+                       to: [0.427 ~ (gen/scalar min: 0.2 max: 0.5)
+                                  0.462 ~ (gen/scalar min: 0.4 max: 1)]))
   (loop (y from: 0 upto: canvas/height inc: 30)
     (loop (x from: 0 upto: canvas/width inc: (* 2 w))
       (define

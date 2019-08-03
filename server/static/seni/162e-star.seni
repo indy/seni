@@ -1,20 +1,20 @@
 (meta linear-colour-space: 1)
 
 (define
-  coords1 [{[-380.559 -302.062] (gen/stray-2d from: [-380.559 -302.062] by: [50 50])}
-           {[-285.454 -474.428] (gen/stray-2d from: [-285.454 -474.428] by: [50 50])}
-           {[342.392 234.727] (gen/stray-2d from: [342.392 234.727] by: [50 50])}
-           {[110.418 -159.441] (gen/stray-2d from: [110.418 -159.441] by: [50 50])}]
+  coords1 [[-380.559 -302.062] ~ (gen/stray-2d from: [-380.559 -302.062] by: [50 50])
+           [-285.454 -474.428] ~ (gen/stray-2d from: [-285.454 -474.428] by: [50 50])
+           [342.392 234.727] ~ (gen/stray-2d from: [342.392 234.727] by: [50 50])
+           [110.418 -159.441] ~ (gen/stray-2d from: [110.418 -159.441] by: [50 50])]
 
-  coords2 [{[-93.395 -113.432] (gen/stray-2d from: [-93.395 -113.432] by: [50 50])}
-           {[363.150 -29.463] (gen/stray-2d from: [363.150 -29.463] by: [50 50])}
-           {[-164.617 308.666] (gen/stray-2d from: [-164.617 308.666] by: [50 50])}
-           {[16.711 61.422] (gen/stray-2d from: [16.711 61.422] by: [50 50])}]
+  coords2 [[-93.395 -113.432] ~ (gen/stray-2d from: [-93.395 -113.432] by: [50 50])
+           [363.150 -29.463] ~ (gen/stray-2d from: [363.150 -29.463] by: [50 50])
+           [-164.617 308.666] ~ (gen/stray-2d from: [-164.617 308.666] by: [50 50])
+           [16.711 61.422] ~ (gen/stray-2d from: [16.711 61.422] by: [50 50])]
 
-  coords3 [{[31.337 -75.713] (gen/stray-2d from: [31.337 -75.713] by: [50 50])}
-           {[-380.814 96.363] (gen/stray-2d from: [-380.814 96.363] by: [50 50])}
-           {[-77.547 -11.253] (gen/stray-2d from: [-77.547 -11.253] by: [50 50])}
-           {[-274.251 -349.727] (gen/stray-2d from: [-274.251 -349.727] by: [50 50])}]
+  coords3 [[31.337 -75.713] ~ (gen/stray-2d from: [31.337 -75.713] by: [50 50])
+           [-380.814 96.363] ~ (gen/stray-2d from: [-380.814 96.363] by: [50 50])
+           [-77.547 -11.253] ~ (gen/stray-2d from: [-77.547 -11.253] by: [50 50])
+           [-274.251 -349.727] ~ (gen/stray-2d from: [-274.251 -349.727] by: [50 50])]
 
 
   col-1 (col/build-procedural preset: robocop
@@ -37,6 +37,6 @@
     (on-matrix-stack
      (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
      (repeat/rotate-mirrored fn: (address-of draw)
-                             copies: {6 (gen/int min: 4 max: 12)})))
+                             copies: 6 ~ (gen/int min: 4 max: 12))))
 
 (render)
