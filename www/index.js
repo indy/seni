@@ -706,11 +706,12 @@ function seniMode() {
   const STRING = 'string';
   const ATOM = 'atom';
   const NUMBER = 'number';
-  const PAREN = 'paren';      // ()
-  const CURLY = 'curly';    // {}
-  const BRACKET = 'bracket';    // []
+  const TILDE = 'tilde';     // ~
+  const PAREN = 'paren';     // ()
+  const BRACKET = 'bracket'; // []
   const SENICOMMON = 'seni-common';
   const PARAMETER = 'seni-parameter';
+
 
   const INDENT_WORD_SKIP = 2;
 
@@ -770,59 +771,16 @@ take translate`);
   }
 
   function tokenType(token, state, ch) {
-    const prefix = 'geno-';
-    let usePrefix = false;
-
-    if (state.insideCurly) {
-      // leave the first element inside curlys as is.
-
-      if (state.curlyCounter === 1) {
-        usePrefix = false;
-        // this is the first element in the curlys
-
-        state.curlyedFirstChildIsString = (token === STRING);
-        state.curlyedFirstChildIsParen = (token === PAREN);
-
-        if (state.curlyedFirstChildIsParen) {
-          // special case of the first child in curlys being a s-exp.
-          // we'll need to keep count of parenDepth
-          state.firstParenCurlyDepth = state.parenDepth;
-        }
-      } else {
-        if (state.curlyedFirstChildIsString) {
-          usePrefix = false;
-          if (token === STRING) {
-            state.curlyedFirstChildIsString = false;
-          }
-        } else if (state.curlyedFirstChildIsParen &&
-                 state.firstParenCurlyDepth <= state.parenDepth) {
-          // normally grey out, except if we're curlyedFirstChildIsParen
-
-          // keep on colouring as normal
-          usePrefix = false;
-
-          // if this is a closing parens then we've processed the first s-exp
-          // and can start using prefix
-          // (i.e. start greying out the remainder of the curly contents)
-          if (state.firstParenCurlyDepth === state.parenDepth && ch === ')') {
-            state.curlyedFirstChildIsParen = false;
-          }
-        } else {
-          usePrefix = true;
-        }
-      }
-
-      state.curlyCounter++;
-    }
-
-    return usePrefix ? prefix + token : token;
+    return state.afterTilde === true ? 'geno-' + token : token;
   }
 
-  function setInsideCurly(value, state) {
+
+  function setAfterTilde(value, state) {
     if (value === true) {
-      state.curlyCounter = 0;
+      // switch off afterTilde when we get to a closing paren of parenDepth + 1
+      state.afterTildeParenDepth = state.parenDepth + 1;
     }
-    state.insideCurly = value;
+    state.afterTilde = value;
   }
 
   return {
@@ -835,11 +793,8 @@ take translate`);
 
         parenDepth: 0,
 
-        insideCurly: false,
-        curlyCounter: 0,
-        firstParenCurlyDepth: 0,
-        curlyedFirstChildIsParen: false,
-        curlyedFirstChildIsString: false
+        afterTilde: false,
+        afterTildeParenDepth: 0,
       };
       return state;
     },
@@ -889,6 +844,9 @@ take translate`);
           returnType = tokenType(STRING, state);
         } else if (ch === '\'') {
           returnType = tokenType(ATOM, state);
+        } else if (ch === '~') {
+          setAfterTilde(true, state);
+          returnType = tokenType(TILDE, state);
         } else if (/^[-+0-9.]/.test(ch) && isDecimalNumber(stream, true)) {
           // match non-prefixed number, must be decimal
           returnType = tokenType(NUMBER, state);
@@ -901,15 +859,11 @@ take translate`);
         } else if (ch === ']') { // bracket
           popStack(state);
           returnType = tokenType(BRACKET, state);
-        } else if (ch === '(' || ch === '{') {
+        } else if (ch === '(') {
           let keyWord = '', letter;
           const indentTemp = stream.column();
 
-          if (ch === '{') {
-            setInsideCurly(true, state);
-          } else {
-            state.parenDepth++;
-          }
+          state.parenDepth++;
 
           while ((letter = stream.eat(/[^\s\(\)\[\]\{\}\;]/)) != null) {
             keyWord += letter;
@@ -934,27 +888,27 @@ take translate`);
 
           if (typeof state.sExprComment === 'number') state.sExprComment++;
 
-          returnType = tokenType(ch === '{' ? CURLY : PAREN, state, ch);
-        } else if (ch === ')' || ch === '}') {
-          returnType = tokenType(ch === '}' ? CURLY : PAREN, state, ch);
-          if (state.indentStack != null &&
-              state.indentStack.type === (ch === ')' ? '(' : '{')) {
+          returnType = tokenType(PAREN, state, ch);
+        } else if (ch === ')') {
+          returnType = tokenType(PAREN, state, ch);
+          if (state.indentStack != null && state.indentStack.type === '(') {
             popStack(state);
 
             if (typeof state.sExprComment === 'number') {
               if (--state.sExprComment === 0) {
-                returnType = tokenType(COMMENT, state); // final closing curly
+                returnType = tokenType(COMMENT, state);
                 state.sExprComment = false; // turn off s-expr commenting mode
               }
             }
           }
-          if (ch === '}') {
-            setInsideCurly(false, state);
-          } else {
-            state.parenDepth--;
+
+          if (state.afterTilde === true && state.parenDepth === state.afterTildeParenDepth) {
+            setAfterTilde(false, state);
           }
+
+          state.parenDepth--;
         } else {
-          stream.eatWhile(/[\w\$_\-!$%&*+\.\/:<=>?@\^~]/);
+          stream.eatWhile(/[\w\$_\-!$%&*+\.\/:<=>?@\^]/);
 
           if (keywords.propertyIsEnumerable(stream.current())) {
             returnType = tokenType(BUILTIN, state);
