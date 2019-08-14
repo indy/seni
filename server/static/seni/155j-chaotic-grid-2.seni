@@ -18,7 +18,7 @@
   colour-volatility 20 ~ (gen/int min: 2 max: 40)
 
   focal-point (focal/build-point position: [500 ~ (gen/int max: canvas/width)
-                                                800 ~ (gen/int max: canvas/height)]
+                                            800 ~ (gen/int max: canvas/height)]
                                  distance: 300 ~ (gen/int max: canvas/width))
   focal-power 50 ~ (gen/scalar max: 200))
 

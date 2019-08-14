@@ -17,11 +17,11 @@
 ;; render the background grid
 (define
   focal-bg-a (focal/build-point position: [587 ~ (gen/int min: 400 max: 600)
-                                               323 ~ (gen/int min: 100 max: 400)]
+                                           323 ~ (gen/int min: 100 max: 400)]
                                 distance: 820 ~ (gen/int min: 700 max: 1000)
                                 falloff: linear)
   focal-bg-b (focal/build-point position: [545 ~ (gen/int min: 400 max: 600)
-                                               830 ~ (gen/int min: 600 max: 900)]
+                                           830 ~ (gen/int min: 600 max: 900)]
                                 distance: 730 ~ (gen/int min: 700 max: 1000)
                                 falloff: linear)
   col-fn-bg (col/build-bezier a: (col/rgb r: 0.666 g: 0.618 b: 0.220 alpha: 0.510) ~ (gen/col)
@@ -50,10 +50,10 @@
 (define
   focal-fg-a (focal/build-point position: [655 446] ~ (gen/int min: 0 max: 1000)
                                 distance: 342 ~ (gen/int min: 0 max: 500)
-                          falloff: linear)
+                                falloff: linear)
   focal-fg-b (focal/build-point position: [889 337] ~ (gen/int min: 0 max: 1000)
                                 distance: 574 ~ (gen/int min: 0 max: 600)
-                          falloff: linear)
+                                falloff: linear)
   col-fn-fg (col/build-bezier a: (col/rgb r: 0.648 g: 0.717 b: 0.807 alpha: 0.141) ~ (gen/col)
                               b: (col/rgb r: 0.857 g: 0.432 b: 0.853 alpha: 0.628) ~ (gen/col)
                               c: (col/rgb r: 0.890 g: 0.001 b: 0.561 alpha: 0.571) ~ (gen/col)

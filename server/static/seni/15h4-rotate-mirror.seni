@@ -14,7 +14,7 @@
                                                     focal/build-hline
                                                     focal/build-vline))
                                 position: [82 ~ (gen/stray-int from: 82 by: 50)
-                                              268 ~ (gen/stray-int from: 268 by: 50)]
+                                           268 ~ (gen/stray-int from: 268 by: 50)]
                                 distance: 488 ~ (gen/stray-int from: 488 by: 100)))
 
 (fence (t num: 63 ~ (gen/int min: 50 max: 70))

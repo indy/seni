@@ -18,11 +18,11 @@
 ;; render the background grid
 (define
   focal-bg-a (focal/build-point position: [525 ~ (gen/stray-int from: 525 by: 100)
-                                               348 ~ (gen/stray-int from: 348 by: 100)]
+                                           348 ~ (gen/stray-int from: 348 by: 100)]
                                 distance: 750 ~ (gen/stray-int from: 750 by: 40)
                                 falloff: linear)
   focal-bg-b (focal/build-point position: [542 ~ (gen/stray-int from: 542 by: 100)
-                                               765 ~ (gen/stray-int from: 765 by: 10)]
+                                           765 ~ (gen/stray-int from: 765 by: 10)]
                                 distance: 891 ~ (gen/stray-int from: 891 by: 50)
                                 falloff: linear)
   col-fn-bg (col/build-bezier a: (col/rgb r: 0.093 g: 0.208 b: 0.298 alpha: 0.247) ~ (gen/col)
