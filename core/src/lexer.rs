@@ -110,7 +110,7 @@ impl<'a> Lexer<'a> {
                 '~' => Ok((Token::Tilde, 1)),
                 '"' => eat_string(&self.input),
                 ';' => eat_comment(&self.input),
-                '-' | '0'...'9' => eat_number(&self.input),
+                '-' | '0'..='9' => eat_number(&self.input),
                 '\n' => Ok((Token::Newline, 1)),
                 ch if ch.is_whitespace() => eat_whitespace(&self.input),
                 _ if is_name(ch) => eat_name(&self.input),
