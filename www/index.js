@@ -545,7 +545,6 @@ class GLRenderer {
     const gl = this.gl;
     const domElement = this.glDomElement;
 
-
     if (domElement.width !== canvasWidth) {
       domElement.width = canvasWidth;
     }
@@ -623,6 +622,8 @@ class GLRenderer {
     return new Promise((resolve, reject) => {
       try {
         this.glDomElement.toBlob(blob => {
+          // console.log(this.glDomElement);
+          // console.log(blob);
           elem.src = window.URL.createObjectURL(blob);
           return resolve();
         });
@@ -1639,20 +1640,10 @@ function updateSelectionUI(state) {
 }
 
 async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) {
-  let destWidth = undefined;
-  let destHeight = undefined;
-  if (w !== undefined && h !== undefined) {
-    destWidth = w;
-    destHeight = h;
-  } else {
-    destWidth = imageElement.clientWidth;
-    destHeight = imageElement.clientHeight;
-  }
-
   const stopFn = startTiming();
 
   gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
-  gGLRenderer.renderTextureToScreen(meta, destWidth, destHeight);
+  gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
@@ -1660,20 +1651,10 @@ async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) 
 }
 
 async function renderGeometryBuffersSection(meta, memory, buffers, imageElement, w, h, section) {
-  let destWidth = undefined;
-  let destHeight = undefined;
-  if (w !== undefined && h !== undefined) {
-    destWidth = w;
-    destHeight = h;
-  } else {
-    destWidth = imageElement.clientWidth;
-    destHeight = imageElement.clientHeight;
-  }
-
   const stopFn = startTiming();
 
   gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
-  gGLRenderer.renderTextureToScreen(meta, destWidth, destHeight);
+  gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
 
@@ -1767,8 +1748,11 @@ function normalize_bitmap_url(url) {
 async function renderScript(parameters, imageElement) {
   const stopFn = startTiming();
 
+  let width = parameters.assumeWidth ? parameters.assumeWidth : imageElement.clientWidth;
+  let height = parameters.assumeHeight ? parameters.assumeHeight : imageElement.clientHeight;
+
   let { meta, memory, buffers } = await renderJob(parameters);
-  await renderGeometryBuffers(meta, memory, buffers, imageElement);
+  await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height);
 
   if (meta.title === '') {
     stopFn(`renderScript`);
@@ -2335,6 +2319,7 @@ async function getGallery(controller) {
 }
 
 async function createGalleryDisplayChunk(controller) {
+  const state = controller.getState();
 
   const createGalleryElement = galleryItem => {
     const container = document.createElement('div');
@@ -2345,7 +2330,8 @@ async function createGalleryDisplayChunk(controller) {
     container.innerHTML = `
       <a href="#" class="show-edit">
         <img class="card-image show-edit"
-             src="${galleryItem.image}">
+             id="gallery-image-${galleryItem.id}"
+             src="${state.placeholder}">
       </a>
       <div class="card-action">
         <span>${galleryItem.name}</span>
@@ -2355,22 +2341,33 @@ async function createGalleryDisplayChunk(controller) {
   };
 
   const row = document.getElementById('gallery-list-cards');
+  const assumeWidth = 300;
+  const assumeHeight = 300;
 
-  const state = controller.getState();
   let least = Math.max(state.galleryOldestToDisplay - state.galleryDisplaySize, 0);
+
+  const promises = [];
+
   for (let i=state.galleryOldestToDisplay; i>least; i--) {
-    // console.log(`creating element ${i}`);
     const item = state.galleryItems[i];
     const e = createGalleryElement(item);
     row.appendChild(e);
+
+    const workerJob = renderScript({
+      script: item.script,
+      assumeWidth,
+      assumeHeight
+    }, document.getElementById(`gallery-image-${item.id}`));
+
+    promises.push(workerJob);
   }
   // console.log(`oldest id to display is now ${least}`);
-
   if (least === 0) {
     // hide the button
     document.getElementById('gallery-more-btn').classList.add('hidden');;
   }
 
+  await Promise.all(promises);
   await controller.dispatch(actionGalleryOldestToDisplay, { oldestId: least});
 }
 
