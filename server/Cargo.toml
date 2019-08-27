@@ -2,6 +2,7 @@
 name = "server"
 version = "4.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
+license = "AGPL-3.0"
 edition = "2018"
 
 [dependencies]

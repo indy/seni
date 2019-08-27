@@ -1,0 +1,27 @@
+
+(define
+
+  start-x 300
+  start-y 300
+  box-dim 400
+
+  element-colour (col/convert from: (col/rgb r: 1 g: 1 b: 0 alpha: 0.8) format: HSLuv)
+  iterations 400
+  dim (/ box-dim iterations)
+  half-dim (/ dim 2)
+
+  rng (prng/build min: 80 max: 90 seed: 3453)
+  )
+
+
+(rect position: [500 250]
+      width: 1000
+      height: 500
+      colour: red)
+
+(loop (y from: start-y to: (+ start-y box-dim) inc: dim)
+  (loop (x from: start-x to: (+ start-x box-dim) inc: dim)
+    (rect position: [(+ x half-dim) (+ y half-dim)]
+          width: dim
+          height: dim
+          colour: (element-colour.col/set-e2 value: (rng.prng/value)))))
