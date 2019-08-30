@@ -1,0 +1,5 @@
+[development]
+assets_dir = "dev_assets/"
+
+[production]
+assets_dir = "prod_assets/"
