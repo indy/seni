@@ -16,6 +16,10 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+const RUNNING_ON_STATIC_SITE = false;
+const PAGE = RUNNING_ON_STATIC_SITE ? "index.html" : "sketch.html";
+const PREFIX = RUNNING_ON_STATIC_SITE ? "/app/www" : "";
+
 const logToConsole = false;
 
 // --------------------------------------------------------------------------------
@@ -801,9 +805,6 @@ const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
 
 // --------------------------------------------------------------------------------
 
-const RUNNING_ON_STATIC_SITE = false;
-const PAGE = RUNNING_ON_STATIC_SITE ? "index.html" : "sketch.html";
-
 const URI_SEED = "seed";
 const URI_MODE = "mode";
 
@@ -924,9 +925,7 @@ function normalize_bitmap_url(url) {
   // todo: this should:
   // 1. do nothing if the url is a valid url
   // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
-
-  // note: setting an absolute path as this works with static site generation for seni.indy.io
-  return "/img/" + url;
+  return `${PREFIX}/img/${url}`;
 }
 
 async function renderJob(parameters) {
@@ -1244,10 +1243,7 @@ async function updateSketch(display) {
 async function main() {
   updateGlobalsFromURI();
 
-  const texturePathElement = getRequiredElement('sketch-texture-path');
-  const workerPathElement = getRequiredElement('sketch-worker-path');
-
-  Job.setup(2, workerPathElement.textContent);
+  Job.setup(2, `${PREFIX}/worker.js`);
 
   const originalButton = getRequiredElement('sketch-eval-original');
   const variationButton = getRequiredElement('sketch-eval-variation');
@@ -1267,7 +1263,7 @@ async function main() {
 
   logDebug("init");
 
-  gState.glRenderer.loadTexture(texturePathElement.textContent)
+  gState.glRenderer.loadTexture(`${PREFIX}/img/texture.png`)
     .then(async () => await updateSketch(DISPLAY_SNAP))
     .catch(error => console.error(error));
 

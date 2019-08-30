@@ -50,9 +50,6 @@
           <div class="seni-content markdown" itemprop="articleBody">
               <div id="sketch-content" class="sketch-content-wrap">
                 <div class="sketch-holder">
-
-                  <div id="sketch-texture-path" style="display: none;">/img/texture.png</div>
-                  <div id="sketch-worker-path" style="display: none;">worker.js</div>
                   <canvas id="bitmap-canvas" style="display: none;"></canvas>
 
                   <div id="sketch-normal-anchor">
@@ -78,44 +75,45 @@
                     <pre><code id="sketch-simplified-script"></code></pre>
                     <!-- the original version of the script, will never be altered -->
                     <pre><code id="sketch-script">
-(meta linear-colour-space: 1)
-
-(define texture "skull-a.png")
+(define
+  texture "skull-b.png"
+  brush brush/b ~ (gen/select from: brush/*)
+  brush-subtype 5 ~ (gen/int min: 1 max: 7))
 
 (define per-pixel-funcs [(address-of pass-0)
                          (address-of pass-1)])
 
 (each (per-pixel-func from: per-pixel-funcs)
-      (bitmap/each from: texture
-                   position: [500 500]
-                   width: 1000
-                   height: 1000
-                   shuffle-seed: 321
-                   fn: per-pixel-func))
+      (texture.bitmap/each position: [500 500]
+                           width: 1000
+                           height: 1000
+                           shuffle-seed: 321
+                           fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
-  (define a (col/e0 from: colour)
-    angle (+ {2.58 (gen/stray from: 2.58 by: 0.6)} (* a math/PI)))
-  (line from: [(* {2.000 (gen/stray from: 2.000 by: 0.6)} (math/cos from: angle))
-               (* {8.000 (gen/stray from: 8.000 by: 0.6)} (math/sin from: angle))]
-        to: [(* {-7.000 (gen/stray from: -7.000 by: 0.6)} (math/cos from: angle))
-             (* {6.000 (gen/stray from: 6.000 by: 0.6)} (math/sin from: angle))]
-        width: (- {8.700 (gen/stray from: 8.700 by: 0.6)} a)
-        brush: brush/d
-        brush-subtype: 1
+  (define
+    a (colour.col/e0)
+    angle (+ 6.37 ~ (gen/stray from: 6.37 by: 2.00) (* a math/PI)))
+  (line from: [(* 7.00 ~ (gen/stray from: 7.00 by: 2.00) (angle.math/cos))
+               (* 12.00 ~ (gen/stray from: 12.00 by: 2.00) (angle.math/sin))]
+        to: [(* 4.00 ~ (gen/stray from: 4.00 by: 2.00) (angle.math/cos))
+             (* -13.00 ~ (gen/stray from: -13.00 by: 2.00) (angle.math/sin))]
+        width: (- 12.50 ~ (gen/stray from: 12.50 by: 2.00) a)
+        brush
+        brush-subtype
         colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
-    b (col/e2 from: colour)
-    angle (+ {3.30 (gen/stray from: 3.30 by: 0.6)} (* b math/PI)))
-  (line from: [(* {11.000 (gen/stray from: 11.000 by: 0.6)} (math/cos from: angle))
-               (* {9.000 (gen/stray from: 9.000 by: 0.6)} (math/sin from: angle))]
-        to: [(* {-3.000 (gen/stray from: -3.000 by: 0.6)} (math/cos from: angle))
-             (* {-9.000 (gen/stray from: -9.000 by: 0.6)} (math/sin from: angle))]
-        width: (- {0.900 (gen/stray from: 0.900 by: 0.6)} b)
-        brush: brush/d
-        brush-subtype: 1
+    b (colour.col/e2)
+    angle (+ 6.82 ~ (gen/stray from: 6.82 by: 2) (* b math/PI)))
+  (line to: [(* 14.00 ~ (gen/stray from: 14.00 by: 2.00) (angle.math/cos))
+             (* 8.00 ~ (gen/stray from: 8.00 by: 2.00) (angle.math/sin))]
+        from: [(* 10.00 ~ (gen/stray from: 10.00 by: 2.00) (angle.math/cos))
+               (* 1.00 ~ (gen/stray from: 1.00 by: 2.00) (angle.math/sin))]
+        width: (- 2.40 ~ (gen/stray from: 2.40 by: 2.00) b)
+        brush
+        brush-subtype
         colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
                     </code></pre>
                   </div> <!-- code-content-wrap -->
