@@ -13,13 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-//mod error;
-//use crate::error::{Result, Error};
-
-
+use std::error;
+use std::fmt;
 use actix_web::http::{header, Method, StatusCode};
 use actix_web::{fs, middleware, server, App, HttpRequest, HttpResponse, Result as ActixResult};
+use config;
 use serde_derive::{Deserialize, Serialize};
 
 // NOTE: Recompile the server everytime db.json is changed
@@ -49,19 +47,25 @@ fn favicon_c(_req: &HttpRequest) -> ActixResult<fs::NamedFile> {
 }
 
 fn gallery(req: &HttpRequest) -> ActixResult<HttpResponse> {
+    // SLOW: reparsing the config file on every request to /gallery
+    //
+    let mut config = config::Config::default();
+    config.merge(config::File::with_name("Config")).unwrap();
+
     println!("{:?}", req);
 
     let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
 
     let mut gallery: Vec<Sketch> = vec![];
-    let path_prefix = "static/seni/".to_string();
-    let path_extension = ".seni".to_string();
+    // let path_prefix = "static/seni/".to_string();
+    let path_prefix = config.get_str("seni_path").unwrap();
+    let path_extension = "seni".to_string();
 
     for entry in poor_db {
         gallery.push(Sketch {
             id: entry.id,
             name: entry.name.clone(),
-            script: std::fs::read_to_string(format!("{}{}{}", &path_prefix, &entry.name, &path_extension)).unwrap(),
+            script: std::fs::read_to_string(format!("{}/{}.{}", &path_prefix, &entry.name, &path_extension)).unwrap(),
         });
     };
 
@@ -80,6 +84,19 @@ fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Option<String> {
     }
 }
 
+fn full_path(script_name: &str) -> String {
+    // SLOW: reparsing the config file on every request to /gallery
+    //
+    let mut config = config::Config::default();
+    config.merge(config::File::with_name("Config")).unwrap();
+
+    let path_prefix = config.get_str("seni_path").unwrap();
+    let path_extension = "seni".to_string();
+    let path_with_ext = format!("{}/{}.{}", &path_prefix, script_name, &path_extension);
+
+    path_with_ext
+}
+
 fn gallery_item(req: &HttpRequest) -> ActixResult<fs::NamedFile> {
     // println!("{:?}", req);
 
@@ -88,13 +105,42 @@ fn gallery_item(req: &HttpRequest) -> ActixResult<fs::NamedFile> {
     let param_id = req.match_info().get("id").unwrap();
     let id: u32 = std::str::FromStr::from_str(param_id).unwrap();
     let name = get_sketch_name_from_id(&poor_db, id).unwrap();
-    let path = ["../server/static/seni", &name].join("/");
-    let path_with_ext = [path, "seni".to_string()].join(".");
+
+    let path_with_ext = full_path(&name);
 
     Ok(fs::NamedFile::open(path_with_ext)?)
 }
 
-fn main() {
+pub type Result<T> = ::std::result::Result<T, SeniServerError>;
+
+#[derive(Debug)]
+pub enum SeniServerError {
+    ConfigError(config::ConfigError),
+}
+
+impl From<config::ConfigError> for SeniServerError {
+    fn from(e: config::ConfigError) -> SeniServerError {
+        SeniServerError::ConfigError(e)
+    }
+}
+
+// don't need to implement any of the trait's methods
+impl error::Error for SeniServerError {}
+
+impl fmt::Display for SeniServerError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SeniServerError::ConfigError(c) => write!(f, "seni gui: Config Error: {:?}", c),
+        }
+    }
+}
+
+fn main() -> Result<()> {
+    // Add in `./Config.toml`
+    //
+    let mut config = config::Config::default();
+    config.merge(config::File::with_name("Config"))?;
+
     ::std::env::set_var("RUST_LOG", "actix_web=debug"); // info
                                                         //    ::std::env::set_var("RUST_BACKTRACE", "1");
     env_logger::init();
@@ -117,7 +163,7 @@ fn main() {
     println!("bind_addr is {}", bind_addr);
 
     let sys = actix::System::new("seni-server");
-    let home = "../www";
+    let home = config.get_str("home_path")?;
 
     server::new(move || {
         App::new()
@@ -137,7 +183,7 @@ fn main() {
                 })
             })
             // static files
-            .handler("/", fs::StaticFiles::new(home).unwrap())
+            .handler("/", fs::StaticFiles::new(home.clone()).unwrap())
     })
     .bind(bind_addr)
     .unwrap()
@@ -145,4 +191,6 @@ fn main() {
     .start();
 
     let _ = sys.run();
+
+    Ok(())
 }

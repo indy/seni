@@ -7,7 +7,9 @@ edition = "2018"
 
 [dependencies]
 clap = "2.32.0"
-env_logger = "0.5.4"
+config = "0.9"
+env_logger = "0.6"
+log = "0.4"
 actix = "0.7"
 actix-web = "^0.7"
 # json
