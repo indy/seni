@@ -1279,7 +1279,7 @@ async function main() {
   });
 
   slideshowButton.addEventListener('click', async () => {
-    originalButton.disabled = true;
+    originalButton.disabled = false;
 
     if (updateToMode(MODE_SLIDESHOW)) {
       await updateSketch(DISPLAY_SNAP);
