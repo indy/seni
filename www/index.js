@@ -87,7 +87,7 @@ const Matrix = {
 
 function initGL(canvas) {
   try {
-    const gl = canvas.getContext('experimental-webgl', {
+    const gl = canvas.getContext('webgl', {
       alpha: false,
       preserveDrawingBuffer: true
     });
@@ -108,7 +108,7 @@ function compileShader(gl, type, src) {
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    //alert(gl.getShaderInfoLog(shader));
+    console.log(gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
@@ -125,10 +125,11 @@ function setupSketchShaders(gl) {
   // this needs to happen in linear colour space
   const fragmentSrc = `
   precision highp float;
-  varying vec4 vColour;
-  varying highp vec2 vTextureCoord;
 
-  uniform sampler2D uSampler;
+  varying vec4 vColour;
+  varying vec2 vTextureCoord;
+
+  uniform sampler2D texture;
   uniform bool uOutputLinearColourSpace;
 
   // https://en.wikipedia.org/wiki/SRGB
@@ -145,7 +146,7 @@ function setupSketchShaders(gl) {
 
 
   void main(void) {
-    vec4 tex = texture2D(uSampler, vTextureCoord);
+    vec4 tex = texture2D(texture, vTextureCoord);
 
     // note: you _never_ want uOutputLinearColourSpace to be set to true
     // it's only here because some of the older sketchs didn't correctly
@@ -176,7 +177,7 @@ function setupSketchShaders(gl) {
   uniform mat4 uPMatrix;
 
   varying vec4 vColour;
-  varying highp vec2 vTextureCoord;
+  varying vec2 vTextureCoord;
 
   void main(void) {
     gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
@@ -207,7 +208,7 @@ function setupSketchShaders(gl) {
 
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'texture');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
@@ -227,7 +228,7 @@ function setupBlitShaders(gl) {
 
   varying vec2 vTextureCoord;
 
-  uniform sampler2D uSampler;
+  uniform sampler2D texture;
   uniform bool uOutputLinearColourSpace;
 
   // https:en.wikipedia.org/wiki/SRGB
@@ -252,7 +253,7 @@ function setupBlitShaders(gl) {
 
   void main()
   {
-     vec4 col = texture2D( uSampler, vTextureCoord );
+     vec4 col = texture2D( texture, vTextureCoord );
 
      // note: you _never_ want uOutputLinearColourSpace to be set to true
      // it's only here because some of the older sketchs didn't correctly
@@ -274,7 +275,7 @@ function setupBlitShaders(gl) {
   uniform mat4 uMVMatrix;
   uniform mat4 uPMatrix;
 
-  varying highp vec2 vTextureCoord;
+  varying vec2 vTextureCoord;
 
   void main(void) {
     gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
@@ -303,7 +304,7 @@ function setupBlitShaders(gl) {
 
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'texture');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
