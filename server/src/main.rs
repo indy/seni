@@ -13,15 +13,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::error;
-use std::fmt;
-use actix_web::http::{header, Method, StatusCode};
-use actix_web::{fs, middleware, server, App, HttpRequest, HttpResponse, Result as ActixResult};
-use config;
+#![feature(proc_macro_hygiene)]
+#![feature(decl_macro)]
+
+#[macro_use]
+extern crate rocket;
+
+#[cfg(test)]
+mod tests;
+
+use rocket::fairing::AdHoc;
+use rocket::response::NamedFile;
+use rocket::State;
+use std::path::{Path, PathBuf};
 use serde_derive::{Deserialize, Serialize};
 
 // NOTE: Recompile the server everytime db.json is changed
-static DB_JSON: &'static str = include_str!("../static/db.json");
+static DB_JSON: &'static str = include_str!("../db.json");
 
 // a poor man's database
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -37,28 +45,17 @@ struct Sketch {
     script: String,
 }
 
-/// favicon handler
-// fn favicon_rust(_req: &HttpRequest) -> Result<fs::NamedFile> {
-//     Ok(fs::NamedFile::open("client/sen-client/www/favicon.ico")?)
-// }
+struct HomeDir(String);
+struct SeniDir(String);
 
-fn favicon_c(_req: &HttpRequest) -> ActixResult<fs::NamedFile> {
-    Ok(fs::NamedFile::open("../www/favicon.ico")?)
-}
-
-fn gallery(req: &HttpRequest) -> ActixResult<HttpResponse> {
-    // SLOW: reparsing the config file on every request to /gallery
-    //
-    let mut config = config::Config::default();
-    config.merge(config::File::with_name("Config")).unwrap();
-
-    println!("{:?}", req);
-
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
+#[get("/gallery")]
+fn gallery(seni_dir: State<SeniDir>) -> String {
+    // format!("hiya from gallery {}", seni_dir.0)
 
     let mut gallery: Vec<Sketch> = vec![];
-    // let path_prefix = "static/seni/".to_string();
-    let path_prefix = config.get_str("seni_path").unwrap();
+
+    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON).unwrap();
+    let path_prefix = &seni_dir.0;
     let path_extension = "seni".to_string();
 
     for entry in poor_db {
@@ -69,10 +66,7 @@ fn gallery(req: &HttpRequest) -> ActixResult<HttpResponse> {
         });
     };
 
-    // response
-    Ok(HttpResponse::build(StatusCode::OK)
-        .content_type("application/json")
-        .body(serde_json::to_string(&gallery).unwrap()))
+    serde_json::to_string(&gallery).unwrap()
 }
 
 fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Option<String> {
@@ -84,113 +78,41 @@ fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Option<String> {
     }
 }
 
-fn full_path(script_name: &str) -> String {
-    // SLOW: reparsing the config file on every request to /gallery
-    //
-    let mut config = config::Config::default();
-    config.merge(config::File::with_name("Config")).unwrap();
+#[get("/gallery/<id>", rank = 1)]
+fn gallery_item(id: u32, seni_dir: State<SeniDir>) -> Option<NamedFile> {
+    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON).unwrap();
 
-    let path_prefix = config.get_str("seni_path").unwrap();
-    let path_extension = "seni".to_string();
-    let path_with_ext = format!("{}/{}.{}", &path_prefix, script_name, &path_extension);
-
-    path_with_ext
-}
-
-fn gallery_item(req: &HttpRequest) -> ActixResult<fs::NamedFile> {
-    // println!("{:?}", req);
-
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
-
-    let param_id = req.match_info().get("id").unwrap();
-    let id: u32 = std::str::FromStr::from_str(param_id).unwrap();
     let name = get_sketch_name_from_id(&poor_db, id).unwrap();
+    let filename = format!("{}.seni", name);
 
-    let path_with_ext = full_path(&name);
-
-    Ok(fs::NamedFile::open(path_with_ext)?)
+    NamedFile::open(Path::new(&seni_dir.0).join(filename)).ok()
 }
 
-pub type Result<T> = ::std::result::Result<T, SeniServerError>;
-
-#[derive(Debug)]
-pub enum SeniServerError {
-    ConfigError(config::ConfigError),
+#[get("/<asset..>", rank = 2)]
+fn assets(asset: PathBuf, home_dir: State<HomeDir>) -> Option<NamedFile> {
+    NamedFile::open(Path::new(&home_dir.0).join(asset)).ok()
 }
 
-impl From<config::ConfigError> for SeniServerError {
-    fn from(e: config::ConfigError) -> SeniServerError {
-        SeniServerError::ConfigError(e)
-    }
-}
+fn main() {
+    rocket::ignite()
+        .mount("/", routes![assets, gallery, gallery_item])
+        .attach(AdHoc::on_attach("Home directory", |rocket| {
+            let home_dir = rocket
+                .config()
+                .get_str("home_dir")
+                .unwrap_or("fook")
+                .to_string();
 
-// don't need to implement any of the trait's methods
-impl error::Error for SeniServerError {}
+            Ok(rocket.manage(HomeDir(home_dir)))
+        }))
+        .attach(AdHoc::on_attach("Seni directory", |rocket| {
+            let seni_dir = rocket
+                .config()
+                .get_str("seni_dir")
+                .unwrap_or("seni")
+                .to_string();
 
-impl fmt::Display for SeniServerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SeniServerError::ConfigError(c) => write!(f, "seni gui: Config Error: {:?}", c),
-        }
-    }
-}
-
-fn main() -> Result<()> {
-    // Add in `./Config.toml`
-    //
-    let mut config = config::Config::default();
-    config.merge(config::File::with_name("Config"))?;
-
-    ::std::env::set_var("RUST_LOG", "actix_web=debug"); // info
-                                                        //    ::std::env::set_var("RUST_BACKTRACE", "1");
-    env_logger::init();
-
-    let matches = clap::App::new("Seni Server")
-        .version("0.1.0")
-        .author("Inderjit Gill <email@indy.io>")
-        .about("AppServer for Seni")
-        .arg(
-            clap::Arg::with_name("port")
-                .short("p")
-                .long("port")
-                .help("The port number")
-                .takes_value(true),
-        )
-        .get_matches();
-
-    let port = matches.value_of("port").unwrap_or("8080");
-    let bind_addr = ["127.0.0.1", port].join(":");
-    println!("bind_addr is {}", bind_addr);
-
-    let sys = actix::System::new("seni-server");
-    let home = config.get_str("home_path")?;
-
-    server::new(move || {
-        App::new()
-            // enable logger
-            .middleware(middleware::Logger::default())
-            // register favicon
-            .resource("/favicon", |r| r.f(favicon_c))
-            // static files
-            .resource("/gallery", |r| r.f(gallery))
-            .resource("/gallery/{id}", |r| r.method(Method::GET).f(gallery_item))
-            // redirect
-            .resource("/", |r| {
-                r.method(Method::GET).f(|_req| {
-                    HttpResponse::Found()
-                        .header(header::LOCATION, "/index.html")
-                        .finish()
-                })
-            })
-            // static files
-            .handler("/", fs::StaticFiles::new(home.clone()).unwrap())
-    })
-    .bind(bind_addr)
-    .unwrap()
-    .shutdown_timeout(1)
-    .start();
-
-    let _ = sys.run();
-
-    Ok(())
+            Ok(rocket.manage(SeniDir(seni_dir)))
+        }))
+        .launch();
 }

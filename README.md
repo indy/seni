@@ -26,7 +26,7 @@ $ ./build.sh
 launch a server:
 ```sh
 $ cd server
-$ cargo run
+$ build run
 ```
 
 You can now useseni at [127.0.0.1:8080/index.html](http://127.0.0.1:8080/index.html)

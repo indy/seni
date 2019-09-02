@@ -1,0 +1,7 @@
+[development]
+home_dir = "../www"
+seni_dir = "seni"
+
+[production]
+home_dir = "/home/indy/work/seni.indy.io/public/app/www"
+seni_dir = "/home/indy/work/seni.indy.io/public/app/seni"
