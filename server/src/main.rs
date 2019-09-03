@@ -13,20 +13,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(proc_macro_hygiene)]
-#![feature(decl_macro)]
+#![feature(proc_macro_hygiene, decl_macro)]
 
-#[macro_use]
-extern crate rocket;
-
+mod error;
 #[cfg(test)]
 mod tests;
 
+use error::{Error, Result};
 use rocket::fairing::AdHoc;
 use rocket::response::NamedFile;
 use rocket::State;
-use std::path::{Path, PathBuf};
+use rocket::{get, routes};
 use serde_derive::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 // NOTE: Recompile the server everytime db.json is changed
 static DB_JSON: &'static str = include_str!("../db.json");
@@ -49,12 +48,12 @@ struct HomeDir(String);
 struct SeniDir(String);
 
 #[get("/gallery")]
-fn gallery(seni_dir: State<SeniDir>) -> String {
+fn gallery(seni_dir: State<SeniDir>) -> Result<String> {
     // format!("hiya from gallery {}", seni_dir.0)
 
     let mut gallery: Vec<Sketch> = vec![];
 
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON).unwrap();
+    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
     let path_prefix = &seni_dir.0;
     let path_extension = "seni".to_string();
 
@@ -62,30 +61,34 @@ fn gallery(seni_dir: State<SeniDir>) -> String {
         gallery.push(Sketch {
             id: entry.id,
             name: entry.name.clone(),
-            script: std::fs::read_to_string(format!("{}/{}.{}", &path_prefix, &entry.name, &path_extension)).unwrap(),
+            script: std::fs::read_to_string(format!(
+                "{}/{}.{}",
+                &path_prefix, &entry.name, &path_extension
+            ))?,
         });
-    };
+    }
 
-    serde_json::to_string(&gallery).unwrap()
+    Ok(serde_json::to_string(&gallery)?)
 }
 
-fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Option<String> {
+fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Result<String> {
     let res: Option<&DbEntry> = poor_db.iter().find(|&entry| entry.id == id);
 
     match res {
-        Some(r) => Some(r.name.clone()),
-        None => None,
+        Some(r) => Ok(r.name.clone()),
+        None => Err(Error::NotInPoorDb(id)),
     }
 }
 
 #[get("/gallery/<id>", rank = 1)]
-fn gallery_item(id: u32, seni_dir: State<SeniDir>) -> Option<NamedFile> {
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON).unwrap();
+fn gallery_item(id: u32, seni_dir: State<SeniDir>) -> Result<NamedFile> {
+    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
 
-    let name = get_sketch_name_from_id(&poor_db, id).unwrap();
+    let name = get_sketch_name_from_id(&poor_db, id)?;
     let filename = format!("{}.seni", name);
+    let named_file = NamedFile::open(Path::new(&seni_dir.0).join(filename))?;
 
-    NamedFile::open(Path::new(&seni_dir.0).join(filename)).ok()
+    Ok(named_file)
 }
 
 #[get("/<asset..>", rank = 2)]
@@ -100,7 +103,7 @@ fn main() {
             let home_dir = rocket
                 .config()
                 .get_str("home_dir")
-                .unwrap_or("fook")
+                .unwrap_or(".")
                 .to_string();
 
             Ok(rocket.manage(HomeDir(home_dir)))

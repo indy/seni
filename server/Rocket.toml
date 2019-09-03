@@ -1,7 +1,9 @@
 [development]
+port = 8000
 home_dir = "../www"
 seni_dir = "seni"
 
 [production]
+port = 3210
 home_dir = "/home/indy/work/seni.indy.io/public/app/www"
 seni_dir = "/home/indy/work/seni.indy.io/public/app/seni"
