@@ -1740,10 +1740,15 @@ function loadBitmapImageData(url) {
 }
 
 function normalize_bitmap_url(url) {
-  // todo: this should:
-  // 1. do nothing if the url is a valid url
-  // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
-  return "img/" + url;
+  const re = /^[\w-]+.png/;
+
+  if (url.match(re)) {
+    // requesting a bitmap just by filename, so get it from /img/immutable/
+    return "img/immutable/" + url;
+  } else {
+    // change nothing, try and fetch the url
+    return url;
+  }
 }
 
 async function renderScript(parameters, imageElement) {
