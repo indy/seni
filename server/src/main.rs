@@ -13,109 +13,156 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#![feature(proc_macro_hygiene, decl_macro)]
-
-mod error;
-#[cfg(test)]
-mod tests;
-
-use error::{Error, Result};
-use rocket::fairing::AdHoc;
-use rocket::response::NamedFile;
-use rocket::State;
-use rocket::{get, routes};
+use actix_files as fs;
+use actix_web::http::StatusCode;
+use actix_web::{
+    guard, middleware, web, App, Error as ActixError, HttpRequest, HttpResponse, HttpServer,
+    Result as ActixResult,
+};
+use dotenv;
+use futures::{future::ok, Future};
 use serde_derive::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use std::collections::BTreeMap;
 
 // NOTE: Recompile the server everytime db.json is changed
 static DB_JSON: &'static str = include_str!("../db.json");
 
+type Index = u32;
+type PoorMansDb = BTreeMap<Index, Sketch>;
+
 // a poor man's database
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct DbEntry {
-    id: u32,
+    id: Index,
     name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Sketch {
-    id: u32,
+    id: Index,
     name: String,
     script: String,
 }
 
-struct HomeDir(String);
-struct SeniDir(String);
+fn create_poor_mans_db(seni_dir: &str) -> PoorMansDb {
+    let mut db: PoorMansDb = BTreeMap::new();
 
-#[get("/gallery")]
-fn gallery(seni_dir: State<SeniDir>) -> Result<String> {
-    // format!("hiya from gallery {}", seni_dir.0)
-
-    let mut gallery: Vec<Sketch> = vec![];
-
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
-    let path_prefix = &seni_dir.0;
+    let data: Vec<DbEntry> = serde_json::from_str(DB_JSON).unwrap();
+    let path_prefix = seni_dir;
     let path_extension = "seni".to_string();
 
-    for entry in poor_db {
-        gallery.push(Sketch {
-            id: entry.id,
-            name: entry.name.clone(),
-            script: std::fs::read_to_string(format!(
-                "{}/{}.{}",
-                &path_prefix, &entry.name, &path_extension
-            ))?,
-        });
+    for entry in data {
+        db.insert(
+            entry.id,
+            Sketch {
+                id: entry.id,
+                name: entry.name.clone(),
+                script: std::fs::read_to_string(format!(
+                    "{}/{}.{}",
+                    &path_prefix, &entry.name, &path_extension
+                ))
+                .unwrap(),
+            },
+        );
     }
 
-    Ok(serde_json::to_string(&gallery)?)
+    db
 }
 
-fn get_sketch_name_from_id(poor_db: &Vec<DbEntry>, id: u32) -> Result<String> {
-    let res: Option<&DbEntry> = poor_db.iter().find(|&entry| entry.id == id);
+/// 404 handler
+fn p404() -> ActixResult<HttpResponse> {
+    Ok(HttpResponse::build(StatusCode::NOT_FOUND)
+        .content_type("text/html; charset=utf-8")
+        .body(
+            "<html>
+                 <head>
+                   <title></title>
+                   <style type = text/css>
+                     html {
+                       height: 100%;
+                     }
+                     body{
+                       font-family: 'Lato', sans-serif;
+                       color: #888;
+                       margin: 0;
+                       display: table;
+                       width: 100%;
+                       height: 100vh;
+                       text-align: center;
+                     }
+                     h1{
+                       font-size: 4em;
+                       display: table-cell;
+                       vertical-align: middle;
+                     }
+                   </style>
+                 </head>
+                 <body>
+                   <h1>Error 404: Page Not Found</h1>
+                 </body>
+               </html>",
+        ))
+}
 
-    match res {
-        Some(r) => Ok(r.name.clone()),
-        None => Err(Error::NotInPoorDb(id)),
+fn gallery(
+    _req: HttpRequest,
+    db: web::Data<PoorMansDb>,
+) -> impl Future<Item = HttpResponse, Error = ActixError> {
+    let gallery: Vec<Sketch> = db.values().rev().cloned().collect();
+
+    ok(HttpResponse::Ok()
+        .content_type("application/json")
+        .body(serde_json::to_string(&gallery).unwrap()))
+}
+
+fn gallery_item(
+    req: HttpRequest,
+    db: web::Data<PoorMansDb>,
+) -> impl Future<Item = HttpResponse, Error = ActixError> {
+    let id: Index = req.match_info().get("id").unwrap().parse().unwrap();
+
+    match db.get(&id) {
+        Some(sketch) => ok(HttpResponse::Ok()
+            .content_type("text/html")
+            .body(&sketch.script)),
+        None => ok(HttpResponse::InternalServerError().into()),
     }
 }
 
-#[get("/gallery/<id>", rank = 1)]
-fn gallery_item(id: u32, seni_dir: State<SeniDir>) -> Result<NamedFile> {
-    let poor_db: Vec<DbEntry> = serde_json::from_str(DB_JSON)?;
+fn main() -> std::io::Result<()> {
+    env_logger::init_from_env("SENI_LOG");
 
-    let name = get_sketch_name_from_id(&poor_db, id)?;
-    let filename = format!("{}.seni", name);
-    let named_file = NamedFile::open(Path::new(&seni_dir.0).join(filename))?;
+    dotenv::dotenv().ok();
 
-    Ok(named_file)
-}
+    let home_dir = std::env::var("HOME_DIR").expect("HOME_DIR");
+    let seni_dir = std::env::var("SENI_DIR").expect("SENI_DIR");
+    let poor_db = create_poor_mans_db(&seni_dir);
 
-#[get("/<asset..>", rank = 2)]
-fn assets(asset: PathBuf, home_dir: State<HomeDir>) -> Option<NamedFile> {
-    NamedFile::open(Path::new(&home_dir.0).join(asset)).ok()
-}
-
-fn main() {
-    rocket::ignite()
-        .mount("/", routes![assets, gallery, gallery_item])
-        .attach(AdHoc::on_attach("Home directory", |rocket| {
-            let home_dir = rocket
-                .config()
-                .get_str("home_dir")
-                .unwrap_or(".")
-                .to_string();
-
-            Ok(rocket.manage(HomeDir(home_dir)))
-        }))
-        .attach(AdHoc::on_attach("Seni directory", |rocket| {
-            let seni_dir = rocket
-                .config()
-                .get_str("seni_dir")
-                .unwrap_or("seni")
-                .to_string();
-
-            Ok(rocket.manage(SeniDir(seni_dir)))
-        }))
-        .launch();
+    HttpServer::new(move || {
+        // the api entry point
+        App::new()
+            .data(poor_db.clone())
+            // enable logger - always register actix-web Logger middleware last
+            .wrap(middleware::Logger::default())
+            .service(web::resource("/gallery/{id}").route(web::get().to_async(gallery_item)))
+            .service(web::resource("/gallery").route(web::get().to_async(gallery)))
+            // static files
+            .service(fs::Files::new("/", home_dir.clone()).index_file("index.html"))
+            // default
+            .default_service(
+                // 404 for GET request
+                web::resource("")
+                    .route(web::get().to(p404))
+                    // all requests that are not `GET`
+                    .route(
+                        web::route()
+                            .guard(guard::Not(guard::Get()))
+                            .to(HttpResponse::MethodNotAllowed),
+                    ),
+            )
+    })
+    .bind("127.0.0.1:3210")
+    .expect("Can not bind to 127.0.0.1:3210")
+    .shutdown_timeout(0) // <- Set shutdown timeout to 0 seconds (default 60s)
+    .run()
 }
