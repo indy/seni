@@ -26,10 +26,10 @@ $ ./build.sh
 launch a server:
 ```sh
 $ cd server
-$ build run
+$ cargo run
 ```
 
-You can now useseni at [127.0.0.1:8080/index.html](http://127.0.0.1:8080/index.html)
+You can now useseni at [127.0.0.1:3210/](http://127.0.0.1:3210/)
 
 ## License
 GNU Affero General Public License
