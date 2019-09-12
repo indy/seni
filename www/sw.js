@@ -1,6 +1,6 @@
 /*
- *  Sen
- *  Copyright (C) 2016 Inderjit Gill <email@indy.io>
+ *  Seni
+ *  Copyright (C) 2019 Inderjit Gill <email@indy.io>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,177 +16,88 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var version = 'v2::';
+const PRECACHE = 'precache-v1';
+const RUNTIME = 'runtime';
 
-// todo: UPDATE
-// /assets/lib/codemirror/codemirror.css is being used instead of this:
-var nodeModuleRequests = [
-  '/node_modules/codemirror/lib/codemirror.css'
+// NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
+const DONT_CACHE_SOME_URLS = true;
+const NO_CACHE_URLS = [
+  '/client.js',
+  '/client_bg.wasm',
+  '/index.js',
+  '/worker.js',
+  '/gallery'
 ];
 
+// A list of local resources we always want to be cached.
+const PRECACHE_URLS = [
+  '/css/bones.css',
+  '/lib/codemirror/codemirror.js',
+  '/lib/codemirror/closebrackets.js',
+  '/lib/codemirror/matchbrackets.js',
+  '/favicon.ico',
+  '/img/spinner.gif'
+];
+
+// The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
-  // console.log('sw: install', event);
-
   event.waitUntil(
-    caches
-      .open(version + 'node-modules')
-      .then(cache => {
-        console.log('caching all node module requests');
-        cache.addAll(nodeModuleRequests);
-      })
+    caches.open(PRECACHE)
+      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(self.skipWaiting())
   );
 });
 
+// The activate handler takes care of cleaning up old caches.
 self.addEventListener('activate', event => {
-  // console.log('sw: activate', event);
-
-  // delete older cache versions
+  const currentCaches = [PRECACHE, RUNTIME];
   event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(keys
-        .filter(key => key.indexOf(version) !== 0)
-        .map(key => caches.delete(key))
-      );
-    })
+    caches.keys().then(cacheNames => {
+      return cacheNames.filter(cacheName => !currentCaches.includes(cacheName));
+    }).then(cachesToDelete => {
+      return Promise.all(cachesToDelete.map(cacheToDelete => {
+        return caches.delete(cacheToDelete);
+      }));
+    }).then(() => self.clients.claim())
   );
 });
 
+// The fetch handler serves responses for same-origin resources from a cache.
+// If no response is found, it populates the runtime cache with the response
+// from the network before returning it to the page.
 self.addEventListener('fetch', event => {
-  // console.log('sw: fetch', event.request.url);
+  // Skip cross-origin requests, like those for Google Analytics.
+  if (event.request.url.startsWith(self.location.origin)) {
 
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if(response) {
-        console.log('have a cached response', response);
+    // during development don't cache files that are constantly changing
+    if(DONT_CACHE_SOME_URLS) {
+      const relative = event.request.url.substr(self.location.origin.length);
+      if(NO_CACHE_URLS.includes(relative)) {
+        console.log(`fetching but not caching ${relative}`);
+        return fetch(event.request).then(response => {
+          return response;
+        });
       }
-      return response || fetch(event.request);
-    })
-  );
-
-  // or simply don't call event.respondWith, which
-  // will result in default browser behaviour
-
-});
-
-
-// ----------------------------------------------------------------------------
-
-// from https://brandonrozek.com/2015/11/service-workers/
-/*
-var version = 'v2.0.24:';
-
-var offlineFundamentals = [
-    '/',
-    '/offline/'
-];
-
-//Add core website files to cache during serviceworker installation
-var updateStaticCache = function() {
-    return caches.open(version + 'fundamentals').then(function(cache) {
-        return Promise.all(offlineFundamentals.map(function(value) {
-            var request = new Request(value);
-            var url = new URL(request.url);
-            if (url.origin != location.origin) {
-                request = new Request(value, {mode: 'no-cors'});
-            }
-            return fetch(request).then(function(response) {
-                var cachedCopy = response.clone();
-                return cache.put(request, cachedCopy);
-            });
-        }))
-    })
-};
-
-//Clear caches with a different version number
-var clearOldCaches = function() {
-    return caches.keys().then(function(keys) {
-            return Promise.all(
-                      keys
-                        .filter(function (key) {
-                              return key.indexOf(version) != 0;
-                        })
-                        .map(function (key) {
-                              return caches.delete(key);
-                        })
-                );
-        })
-}
-
-//    limits the cache
-//    If cache has more than maxItems then it removes the first item in the cache
-var limitCache = function(cache, maxItems) {
-    cache.keys().then(function(items) {
-        if (items.length > maxItems) {
-            cache.delete(items[0]);
-        }
-    })
-}
-
-
-//When the service worker is first added to a computer
-self.addEventListener("install", function(event) {
-    event.waitUntil(updateStaticCache())
-})
-
-//Service worker handles networking
-self.addEventListener("fetch", function(event) {
-
-    //Fetch from network and cache
-    var fetchFromNetwork = function(response) {
-        var cacheCopy = response.clone();
-        if (event.request.headers.get('Accept').indexOf('text/html') != -1) {
-            caches.open(version + 'pages').then(function(cache) {
-                cache.put(event.request, cacheCopy).then(function() {
-                    limitCache(cache, 25);
-                })
-            });
-        } else if (event.request.headers.get('Accept').indexOf('image') != -1) {
-            caches.open(version + 'images').then(function(cache) {
-                cache.put(event.request, cacheCopy).then(function() {
-                    limitCache(cache, 10);
-                });
-            });
-        } else {
-            caches.open(version + 'assets').then(function add(cache) {
-                cache.put(event.request, cacheCopy);
-            });
-        }
-
-        return response;
     }
 
-    //Fetch from network failed
-    var fallback = function() {
-        if (event.request.headers.get('Accept').indexOf('text/html') != -1) {
-            return caches.match(event.request).then(function (response) {
-                return response || caches.match('/offline/');
-            })
-        } else if (event.request.headers.get('Accept').indexOf('image') != -1) {
-            return new Response('<svg width="400" height="300" role="img" aria-labelledby="offline-title" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg"><title id="offline-title">Offline</title><g fill="none" fill-rule="evenodd"><path fill="#D8D8D8" d="M0 0h400v300H0z"/><text fill="#9B9B9B" font-family="Helvetica Neue,Arial,Helvetica,sans-serif" font-size="72" font-weight="bold"><tspan x="93" y="172">offline</tspan></text></g></svg>', { headers: { 'Content-Type': 'image/svg+xml' }});
-        }
-    }
-
-    //This service worker won't touch non-get requests
-    if (event.request.method != 'GET') {
-        return;
-    }
-
-    //For HTML requests, look for file in network, then cache if network fails.
-    if (event.request.headers.get('Accept').indexOf('text/html') != -1) {
-            event.respondWith(fetch(event.request).then(fetchFromNetwork, fallback));
-        return;
-        }
-
-    //For non-HTML requests, look for file in cache, then network if no cache exists.
+    // cache everything
     event.respondWith(
-        caches.match(event.request).then(function(cached) {
-            return cached || fetch(event.request).then(fetchFromNetwork, fallback);
-        })
-    )
-});
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          console.log(`in cache: ${event.request.url}`);
+          return cachedResponse;
+        }
 
-//After the install event
-self.addEventListener("activate", function(event) {
-    event.waitUntil(clearOldCaches())
+        return caches.open(RUNTIME).then(cache => {
+          return fetch(event.request).then(response => {
+            // Put a copy of the response in the runtime cache.
+            return cache.put(event.request, response.clone()).then(() => {
+              console.log(`added to cache: ${event.request.url}`);
+              return response;
+            });
+          });
+        });
+      })
+    );
+  }
 });
-*/
