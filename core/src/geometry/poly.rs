@@ -13,13 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::matrix::Matrix;
-use crate::result::Result;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
-
 use log::error;
 
 pub fn render(

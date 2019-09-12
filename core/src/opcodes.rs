@@ -15,8 +15,8 @@
 
 use strum_macros::{Display, EnumIter, EnumString};
 
+use crate::error::Result;
 use crate::packable::{Mule, Packable};
-use crate::result::Result;
 
 #[allow(non_camel_case_types)]
 #[derive(Hash, Copy, Clone, Debug, Eq, PartialEq, Display, EnumString, EnumIter)]

@@ -14,9 +14,8 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use std::collections::HashSet;
-
 use crate::parser::{Node, WordLut};
-use crate::result::Result;
+use crate::error::Result;
 use crate::iname::Iname;
 use crate::keywords::Keyword;
 

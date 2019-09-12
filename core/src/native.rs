@@ -17,7 +17,7 @@ use crate::bitmap;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct, ProcColourType};
 use crate::context::Context;
 use crate::ease::easing_from_keyword;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::focal;
 use crate::iname::Iname;
 use crate::interp;
@@ -28,19 +28,14 @@ use crate::path;
 use crate::prng;
 use crate::program::Program;
 use crate::repeat;
-use crate::result::Result;
-use crate::vm::{StackPeek, Var, Vm};
-
 use crate::uvmapper::BrushType;
-
+use crate::vm::{StackPeek, Var, Vm};
+use log::error;
 use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::rc::Rc;
-
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
-
-use log::error;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, Display, EnumString, EnumIter)]
 pub enum Native {

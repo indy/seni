@@ -15,11 +15,12 @@
 
 use crate::compiler::{compile_program_1, compile_program_for_trait, Compilation, Compiler};
 use crate::context::Context;
+use crate::error::Result;
 use crate::iname::Iname;
+use crate::node::{Node, NodeGene};
 use crate::packable::{Mule, Packable};
-use crate::parser::{Node, NodeGene, WordLut};
+use crate::parser::WordLut;
 use crate::program::Program;
-use crate::result::Result;
 use crate::run_program_with_preamble;
 use crate::vm::{Var, Vm};
 

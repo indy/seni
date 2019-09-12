@@ -14,11 +14,11 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::context::Context;
+use crate::error::Result;
 use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::mathutil::*;
 use crate::program::Program;
-use crate::result::Result;
 use crate::vm::*;
 
 fn flip(

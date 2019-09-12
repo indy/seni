@@ -13,14 +13,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashMap;
-
-use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter, EnumString};
-
+use crate::error::Result;
 use crate::iname::Iname;
 use crate::packable::{Mule, Packable};
-use crate::result::Result;
+use std::collections::HashMap;
+use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter, EnumString};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, Display, EnumIter)]
 pub enum Keyword {

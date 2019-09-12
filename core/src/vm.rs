@@ -15,7 +15,7 @@
 
 use crate::colour::{Colour, ProcColourStateStruct};
 use crate::context::Context;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::focal::FocalStateStruct;
 use crate::iname::Iname;
 use crate::interp::InterpStateStruct;
@@ -25,7 +25,6 @@ use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
 use crate::program::{Bytecode, BytecodeArg, FnInfo, Mem, Program};
-use crate::result::Result;
 
 use std::cell::RefCell;
 use std::fmt;

@@ -13,12 +13,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::Error;
-use crate::result::Result;
-
-use std::collections::HashMap;
-
+use crate::error::{Error, Result};
 use log::error;
+use std::collections::HashMap;
 
 pub struct BitmapCache {
     pub info: HashMap<String, BitmapInfo>,

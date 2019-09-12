@@ -22,18 +22,14 @@
 // | LAB    | L 0..100  | A -128..128 | B -128..128 |
 // |--------+-----------+-------------+-------------|
 
-use crate::error::Error;
+use crate::colour_palettes::COLOUR_PALETTES;
+use crate::error::{Error, Result};
 use crate::keywords::Keyword;
 use crate::mathutil;
 use crate::packable::{Mule, Packable};
-use crate::result::Result;
-
-use crate::colour_palettes::COLOUR_PALETTES;
-
+use log::error;
 use std;
 use std::fmt;
-
-use log::error;
 
 const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
 const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);

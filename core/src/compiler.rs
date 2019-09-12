@@ -13,23 +13,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::{BTreeMap, HashMap};
-use std::fmt;
-
 use crate::colour::{Colour, ColourFormat};
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::gene::Genotype;
 use crate::iname::Iname;
 use crate::keywords::{name_to_keyword_hash, Keyword};
 use crate::mathutil;
 use crate::native::{name_to_native_hash, parameter_info, Native};
+use crate::node::Node;
 use crate::opcodes::{opcode_stack_offset, Opcode};
-use crate::parser::{Node, WordLut};
+use crate::parser::WordLut;
 use crate::program::{Bytecode, BytecodeArg, Data, FnInfo, Mem, Program};
-use crate::result::Result;
 use crate::vm::{Var, MEMORY_LOCAL_SIZE};
-
 use log::error;
+use std::collections::{BTreeMap, HashMap};
+use std::fmt;
 
 const NONSENSE: i32 = 666;
 

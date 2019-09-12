@@ -17,13 +17,12 @@ use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::colour::Colour;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::native::Native;
 use crate::opcodes::Opcode;
 use crate::packable::{Mule, Packable};
-use crate::result::Result;
 
 use log::error;
 

@@ -16,6 +16,8 @@
 use std::error;
 use std::fmt;
 
+pub type Result<T> = ::std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
     Bitmap,
@@ -27,6 +29,7 @@ pub enum Error {
     Geometry,
     Lexer,
     Native,
+    Node,
     Packable,
     Parser,
     Program,
@@ -71,6 +74,7 @@ impl fmt::Display for Error {
             Error::Geometry => write!(f, "seni core: Geometry"),
             Error::Lexer => write!(f, "seni core: Lexer"),
             Error::Native => write!(f, "seni core: Native"),
+            Error::Node => write!(f, "seni core: Node"),
             Error::Packable => write!(f, "seni core: Packable"),
             Error::Parser => write!(f, "seni core: Parser"),
             Error::Program => write!(f, "seni core: Program"),

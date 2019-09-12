@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::{Colour, ColourFormat};
-use crate::result::Result;
+use crate::error::Result;
 
 // Used by low level modules that expect RGB colours, more restrictive than
 // Colour since a couple of bugs were caused by passing in non-RGB Colour

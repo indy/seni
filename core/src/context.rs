@@ -16,14 +16,12 @@
 use crate::bitmap_cache::BitmapCache;
 use crate::colour::Colour;
 use crate::ease::Easing;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::geometry;
 use crate::matrix::MatrixStack;
-use crate::result::Result;
 use crate::rgb::Rgb;
 use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
-
 use log::error;
 
 #[derive(Default)]

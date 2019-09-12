@@ -16,15 +16,13 @@
 use crate::colour::Colour;
 use crate::compiler::compile_preamble;
 use crate::context::Context;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::packable::{Mule, Packable};
 use crate::prng::PrngStateStruct;
-use crate::result::Result;
 use crate::trait_list::{Trait, TraitList};
 use crate::vm::{VMProfiling, Var, Vm};
-
 use log::error;
 
 /*

@@ -13,12 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::fmt;
-
+use crate::error::Result;
 use crate::keywords::Keyword;
 use crate::native::Native;
 use crate::packable::{Mule, Packable};
-use crate::result::Result;
+use std::fmt;
 
 #[derive(Copy, Clone, Debug, Hash, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Iname(i32);

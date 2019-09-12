@@ -14,13 +14,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::ColourFormat;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::gene::{Gene, Genotype};
 use crate::iname::Iname;
 use crate::keywords::Keyword;
-use crate::parser::{parse, Node, NodeGene, WordLut};
-use crate::result::Result;
-
+use crate::node::{Node, NodeGene};
+use crate::parser::{parse, WordLut};
 use log::error;
 
 pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {

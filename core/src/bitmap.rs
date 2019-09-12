@@ -15,12 +15,11 @@
 
 use crate::colour::{Colour, ColourFormat};
 use crate::context::Context;
-use crate::error::Error;
+use crate::error::{Error, Result};
 use crate::iname::Iname;
 use crate::keywords::Keyword;
 use crate::prng::PrngStateStruct;
 use crate::program::Program;
-use crate::result::Result;
 use crate::vm::Vm;
 
 use log::error;
