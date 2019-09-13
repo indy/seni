@@ -13,6 +13,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#![cfg_attr(
+    feature = "cargo-clippy",
+    allow(
+        clippy::many_single_char_names,
+        clippy::too_many_arguments,
+        clippy::excessive_precision
+    )
+)]
+
 /*!
 The core crate provides the basic functionality of the Seni system
 */
@@ -104,9 +113,7 @@ pub fn bitmaps_to_transfer(program: &Program, context: &Context) -> Vec<String> 
     let bitmap_strings = program.data.bitmap_strings();
 
     // keep the names that aren't already in the bitmap_cache
-    let bitmaps_to_transfer = context.bitmap_cache.uncached(bitmap_strings);
-
-    bitmaps_to_transfer
+    context.bitmap_cache.uncached(bitmap_strings)
 }
 
 pub fn build_traits(s: &str) -> Result<TraitList> {

@@ -561,7 +561,7 @@ fn stack_peek_vars(stack: &[Var], sp: usize, offset: usize) -> Result<&Vec<Var>>
         Ok(vs)
     } else {
         error!("expected Var::Vector");
-        return Err(Error::Native);
+        Err(Error::Native)
     }
 }
 
@@ -588,7 +588,7 @@ fn stack_peek_proc_colour_state_struct(
         Ok(pcss)
     } else {
         error!("expected Var::ProcColourState");
-        return Err(Error::Native);
+        Err(Error::Native)
     }
 }
 
@@ -601,7 +601,7 @@ fn stack_peek_interp_state_struct(
         Ok(iss)
     } else {
         error!("expected Var::InterpState");
-        return Err(Error::Native);
+        Err(Error::Native)
     }
 }
 
@@ -614,7 +614,7 @@ fn stack_peek_focal_state_struct(
         Ok(fss)
     } else {
         error!("expected Var::FocalState");
-        return Err(Error::Native);
+        Err(Error::Native)
     }
 }
 
@@ -627,7 +627,7 @@ fn ref_mut_prng_state_struct(
         Ok(prng_state_struct.borrow_mut())
     } else {
         error!("expected Var::PrngState");
-        return Err(Error::Native);
+        Err(Error::Native)
     }
 }
 

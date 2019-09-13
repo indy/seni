@@ -168,11 +168,10 @@ impl Context {
     }
 
     pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
-        let coords: Result<Vec<(f32, f32)>> =
-            coords.into_iter().map(|c| var_to_f32_pair(c)).collect();
+        let coords: Result<Vec<(f32, f32)>> = coords.iter().map(|c| var_to_f32_pair(c)).collect();
         let coords = coords?;
 
-        let colours: Result<Vec<Rgb>> = colours.into_iter().map(|c| var_to_rgb(c)).collect();
+        let colours: Result<Vec<Rgb>> = colours.iter().map(|c| var_to_rgb(c)).collect();
         let colours = colours?;
 
         if let Some(matrix) = self.matrix_stack.peek() {

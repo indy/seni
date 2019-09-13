@@ -1569,7 +1569,7 @@ impl Compiler {
     fn compile_fence(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
         if children.len() < 2 {
-            if children.len() == 0 {
+            if children.is_empty() {
                 error!("compile_fence requires at least 2 forms");
             } else {
                 children[0].error_here("compile_fence requires at least 2 forms");
@@ -1731,7 +1731,7 @@ impl Compiler {
         // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
         //
         if children.len() < 2 {
-            if children.len() == 0 {
+            if children.is_empty() {
                 error!("compile_loop requires at least 2 forms");
             } else {
                 children[0].error_here("compile_loop requires at least 2 forms");
@@ -1857,7 +1857,7 @@ impl Compiler {
         // (each (x from: [10 20 30 40 50])
         //       (+ x x))
         if children.len() < 2 {
-            if children.len() == 0 {
+            if children.is_empty() {
                 error!("compile_each requires at least 2 forms");
             } else {
                 children[0].error_here("compile_each requires at least 2 forms");
@@ -2006,7 +2006,7 @@ impl Compiler {
         children: &[&Node],
     ) -> Result<()> {
         if children.len() != 2 {
-            if children.len() == 0 {
+            if children.is_empty() {
                 error!("compile_vector_append requires 2 args");
             } else {
                 children[0].error_here("compile_vector_append requires 2 args");
@@ -2377,7 +2377,7 @@ impl Compiler {
     ) -> Result<()> {
         // overwrite the default arguments with the actual arguments given by the fn invocation
         let mut arg_vals = &children[..];
-        while arg_vals.len() > 0 {
+        while !arg_vals.is_empty() {
             let arg = &arg_vals[0];
             if let Node::Label(_, _, iname) = arg {
                 let val = &arg_vals[1];
@@ -2594,7 +2594,7 @@ impl Compiler {
                 Mem::Global => self.store_globally(compilation, *iname),
                 _ => {
                     node.error_here("store_from_stack_to_memory invalid memory type");
-                    return Err(Error::Compiler);
+                    Err(Error::Compiler)
                 }
             }
         } else {

@@ -174,9 +174,9 @@ impl Node {
         }
     }
 
-    pub fn is_name_with_iname(&self, iname: &Iname) -> bool {
+    pub fn is_name_with_iname(&self, iname: Iname) -> bool {
         match self {
-            Node::Name(_, _, name_iname) => name_iname == iname,
+            Node::Name(_, _, name_iname) => *name_iname == iname,
             _ => false,
         }
     }
@@ -235,20 +235,20 @@ impl Node {
 
 fn gene_name(gene: &Gene) -> Result<Iname> {
     match gene {
-        Gene::Name(i) => return Ok(*i),
+        Gene::Name(i) => Ok(*i),
         _ => {
             error!("gene_name: expected Gene::Name");
-            return Err(Error::Node);
+            Err(Error::Node)
         }
     }
 }
 
 fn gene_string(gene: &Gene) -> Result<Iname> {
     match gene {
-        Gene::String(i) => return Ok(*i),
+        Gene::String(i) => Ok(*i),
         _ => {
             error!("gene_string: expected Gene::String");
-            return Err(Error::Node);
+            Err(Error::Node)
         }
     }
 }
@@ -256,11 +256,11 @@ fn gene_string(gene: &Gene) -> Result<Iname> {
 fn gene_name_or_int(gene: &Gene) -> Result<Iname> {
     match gene {
         // todo: what type of gene would a Node::Label have?
-        Gene::Int(i) => return Ok(Iname::new(*i)),
-        Gene::Name(i) => return Ok(*i),
+        Gene::Int(i) => Ok(Iname::new(*i)),
+        Gene::Name(i) => Ok(*i),
         _ => {
             error!("gene_name_or_int: expected Gene::Int or Gene::Name");
-            return Err(Error::Node);
+            Err(Error::Node)
         }
     }
 }

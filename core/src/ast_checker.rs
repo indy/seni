@@ -33,7 +33,7 @@ fn find_global_defines(ast: &[Node]) -> Result<HashSet<Iname>> {
         match node {
             Node::List(all_children, _) => {
                 let children = semantic_children(all_children);
-                if children.len() > 0 && children[0].is_name_with_iname(&iname_define) {
+                if children.len() > 0 && children[0].is_name_with_iname(iname_define) {
                     add_global_decls(&mut global_defines, &children[1..]);
                 }
             },

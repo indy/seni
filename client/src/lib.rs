@@ -131,7 +131,7 @@ impl Bridge {
             }
         } else {
             error!("program_from_source_and_genotype: Genotype failed to unpack");
-            return false;
+            false
         }
     }
 
@@ -218,7 +218,7 @@ impl Bridge {
             Err(e) => error!("{:?}", e),
         }
 
-        return "".to_string();
+        "".to_string()
     }
 
     pub fn single_genotype_from_seed(&mut self, packed_trait_list: &str, seed: i32) -> bool {
@@ -227,14 +227,14 @@ impl Bridge {
         if let Ok((trait_list, _)) = TraitList::unpack(packed_trait_list) {
             if let Ok(genotype) = Genotype::build_from_seed(&trait_list, seed) {
                 self.genotype_list = vec![genotype];
-                return true;
+                true
             } else {
                 error!("single_genotype_from_seed: can't build genotype from unpacked TraitList");
-                return false;
+                false
             }
         } else {
             error!("single_genotype_from_seed: TraitList failed to unpack");
-            return false;
+            false
         }
     }
 
@@ -251,14 +251,14 @@ impl Bridge {
             if let Ok(genotype_list) = Genotype::build_genotypes(&trait_list, population_size, seed)
             {
                 self.genotype_list = genotype_list;
-                return true;
+                true
             } else {
                 error!("create_initial_generation: can't build genotypes from unpacked TraitList");
-                return false;
+                false
             }
         } else {
             error!("create_initial_generation: TraitList failed to unpack");
-            return false;
+            false
         }
     }
 
@@ -328,16 +328,16 @@ impl Bridge {
             ) {
                 Ok(new_generation) => {
                     self.genotype_list = new_generation;
-                    return true;
+                    true
                 }
                 Err(e) => {
                     error!("{:?}", e);
-                    return false;
+                    false
                 }
             }
         } else {
             error!("next_generation_build: TraitList failed to unpack");
-            return false;
+            false
         }
     }
 

@@ -137,7 +137,7 @@ fn main() -> Result<()> {
             )
     })
     .bind(bind_address)
-    .expect(&format!("Can not bind to {}", bind_address))
+    .unwrap_or_else(|_| panic!("Can not bind to {}", bind_address))
     .shutdown_timeout(0) // <- Set shutdown timeout to 0 seconds (default 60s)
     .run()?;
 

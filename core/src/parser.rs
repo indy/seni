@@ -50,13 +50,7 @@ enum AlterableCheck {
 }
 
 fn is_name_or_keyword(s: &str) -> bool {
-    if let Ok(_) = Native::from_str(s) {
-        return true;
-    }
-    if let Ok(_) = Keyword::from_str(s) {
-        return true;
-    }
-    false
+    Native::from_str(s).is_ok() || Keyword::from_str(s).is_ok()
 }
 
 impl Default for WordLut {
