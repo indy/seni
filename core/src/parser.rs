@@ -759,6 +759,47 @@ mod tests {
         );
     }
 
+    // todo: also test: can have a vector of vectors, top level should have a gen/2d
+    #[test]
+    fn test_parser_alterable_vector_tilde() {
+        assert_eq!(
+            ast("hello [7 8] ~ (gen/scalar)"),
+            [
+                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Vector(
+                    NodeMeta {
+                        loc: NodeLocation {
+                            line: 1,
+                            character: 7
+                        },
+                        gene_info: Some(NodeGene {
+                            gene: None,
+                            parameter_ast: vec![Node::List(
+                                meta_loc(1, 15),
+                                vec![Node::Name(
+                                    meta_loc(1, 16),
+                                    "gen/scalar".to_string(),
+                                    Iname::from(Native::GenScalar),
+                                )],
+                            )],
+                            parameter_prefix: vec![
+                                Node::Whitespace(meta_loc(1, 12), " ".to_string()),
+                                Node::Tilde(meta_loc(1, 13)),
+                                Node::Whitespace(meta_loc(1, 14), " ".to_string())
+                            ]
+                        })
+                    },
+                    vec![
+                        Node::Float(meta_loc(1, 8), 7.0, "7".to_string()),
+                        Node::Whitespace(meta_loc(1, 9), " ".to_string()),
+                        Node::Float(meta_loc(1, 10), 8.0, "8".to_string())
+                    ],
+                ),
+            ]
+        );
+    }
+
     #[test]
     fn test_parser_native() {
         assert_eq!(

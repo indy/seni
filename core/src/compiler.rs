@@ -130,7 +130,7 @@ pub fn compile_program_with_genotype(
 }
 
 fn assign_genotype_to_ast(ast: &mut [Node], genotype: &mut Genotype) -> Result<()> {
-    genotype.current_gene_index = 0;
+    genotype.reset_gene_index();
 
     for n in ast {
         assign_genes_to_nodes(n, genotype)?;
@@ -139,49 +139,40 @@ fn assign_genotype_to_ast(ast: &mut [Node], genotype: &mut Genotype) -> Result<(
     Ok(())
 }
 
-fn hacky_assign_genes_to_each_node_in_vector(
-    elements: &mut Vec<Node>,
-    genotype: &mut Genotype,
-) -> Vec<Node> {
-    let mut res: Vec<Node> = Vec::new();
-
-    for n in elements {
-        match n {
-            Node::Vector(meta, ns) => {
-                res.push(Node::Vector(
-                    meta.new_with_gene(genotype.genes[genotype.current_gene_index].clone()),
-                    ns.clone(),
-                ));
-                genotype.current_gene_index += 1;
-            }
-            Node::Float(meta, f, s) => {
-                res.push(Node::Float(
-                    meta.new_with_gene(genotype.genes[genotype.current_gene_index].clone()),
-                    *f,
-                    s.to_string(),
-                ));
-                genotype.current_gene_index += 1;
-            }
-            _ => {}
+fn assign_gene(n: &Node, genotype: &mut Genotype) -> Result<Node> {
+    match n {
+        Node::Vector(meta, ns) => Ok(Node::Vector(
+            meta.new_with_gene(genotype.clone_next_gene()?),
+            ns.clone(),
+        )),
+        Node::Float(meta, f, s) => Ok(Node::Float(
+            meta.new_with_gene(genotype.clone_next_gene()?),
+            *f,
+            s.to_string(),
+        )),
+        _ => {
+            error!("assign_gene: element neither vector nor float");
+            Err(Error::Compiler)
         }
     }
-
-    res
 }
 
-fn hacky_assign_genes_to_each_node_in_vector2(ns: &mut Vec<Node>, res: Vec<Node>) {
-    ns.clear();
-    for n in res {
-        ns.push(n);
-    }
+fn assign_genes_to_each_node_in_vector(
+    elements: &mut Vec<Node>,
+    genotype: &mut Genotype,
+) -> Result<Vec<Node>> {
+    elements
+        .iter()
+        .filter(|n| n.is_semantic())
+        .map(|n| assign_gene(n, genotype))
+        .collect()
 }
 
 fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()> {
     match node {
         Node::List(meta, ref mut ns) => {
             if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
+                gene_info.gene = Some(genotype.clone_next_gene()?);
             }
             for n in ns {
                 assign_genes_to_nodes(n, genotype)?;
@@ -189,60 +180,28 @@ fn assign_genes_to_nodes(node: &mut Node, genotype: &mut Genotype) -> Result<()>
         }
         Node::Vector(meta, ref mut ns) => {
             if meta.gene_info.is_some() {
-                let res = hacky_assign_genes_to_each_node_in_vector(ns, genotype);
-                hacky_assign_genes_to_each_node_in_vector2(ns, res);
+                let ns_with_genes = assign_genes_to_each_node_in_vector(ns, genotype)?;
+
+                ns.clear();
+                for n in ns_with_genes {
+                    ns.push(n);
+                }
             } else {
                 for n in ns {
                     assign_genes_to_nodes(n, genotype)?;
                 }
             }
         }
-        Node::Float(ref mut meta, _, _) => {
+        Node::Float(meta, _, _)
+        | Node::FromName(meta, _, _)
+        | Node::Name(meta, _, _)
+        | Node::Label(meta, _, _)
+        | Node::String(meta, _, _)
+        | Node::Tilde(meta)
+        | Node::Whitespace(meta, _)
+        | Node::Comment(meta, _) => {
             if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::FromName(meta, _, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::Name(meta, _, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::Label(meta, _, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::String(meta, _, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::Tilde(meta) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::Whitespace(meta, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
-            }
-        }
-        Node::Comment(meta, _) => {
-            if let Some(ref mut gene_info) = meta.gene_info {
-                gene_info.gene = Some(genotype.genes[genotype.current_gene_index].clone());
-                genotype.current_gene_index += 1;
+                gene_info.gene = Some(genotype.clone_next_gene()?);
             }
         }
     }

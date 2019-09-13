@@ -214,6 +214,21 @@ impl Genotype {
         self.genes.push(a_gene);
     }
 
+    pub fn reset_gene_index(&mut self) {
+        self.current_gene_index = 0;
+    }
+
+    pub fn clone_next_gene(&mut self) -> Result<Gene> {
+        if self.current_gene_index >= self.genes.len() {
+            return Err(Error::Gene);
+        }
+
+        let res = self.genes[self.current_gene_index].clone();
+        self.current_gene_index += 1;
+
+        Ok(res)
+    }
+
     pub fn crossover(&self, other: &Genotype, prng: &mut PrngStateStruct) -> Result<Self> {
         let mut child: Genotype = Default::default();
 

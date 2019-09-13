@@ -26,6 +26,7 @@ pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
     let (ast, word_lut) = parse(source)?;
     let mut s: String = "".to_string();
 
+    genotype.reset_gene_index();
     for n in &ast {
         unparse_ast_node(&mut s, &word_lut, n, genotype)?;
     }
@@ -220,8 +221,7 @@ fn count_decimals(s: &str) -> usize {
 }
 
 fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) -> Result<String> {
-    let gene = &genotype.genes[genotype.current_gene_index];
-    genotype.current_gene_index += 1;
+    let gene = &genotype.clone_next_gene()?;
 
     match gene {
         Gene::Float(f) => {
