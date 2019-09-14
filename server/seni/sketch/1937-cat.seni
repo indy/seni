@@ -1,0 +1,57 @@
+(define texture "temp-cat.png")
+(define per-pixel-funcs [(address-of pass-0)
+                         (address-of pass-1)
+                         (address-of pass-2)
+                         (address-of pass-3)])
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   position: [500 500]
+                   width: 1000
+                   height: 1000
+;                   shuffle-seed: 34
+                   fn: per-pixel-func))
+
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel c: colour
+             width: 1.0
+             from: [0 0]
+             to: [1 1]))
+
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel c: colour
+             width: 7.3 ~ (gen/scalar min: 0.1 max: 15)
+             from: [-12 ~ (gen/scalar min: -15 max: 15)
+                    2 ~ (gen/scalar min: -15 max: 15)]
+             to: [7 ~ (gen/scalar min: -15 max: 15)
+                  10 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel c: colour
+             width: 6.4 ~ (gen/scalar min: 0.1 max: 15)
+             from: [6 ~ (gen/scalar min: -15 max: 15)
+                    2 ~ (gen/scalar min: -15 max: 15)]
+             to: [3 ~ (gen/scalar min: -15 max: 15)
+                  2 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (pass-3 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel c: colour
+             width: 1.9 ~ (gen/scalar min: 0.1 max: 15)
+             from: [4 ~ (gen/scalar min: -15 max: 15)
+                    -6 ~ (gen/scalar min: -15 max: 15)]
+             to: [5 ~ (gen/scalar min: -15 max: 15)
+                  2 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (per-pixel c: 0 width: 0 from: [0 0] to: [0 0])
+  (define
+    a (c.col/e0)
+    angle (* a math/PI)
+    angle-cos (angle.math/cos)
+    angle-sin (angle.math/sin))
+  (if (> a 0.3)
+      (line from: [(* (from.get-x) angle-cos) (* (from.get-y) angle-sin)]
+            to: [(* (to.get-x) angle-cos) (* (to.get-y) angle-sin)]
+            width: (- width a)
+            brush: brush/a  ~ (gen/select from: brush/*)
+            brush-subtype: 2
+            colour: c)))
