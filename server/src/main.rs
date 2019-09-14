@@ -25,43 +25,44 @@ use dotenv;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-type Index = u32;
-type PoorMansDb = BTreeMap<Index, Sketch>;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::Path;
 
-// a poor man's database
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct DbEntry {
-    id: Index,
-    name: String,
-}
+type Index = usize;
+type PoorMansDb = BTreeMap<Index, DbRecord>;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Sketch {
+struct DbRecord {
     id: Index,
     name: String,
     script: String,
 }
 
-fn create_poor_mans_db(seni_dir: &str) -> Result<PoorMansDb> {
+fn create_poor_mans_db(seni_dir: &str, db_filename: &str) -> Result<PoorMansDb> {
     let mut db: PoorMansDb = BTreeMap::new();
+    let seni_path = Path::new(seni_dir);
 
-    // NOTE: Recompile the server everytime db.json is changed
-    let data: Vec<DbEntry> = serde_json::from_str(include_str!("../db.json"))?;
-    let path_prefix = seni_dir;
-    let path_extension = "seni".to_string();
+    // read in names of sketches
+    //
+    let mut lines_in_latest_order: Vec<String> = Vec::with_capacity(256);
+    let path = seni_path.join(db_filename);
+    let file = File::open(path).unwrap();
+    let reader = BufReader::new(file);
+    for line in reader.lines() {
+        lines_in_latest_order.push(line?);
+    }
 
-    for entry in data {
-        db.insert(
-            entry.id,
-            Sketch {
-                id: entry.id,
-                name: entry.name.clone(),
-                script: std::fs::read_to_string(format!(
-                    "{}/{}.{}",
-                    &path_prefix, &entry.name, &path_extension
-                ))?,
-            },
-        );
+    // create the poor man's database
+    //
+    let max_line_id = lines_in_latest_order.len() - 1;
+    for (index, line) in lines_in_latest_order.iter().enumerate() {
+        let id = max_line_id - index;
+        let name = line.to_string();
+        let script_path = seni_path.join(&name).with_extension("seni");
+        let script = std::fs::read_to_string(script_path)?;
+
+        db.insert(id, DbRecord { id, name, script });
     }
 
     Ok(db)
@@ -75,7 +76,7 @@ fn p404() -> ActixResult<HttpResponse> {
 }
 
 fn gallery(_req: HttpRequest, db: web::Data<PoorMansDb>) -> ActixResult<HttpResponse> {
-    let gallery: Vec<Sketch> = db.values().rev().cloned().collect();
+    let gallery: Vec<DbRecord> = db.values().rev().cloned().collect();
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
@@ -106,7 +107,7 @@ fn main() -> Result<()> {
 
     let home_dir = std::env::var("HOME_DIR").expect("HOME_DIR");
     let seni_dir = std::env::var("SENI_DIR").expect("SENI_DIR");
-    let poor_db = create_poor_mans_db(&seni_dir)?;
+    let poor_db = create_poor_mans_db(&seni_dir, "db.txt")?;
 
     let bind_address = "127.0.0.1:3210";
     println!("Starting server at: {}", bind_address);
