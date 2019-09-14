@@ -115,76 +115,10 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-function setupSketchShaders(gl) {
+function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
   const shader = {};
 
   shader.program = gl.createProgram();
-
-  // pre-multiply the alpha in the shader
-  // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
-  // this needs to happen in linear colour space
-  const fragmentSrc = `
-  precision highp float;
-
-  varying vec4 vColour;
-  varying vec2 vTextureCoord;
-
-  uniform sampler2D texture;
-  uniform bool uOutputLinearColourSpace;
-
-  // https://en.wikipedia.org/wiki/SRGB
-  vec3 srgb_to_linear(vec3 srgb) {
-      float a = 0.055;
-      float b = 0.04045;
-      vec3 linear_lo = srgb / 12.92;
-      vec3 linear_hi = pow((srgb + vec3(a)) / (1.0 + a), vec3(2.4));
-      return vec3(
-          srgb.r > b ? linear_hi.r : linear_lo.r,
-          srgb.g > b ? linear_hi.g : linear_lo.g,
-          srgb.b > b ? linear_hi.b : linear_lo.b);
-  }
-
-
-  void main(void) {
-    vec4 tex = texture2D(texture, vTextureCoord);
-
-    // note: you _never_ want uOutputLinearColourSpace to be set to true
-    // it's only here because some of the older sketchs didn't correctly
-    // convert from linear colour space to sRGB colour space during rendering
-    // and this shader needs to reproduce them as intended at time of creation
-    //
-    if (uOutputLinearColourSpace) {
-      gl_FragColor.r = tex.r * vColour.r * vColour.a;
-      gl_FragColor.g = tex.r * vColour.g * vColour.a;
-      gl_FragColor.b = tex.r * vColour.b * vColour.a;
-      gl_FragColor.a = tex.r * vColour.a;
-    } else {
-      vec4 linearColour = vec4(srgb_to_linear(vColour.rgb), vColour.a);
-      gl_FragColor.r = tex.r * linearColour.r * linearColour.a;
-      gl_FragColor.g = tex.r * linearColour.g * linearColour.a;
-      gl_FragColor.b = tex.r * linearColour.b * linearColour.a;
-      gl_FragColor.a = tex.r * linearColour.a;
-    }
-  }
-  `;
-
-  const vertexSrc = `
-  attribute vec2 aVertexPosition;
-  attribute vec4 aVertexColour;
-  attribute vec2 aVertexTexture;
-
-  uniform mat4 uMVMatrix;
-  uniform mat4 uPMatrix;
-
-  varying vec4 vColour;
-  varying vec2 vTextureCoord;
-
-  void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
-    vColour = aVertexColour;
-    vTextureCoord = aVertexTexture;
-  }
-  `;
 
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
@@ -218,70 +152,10 @@ function setupSketchShaders(gl) {
   return shader;
 }
 
-function setupBlitShaders(gl) {
+function setupBlitShaders(gl, vertexSrc, fragmentSrc) {
   const shader = {};
 
   shader.program = gl.createProgram();
-
-  const fragmentSrc = `
-  precision highp float;
-
-  varying vec2 vTextureCoord;
-
-  uniform sampler2D texture;
-  uniform bool uOutputLinearColourSpace;
-
-  // https:en.wikipedia.org/wiki/SRGB
-  vec3 linear_to_srgb(vec3 linear) {
-      float a = 0.055;
-      float b = 0.0031308;
-      vec3 srgb_lo = 12.92 * linear;
-      vec3 srgb_hi = (1.0 + a) * pow(linear, vec3(1.0/2.4)) - vec3(a);
-      return vec3(
-          linear.r > b ? srgb_hi.r : srgb_lo.r,
-          linear.g > b ? srgb_hi.g : srgb_lo.g,
-          linear.b > b ? srgb_hi.b : srgb_lo.b);
-  }
-
-  // https:twitter.com/jimhejl/status/633777619998130176
-  vec3 ToneMapFilmic_Hejl2015(vec3 hdr, float whitePt) {
-      vec4 vh = vec4(hdr, whitePt);
-      vec4 va = 1.425 * vh + 0.05;
-      vec4 vf = (vh * va + 0.004) / (vh * (va + 0.55) + 0.0491) - 0.0821;
-      return vf.rgb / vf.www;
-  }
-
-  void main()
-  {
-     vec4 col = texture2D( texture, vTextureCoord );
-
-     // note: you _never_ want uOutputLinearColourSpace to be set to true
-     // it's only here because some of the older sketchs didn't correctly
-     // convert from linear colour space to sRGB colour space during rendering
-     // and this shader needs to reproduce them as intended at time of creation
-     //
-     if (uOutputLinearColourSpace) {
-       gl_FragColor = col;
-     } else {
-       gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
-     }
-  }
-  `;
-
-  const vertexSrc = `
-  attribute vec2 aVertexPosition;
-  attribute vec2 aVertexTexture;
-
-  uniform mat4 uMVMatrix;
-  uniform mat4 uPMatrix;
-
-  varying vec2 vTextureCoord;
-
-  void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
-    vTextureCoord = aVertexTexture;
-  }
-  `;
 
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
@@ -406,15 +280,16 @@ const gConfig = {
 };
 
 class GLRenderer {
-  constructor(canvasElement) {
+  constructor(canvasElement, shaders) {
     this.glDomElement = canvasElement;
 
     // webgl setup
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.sketchShader = setupSketchShaders(gl);
-    this.blitShader = setupBlitShaders(gl);
+    // note: constructors can't be async so the shaders should already have been loaded by loadShaders
+    this.sketchShader = setupSketchShaders(gl, shaders['shader/main-vert.glsl'], shaders['shader/main-frag.glsl']);
+    this.blitShader = setupBlitShaders(gl, shaders['shader/blit-vert.glsl'], shaders['shader/blit-frag.glsl']);
 
     setupGLState(gl);
 
@@ -2422,6 +2297,21 @@ function compatibilityHacks() {
   }
 }
 
+async function loadShaders(scriptUrls) {
+  const fetchPromises = scriptUrls.map(s => fetch(s));
+  const responses = await Promise.all(fetchPromises);
+
+  const textPromises = responses.map(r => r.text());
+  const shaders = await Promise.all(textPromises);
+
+  const res = {};
+  for (const [i, url] of scriptUrls.entries()) {
+    res[url] = shaders[i];
+  }
+
+  return res;
+}
+
 async function main() {
   const state = createInitialState();
   const controller = new Controller(state);
@@ -2429,7 +2319,14 @@ async function main() {
   allocateWorkers(state);
 
   const canvasElement = document.getElementById('render-canvas');
-  gGLRenderer = new GLRenderer(canvasElement);
+
+  // load the shaders asynchronously here as constructors can't do that.
+  //
+  const shaders = await loadShaders(['shader/main-vert.glsl',
+                                     'shader/main-frag.glsl',
+                                     'shader/blit-vert.glsl',
+                                     'shader/blit-frag.glsl']);
+  gGLRenderer = new GLRenderer(canvasElement, shaders);
 
   try {
     await gGLRenderer.loadTexture('img/texture.png');

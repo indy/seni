@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PRECACHE = 'precache-v1';
+const PRECACHE = 'precache-v3';
 const RUNTIME = 'runtime';
 
 // NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
@@ -26,7 +26,11 @@ const NO_CACHE_URLS = [
   '/client_bg.wasm',
   '/index.js',
   '/worker.js',
-  '/gallery'
+  '/gallery',
+  '/shader/main-vert.glsl',
+  '/shader/main-frag.glsl',
+  '/shader/blit-vert.glsl',
+  '/shader/blit-frag.glsl',
 ];
 
 // A list of local resources we always want to be cached.
