@@ -27,6 +27,8 @@ The public API for the Seni language
 - [Path](#path): invoke a function for every point
 - [Repeat](#repeat): invoke a function repeatedly, altering the base view matrix
 - [Focal](#focal): answer the question: how important is this co-ordinate?
+- [Bitmap](#bitmap): working with bitmaps
+- [Masking](#masking): masking parts of the canvas
 - [Gen](#gen): define how genotypes will be generated
 - [Interpolation Constants](#interpolation-constants)
 
@@ -149,6 +151,17 @@ The public API for the Seni language
 - [focal/build-vline](#focalbuild-vline)
 - [focal/build-hline](#focalbuild-hline)
 - [focal/value](#focalvalue)
+
+# Bitmap
+
+- [bitmap/each](#bitmapeach)
+- [bitmap/value](#bitmapvalue)
+- [bitmap/width](#bitmapwidth)
+- [bitmap/height](#bitmapheight)
+
+# Masking
+
+- [mask/set](#maskset)
 
 # Gen
 
@@ -831,6 +844,49 @@ Parameter | Default | Description
 --- | --- | ---
     | from      |         |             |
     | position  | [0 0]   |             |
+
+
+# Bitmap Functions
+
+## bitmap/each
+
+Parameter | Default | Description
+--- | --- | ---
+    | from          |           |             |
+    | position      | [500 500] |             |
+    | width         | 1000      |             |
+    | height        | 1000      |             |
+    | fn            |           |             |
+    | shuffle-seed  | 0.0       |             |
+
+## bitmap/value
+
+Parameter | Default | Description
+--- | --- | ---
+    | from           |              |             |
+    | position       | [0 0]        |             |
+    | default-colour | RGB(0 0 0 0) |             |
+
+## bitmap/width
+
+Parameter | Default | Description
+--- | --- | ---
+    | from           |                  |             |
+
+## bitmap/height
+
+Parameter | Default | Description
+--- | --- | ---
+    | from           |                  |             |
+
+# Masking Functions
+
+## mask/set
+
+Parameter | Default | Description
+--- | --- | ---
+    | TEMP      |       0 |             |
+    | TEMP        |       1 |             |
 
 # Gen Functions
 
