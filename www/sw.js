@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PRECACHE = 'precache-v3';
+const PRECACHE = 'precache-v4';
 const RUNTIME = 'runtime';
 
 // NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
@@ -72,11 +72,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // Skip cross-origin requests, like those for Google Analytics.
   if (event.request.url.startsWith(self.location.origin)) {
-
     // during development don't cache files that are constantly changing
+    // currently this includes any files in the NO_CACHE_URLS array and
+    // every piece script (a url beginning with gallery/{id})
+    //
     if(DONT_CACHE_SOME_URLS) {
+      let gallery_item_re = /\/gallery\/\d+/;
       const relative = event.request.url.substr(self.location.origin.length);
-      if(NO_CACHE_URLS.includes(relative)) {
+      if(NO_CACHE_URLS.includes(relative) || relative.match(gallery_item_re)) {
         console.log(`fetching but not caching ${relative}`);
         return fetch(event.request).then(response => {
           return response;
