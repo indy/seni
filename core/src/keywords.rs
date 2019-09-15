@@ -330,6 +330,8 @@ pub enum Keyword {
     InnerHeight,
     #[strum(serialize = "inner-width")]
     InnerWidth,
+    #[strum(serialize = "invert")]
+    Invert,
     #[strum(serialize = "iterations")]
     Iterations,
     #[strum(serialize = "linear-colour-space")]

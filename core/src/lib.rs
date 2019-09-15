@@ -80,7 +80,7 @@ pub fn run_program_with_preamble(
     context: &mut Context,
     program: &Program,
 ) -> Result<Var> {
-    context.reset();
+    context.reset_for_piece();
     vm.reset();
 
     // setup the env with the global variables in preamble
@@ -114,6 +114,13 @@ pub fn bitmaps_to_transfer(program: &Program, context: &Context) -> Vec<String> 
 
     // keep the names that aren't already in the bitmap_cache
     context.bitmap_cache.uncached(bitmap_strings)
+}
+
+pub fn textures_to_load(program: &Program, _context: &Context) -> Vec<String> {
+    // no need to dedupe this here as the host system will take care of that
+    let texture_strings = program.data.texture_strings();
+
+    texture_strings
 }
 
 pub fn build_traits(s: &str) -> Result<TraitList> {

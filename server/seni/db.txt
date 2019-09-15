@@ -1,3 +1,4 @@
+sketch/1937-mask
 sketch/1937-cat-scratch
 sketch/1937-einstein-scratch
 sketch/1923-skull-vhs

@@ -1461,6 +1461,17 @@ impl StackPeek<Colour> for Vm {
     }
 }
 
+impl StackPeek<bool> for Vm {
+    fn stack_peek(&self, offset: usize) -> Result<bool> {
+        if let Var::Bool(b) = &self.stack[self.sp - offset] {
+            Ok(*b)
+        } else {
+            error!("stack_peek expected Var::Bool");
+            Err(Error::VM)
+        }
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use super::*;
@@ -1471,7 +1482,7 @@ pub mod tests {
         let (ast, word_lut) = parse(s).unwrap();
         let program = compile_program(&ast, &word_lut).unwrap();
 
-        context.reset();
+        context.reset_for_piece();
         vm.reset();
         vm.interpret(context, &program).unwrap();
     }

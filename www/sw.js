@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PRECACHE = 'precache-v4';
+const PRECACHE = 'precache-v5';
 const RUNTIME = 'runtime';
 
 // NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
@@ -80,7 +80,7 @@ self.addEventListener('fetch', event => {
       let gallery_item_re = /\/gallery\/\d+/;
       const relative = event.request.url.substr(self.location.origin.length);
       if(NO_CACHE_URLS.includes(relative) || relative.match(gallery_item_re)) {
-        console.log(`fetching but not caching ${relative}`);
+        // console.log(`fetching but not caching ${relative}`);
         return fetch(event.request).then(response => {
           return response;
         });
@@ -91,7 +91,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       caches.match(event.request).then(cachedResponse => {
         if (cachedResponse) {
-          console.log(`in cache: ${event.request.url}`);
+          // console.log(`in cache: ${event.request.url}`);
           return cachedResponse;
         }
 
@@ -99,7 +99,7 @@ self.addEventListener('fetch', event => {
           return fetch(event.request).then(response => {
             // Put a copy of the response in the runtime cache.
             return cache.put(event.request, response.clone()).then(() => {
-              console.log(`added to cache: ${event.request.url}`);
+              // console.log(`added to cache: ${event.request.url}`);
               return response;
             });
           });

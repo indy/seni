@@ -24,7 +24,7 @@ use wasm_bindgen::prelude::*;
 
 use core::{
     build_traits, next_generation, program_from_source, program_from_source_and_genotype,
-    run_program_with_preamble, simplified_unparse, unparse, bitmaps_to_transfer
+    run_program_with_preamble, simplified_unparse, unparse, bitmaps_to_transfer, textures_to_load
 };
 use core::{BitmapInfo, Context, Genotype, Packable, Program, TraitList, Vm};
 
@@ -137,21 +137,22 @@ impl Bridge {
 
     // return the list of required bitmaps to the host system
     // it will send the bitmap data back here via the add_rgba_bitmap function
-    pub fn get_bitmap_transfers_as_json(&mut self) -> String {
+    pub fn get_bitmap_transfers_as_json(&self) -> String {
         // todo: check that we're in the RENDER state
 
         if let Some(program) = &self.program {
             let bitmaps_to_transfer = bitmaps_to_transfer(program, &self.context);
+            vec_strings_as_json(&bitmaps_to_transfer)
+        } else {
+            "[]".to_string()
+        }
+    }
 
-            let mut res: String = "[".to_string();
-            for (i, b) in bitmaps_to_transfer.iter().enumerate() {
-                res.push_str(&format!("\"{}\"", b));
-                if i < bitmaps_to_transfer.len() - 1 {
-                    res.push_str(", ");
-                }
-            }
-            res.push_str("]");
-            res
+    // return the list of textures to load onto the GPU
+    pub fn get_textures_to_load_as_json(&self) -> String {
+        if let Some(program) = &self.program {
+            let textures_to_load = textures_to_load(program, &self.context);
+            vec_strings_as_json(&textures_to_load)
         } else {
             "[]".to_string()
         }
@@ -166,6 +167,7 @@ impl Bridge {
             match run_program_with_preamble(&mut self.vm, &mut self.context, &program) {
                 Ok(_) => {
                     self.vm.debug_str_clear();
+                    self.context.geometry.remove_useless_render_packets();
                     self.context.geometry.get_num_render_packets()
                 }
                 Err(e) => {
@@ -183,6 +185,18 @@ impl Bridge {
     }
 
     // --------------------------------------------------------------------------------
+
+    pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
+        self.context.get_render_packet_command(packet_number)
+    }
+
+    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> String {
+        self.context.get_render_packet_mask_filename(packet_number)
+    }
+
+    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> bool {
+        self.context.get_render_packet_mask_invert(packet_number)
+    }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
         // info!("get_render_packet_geo_len");
@@ -366,4 +380,17 @@ impl Bridge {
         }
         "".to_string()
     }
+}
+
+fn vec_strings_as_json(strings: &Vec<String>) -> String {
+    let mut res: String = "[".to_string();
+    for (i, s) in strings.iter().enumerate() {
+        res.push_str(&format!("\"{}\"", s));
+        if i < strings.len() - 1 {
+            res.push_str(", ");
+        }
+    }
+    res.push_str("]");
+
+    res
 }

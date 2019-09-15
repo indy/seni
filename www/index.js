@@ -85,6 +85,11 @@ const Matrix = {
 // --------------------------------------------------------------------------------
 // renderer
 
+
+const TEXTURE_UNIT_RENDER_TO_TEXTURE = 0;
+const TEXTURE_UNIT_BRUSH_TEXTURE = 1;
+const TEXTURE_UNIT_MASK_TEXTURE = 2;
+
 function initGL(canvas) {
   try {
     const gl = canvas.getContext('webgl', {
@@ -97,6 +102,7 @@ function initGL(canvas) {
     //    }
 
     return gl;
+
   } catch (e) {
     return undefined;
   }
@@ -142,7 +148,10 @@ function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
 
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'texture');
+  shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
+  shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
+
+  shader.maskInvert = gl.getUniformLocation(shader.program, 'maskInvert');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
@@ -202,8 +211,31 @@ function setupGLState(gl) {
 //  gl.disable(gl.DEPTH_TEST);
 }
 
+function textureUnitToGl(gl, unit) {
+  let texUnit = gl.TEXTURE0 + unit;
+  switch(unit) {
+  case TEXTURE_UNIT_RENDER_TO_TEXTURE: texUnit = gl.TEXTURE0; break;
+  case TEXTURE_UNIT_BRUSH_TEXTURE: texUnit = gl.TEXTURE1; break;
+  case TEXTURE_UNIT_MASK_TEXTURE: texUnit = gl.TEXTURE2; break;
+  case 3: texUnit = gl.TEXTURE3; break;
+  case 4: texUnit = gl.TEXTURE4; break;
+  case 5: texUnit = gl.TEXTURE5; break;
+  case 6: texUnit = gl.TEXTURE6; break;
+  case 7: texUnit = gl.TEXTURE7; break;
+  default:
+    console.error(`invalid unit for texture: ${unit}`);
+  };
 
-function handleTextureLoaded(gl, image, texture) {
+  return texUnit;
+}
+
+function handleTextureLoaded(gl, image, unit) {
+  const texture = gl.createTexture();
+
+  let texUnit = textureUnitToGl(gl, unit);
+
+  gl.activeTexture(texUnit);
+
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
@@ -211,16 +243,18 @@ function handleTextureLoaded(gl, image, texture) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
                    gl.LINEAR_MIPMAP_NEAREST);
   gl.generateMipmap(gl.TEXTURE_2D);
-  gl.bindTexture(gl.TEXTURE_2D, null);  /// ?????
 
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  return texture;
 }
 
 function createRenderTexture(gl, config) {
   // create to render to
   const targetTextureWidth = config.render_texture_width;
   const targetTextureHeight = config.render_texture_height;
+
+  let texUnit = textureUnitToGl(gl, TEXTURE_UNIT_RENDER_TO_TEXTURE);
+  console.log(`activeTexture ${TEXTURE_UNIT_RENDER_TO_TEXTURE}`);
+  gl.activeTexture(texUnit);
 
   const targetTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, targetTexture);
@@ -287,6 +321,9 @@ class GLRenderer {
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
+    // map of texture filename -> texture unit
+    this.loadedTextureCache = {};
+
     // note: constructors can't be async so the shaders should already have been loaded by loadShaders
     this.sketchShader = setupSketchShaders(gl, shaders['shader/main-vert.glsl'], shaders['shader/main-frag.glsl']);
     this.blitShader = setupBlitShaders(gl, shaders['shader/blit-vert.glsl'], shaders['shader/blit-frag.glsl']);
@@ -305,19 +342,14 @@ class GLRenderer {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
-  loadTexture(src) {
+  loadImage(src) {
     let that = this;
 
     return new Promise((resolve, reject) => {
-
-      const gl = that.gl;
-      // todo: why is texture attached to that?
-      that.texture = gl.createTexture();
       const image = new Image();
 
       image.addEventListener('load', () => {
-        handleTextureLoaded(that.gl, image, that.texture);
-        resolve();
+        resolve(image);
       });
 
       image.addEventListener('error', () => {
@@ -328,8 +360,27 @@ class GLRenderer {
     });
   }
 
+  async ensureTexture(unit, src) {
+    let that = this;
 
-  renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
+    let normalized_src = normalize_bitmap_url(src);
+
+    if (that.loadedTextureCache[normalized_src] === undefined) {
+      let image = await that.loadImage(normalized_src);
+      const texture = handleTextureLoaded(that.gl, image, unit);
+      that.loadedTextureCache[normalized_src] = texture;
+    }
+
+    const texture = that.loadedTextureCache[normalized_src];
+    return new Promise((resolve, reject) => {
+      let texUnit = textureUnitToGl(that.gl, unit);
+      that.gl.activeTexture(texUnit);
+      that.gl.bindTexture(that.gl.TEXTURE_2D, texture);
+      resolve(texture);
+    });
+  }
+
+  async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
     const gl = this.gl;
 
     let shader = this.sketchShader;
@@ -338,7 +389,7 @@ class GLRenderer {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
     gl.viewport(0, 0, destTextureWidth, destTextureHeight);
 
     gl.useProgram(shader.program);
@@ -374,9 +425,11 @@ class GLRenderer {
                         false,
                         this.mvMatrix);
 
-    gl.uniform1i(shader.textureUniform, 0);
+    gl.uniform1i(shader.brushUniform, TEXTURE_UNIT_BRUSH_TEXTURE);
+    gl.uniform1i(shader.maskUniform, TEXTURE_UNIT_MASK_TEXTURE);
 
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+    gl.uniform1i(shader.maskInvert, false);
 
     const glVertexBuffer = this.glVertexBuffer;
 
@@ -387,34 +440,56 @@ class GLRenderer {
     const textureItemSize = 2;
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
+    const RPCommand_RenderGeometry = 1;
+    const RPCommand_SetMask = 2;
 
-    buffers.forEach(buffer => {
-      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
-      // a new typed array view is created that views the specified ArrayBuffer
-      const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
 
-      //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
+    let that = this;
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+    let texture_INITIAL = await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
-      gl.vertexAttribPointer(shader.positionAttribute,
-                             vertexItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             0);
-      gl.vertexAttribPointer(shader.colourAttribute,
-                             colourItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             vertexItemSize * bytesin32bit);
-      gl.vertexAttribPointer(shader.textureAttribute,
-                             textureItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             (vertexItemSize + colourItemSize) * bytesin32bit);
+    // let texUnitA = textureUnitToGl(that.gl, TEXTURE_UNIT_MASK_TEXTURE);
+    // that.gl.activeTexture(texUnitA);
+    // that.gl.bindTexture(that.gl.TEXTURE_2D, texture_INITIAL);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+    buffers.forEach(async buffer => {
+      switch(buffer.command) {
+      case RPCommand_RenderGeometry:
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
+        // a new typed array view is created that views the specified ArrayBuffer
+        const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
 
+        gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
+
+        gl.vertexAttribPointer(shader.positionAttribute,
+                               vertexItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               0);
+        gl.vertexAttribPointer(shader.colourAttribute,
+                               colourItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               vertexItemSize * bytesin32bit);
+        gl.vertexAttribPointer(shader.textureAttribute,
+                               textureItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               (vertexItemSize + colourItemSize) * bytesin32bit);
+
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+        break;
+      case RPCommand_SetMask:
+        gl.uniform1i(shader.maskInvert, buffer.mask_invert);
+        let texture = await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
+
+        // this doesn't work, these lines have to be in a promise. I don't know why but it just is
+        //
+        // let texUnit = textureUnitToGl(that.gl, TEXTURE_UNIT_MASK_TEXTURE);
+        // that.gl.activeTexture(texUnit);
+        // that.gl.bindTexture(that.gl.TEXTURE_2D, texture);
+
+        break;
+      }
     });
-
   }
 
   renderTextureToScreen(meta, canvasWidth, canvasHeight) {
@@ -431,7 +506,7 @@ class GLRenderer {
     let shader = this.blitShader;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.renderTexture);
+
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     gl.useProgram(shader.program);
@@ -456,10 +531,9 @@ class GLRenderer {
                         false,
                         this.mvMatrix);
 
-    gl.uniform1i(shader.textureUniform, 0);
+    gl.uniform1i(shader.textureUniform, TEXTURE_UNIT_RENDER_TO_TEXTURE);
 
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
-
 
     const glVertexBuffer = this.glVertexBuffer;
 
@@ -1518,7 +1592,7 @@ function updateSelectionUI(state) {
 async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) {
   const stopFn = startTiming();
 
-  gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
+  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
   gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
@@ -1529,7 +1603,7 @@ async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) 
 async function renderGeometryBuffersSection(meta, memory, buffers, imageElement, w, h, section) {
   const stopFn = startTiming();
 
-  gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
+  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
@@ -1615,7 +1689,7 @@ function loadBitmapImageData(url) {
 }
 
 function normalize_bitmap_url(url) {
-  const re = /^[\w-]+.png/;
+  const re = /^[\w-/]+.png/;
 
   if (url.match(re)) {
     // requesting a bitmap just by filename, so get it from /img/immutable/
@@ -1645,20 +1719,29 @@ async function renderScript(parameters, imageElement) {
 async function renderJob(parameters) {
   // 1. compile the program in a web worker
   // 2. (retain the id for this worker)
-  // 3. after compilation, the worker will return a list of bitmaps that are
-  //    required by the program and are not in the web worker's bitmap-cache
+  // 3. after compilation, the worker will return:
+  //    a: A list of textures to load onto the GPU
+  //    b: A list of bitmaps that are required by the program
+  //       and are not in the web worker's bitmap-cache.
   // 4. sequentially load in the bitmaps and send their data to the worker
   // 5. can now request a render which will return the render packets
 
   // request a compile job but make sure to retain the worker as it will be performing the rendering
   //
   parameters.__retain = true;
-  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
+  const { bitmapsToTransfer, texturesToLoad, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
+
+  // ensure that any required textures have been loaded
+  //
+  texturesToLoad.map(async filename => {
+    await gGLRenderer.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, filename);
+  });
 
   // convert each bitmap path to a function that returns a promise
   //
   const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
     log(`worker ${__worker_id}: bitmap request: ${filename}`);
+
     const imageData = await loadBitmapImageData(filename);
     // make an explicit job request to the same worker
     return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
@@ -2329,7 +2412,8 @@ async function main() {
   gGLRenderer = new GLRenderer(canvasElement, shaders);
 
   try {
-    await gGLRenderer.loadTexture('img/texture.png');
+    await gGLRenderer.ensureTexture(TEXTURE_UNIT_BRUSH_TEXTURE, 'brush.png');
+    await gGLRenderer.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
     setupUI(controller);
 

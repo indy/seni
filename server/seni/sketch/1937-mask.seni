@@ -1,0 +1,6 @@
+; (mask/set from: "mask-fook.png")
+
+(rect position: [500 500]
+      width: 950
+      height: 950
+      colour: red)

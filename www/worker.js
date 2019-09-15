@@ -43,8 +43,9 @@ function compile({ script, genotype }) {
   }
 
   const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
+  const texturesToLoad = JSON.parse(gState.bridge.get_textures_to_load_as_json());
 
-  return [{}, { bitmapsToTransfer }];
+  return [{}, { bitmapsToTransfer, texturesToLoad }];
 }
 
 function receiveBitmapData( { filename, imageData } ) {
@@ -60,20 +61,34 @@ function receiveBitmapData( { filename, imageData } ) {
   return [{}, { result: "shabba" }];
 }
 
+const RPCommand_RenderGeometry = 1;
+const RPCommand_SetMask = 2;
+
 function renderPackets({  }) {
   const buffers = [];
 
   const numRenderPackets = gState.bridge.run_program();
-  // console.log(`numRenderPackets = ${numRenderPackets}`);
 
   for (let i = 0; i < numRenderPackets; i++) {
     const buffer = {};
-    buffer.geo_len = gState.bridge.get_render_packet_geo_len(i);
-    if (buffer.geo_len > 0) {
+    buffer.command = gState.bridge.get_render_packet_command(i);
+
+    switch (buffer.command) {
+    case RPCommand_RenderGeometry:
+      buffer.geo_len = gState.bridge.get_render_packet_geo_len(i);
       buffer.geo_ptr = gState.bridge.get_render_packet_geo_ptr(i);
-      buffers.push(buffer);
-    }
-  }
+      break;
+    case RPCommand_SetMask:
+      buffer.mask_filename = gState.bridge.get_render_packet_mask_filename(i);
+      buffer.mask_invert = gState.bridge.get_render_packet_mask_invert(i);
+      break;
+    default:
+      console.error(`unknown buffer command: ${buffer.command}`);
+      break;
+    };
+
+    buffers.push(buffer);
+  };
 
   const meta = {
     title: '',

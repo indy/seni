@@ -64,7 +64,7 @@ impl Gene {
     }
 
     pub fn build_from_trait(vm: &mut Vm, context: &mut Context, t: &Trait) -> Result<Self> {
-        context.reset();
+        context.reset_for_piece();
         vm.reset();
         vm.building_with_trait_within_vector = t.within_vector;
         vm.trait_within_vector_index = t.index;

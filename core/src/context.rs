@@ -24,19 +24,51 @@ use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
 use log::error;
 
-#[derive(Default)]
 pub struct Context {
     pub matrix_stack: MatrixStack,
     pub mappings: Mappings,
     pub geometry: geometry::Geometry,
     pub bitmap_cache: BitmapCache,
-    pub output_linear_colour_space: bool, // derive Default sets bool to false
+    pub output_linear_colour_space: bool,
+}
+
+impl Default for Context {
+    fn default() -> Context {
+        Context {
+            matrix_stack: Default::default(),
+            mappings: Default::default(),
+            geometry: Default::default(),
+            bitmap_cache: Default::default(),
+            output_linear_colour_space: false,
+        }
+    }
 }
 
 impl Context {
-    pub fn reset(&mut self) {
+    // context contains some values which remain valid for the whole 'session'.
+    // e.g. mappings and bitmap_cache. It also contains values that should be
+    // reset for every new 'piece' that's rendered
+    //
+    pub fn reset_for_piece(&mut self) {
         self.matrix_stack.reset();
         self.geometry.reset();
+        self.output_linear_colour_space = false;
+    }
+
+    pub fn set_mask(&mut self, mask_filename: &str, invert: bool) -> Result<()> {
+        self.geometry.set_mask(mask_filename, invert)
+    }
+
+    pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
+        self.geometry.get_render_packet_command(packet_number)
+    }
+
+    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> String {
+        self.geometry.get_render_packet_mask_filename(packet_number)
+    }
+
+    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> bool {
+        self.geometry.get_render_packet_mask_invert(packet_number)
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {

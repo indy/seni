@@ -251,6 +251,11 @@ pub enum Native {
     #[strum(serialize = "bitmap/height")]
     BitmapHeight,
 
+    // masking
+    //
+    #[strum(serialize = "mask/set")]
+    MaskSet,
+
     // gen
     //
     #[strum(serialize = "gen/stray-int")]
@@ -395,6 +400,8 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::BitmapValue => bitmap_value_parameter_info(),
         Native::BitmapWidth => bitmap_width_parameter_info(),
         Native::BitmapHeight => bitmap_height_parameter_info(),
+        // masking
+        Native::MaskSet => mask_set_parameter_info(),
         // gen
         Native::GenStrayInt => gen_stray_int_parameter_info(),
         Native::GenStray => gen_stray_parameter_info(),
@@ -518,6 +525,8 @@ pub fn execute_native(
         Native::BitmapValue => bitmap_value_execute(vm, context, program),
         Native::BitmapWidth => bitmap_width_execute(vm, context, program),
         Native::BitmapHeight => bitmap_height_execute(vm, context, program),
+        // masking
+        Native::MaskSet => mask_set_execute(vm, context, program),
         // gen
         Native::GenStrayInt => gen_stray_int_execute(vm),
         Native::GenStray => gen_stray_execute(vm),
@@ -3201,6 +3210,37 @@ fn bitmap_height_execute(
     let height = bitmap::height(context, program, from)?;
 
     Ok(Some(Var::Float(height)))
+}
+
+fn mask_set_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::From, Var::Bool(false)),
+            (Keyword::Invert, Var::Float(0.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn mask_set_execute(vm: &mut Vm, context: &mut Context, program: &Program) -> Result<Option<Var>> {
+    let default_mask: i32 = vm.stack_peek(3)?;
+
+    if !is_arg_given(default_mask, 1) {
+        error!("mask/set requires a from parameter");
+        return Err(Error::Native);
+    }
+
+    let from: Iname = vm.stack_peek(1)?;
+    let invert_f32: f32 = vm.stack_peek(2)?; // hacky: should just work with a boolean
+
+    let invert: bool = invert_f32 > 0.0;
+
+    let mask_filename = program.data.string_from_iname(from)?;
+    context.set_mask(&mask_filename, invert)?;
+
+    Ok(None)
 }
 
 fn gen_stray_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
