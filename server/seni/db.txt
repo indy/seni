@@ -1,6 +1,5 @@
-sketch/1937-mask
-sketch/1937-cat-scratch
-sketch/1937-einstein-scratch
+sketch/1938-skull-nib-4
+sketch/1938-skull-nib-2
 sketch/1923-skull-vhs
 sketch/1922-skull-needle
 sketch/1922-skull-bootleg
