@@ -23,10 +23,11 @@ use cfg_if::cfg_if;
 use wasm_bindgen::prelude::*;
 
 use core::{
-    build_traits, next_generation, program_from_source, program_from_source_and_genotype,
-    run_program_with_preamble, simplified_unparse, unparse, bitmaps_to_transfer, textures_to_load
+    bitmaps_to_transfer, build_traits, next_generation, program_from_source,
+    program_from_source_and_genotype, run_program_with_preamble, simplified_unparse,
+    textures_to_load, unparse,
 };
-use core::{BitmapInfo, Context, Genotype, Packable, Program, TraitList, Vm};
+use core::{BitmapInfo, Context, Genotype, Packable, Program, RenderPacketMask, TraitList, Vm};
 
 use log::{error, info};
 
@@ -64,6 +65,35 @@ cfg_if! {
         extern crate wee_alloc;
         #[global_allocator]
         static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+    }
+}
+
+// RenderPacketMaskWasm is a structure that mirrors RenderPacketMask.
+// The only difference is that it is annotated with wasm_bindgen so
+// it can be transferred over to the JS side
+//
+#[wasm_bindgen]
+pub struct RenderPacketMaskWasm {
+    filename: String,
+    invert: bool,
+}
+
+#[wasm_bindgen]
+impl RenderPacketMaskWasm {
+    pub fn get_filename(&self) -> String {
+        self.filename.clone()
+    }
+    pub fn get_invert(&self) -> bool {
+        self.invert
+    }
+}
+
+impl From<&RenderPacketMask> for RenderPacketMaskWasm {
+    fn from(rpm: &RenderPacketMask) -> RenderPacketMaskWasm {
+        RenderPacketMaskWasm {
+            filename: rpm.filename.clone(),
+            invert: rpm.invert,
+        }
     }
 }
 
@@ -187,27 +217,30 @@ impl Bridge {
     // --------------------------------------------------------------------------------
 
     pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
-        self.context.get_render_packet_command(packet_number)
+        self.context
+            .get_render_packet_command(packet_number)
+            .unwrap()
     }
 
-    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> String {
-        self.context.get_render_packet_mask_filename(packet_number)
-    }
-
-    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> bool {
-        self.context.get_render_packet_mask_invert(packet_number)
+    pub fn get_render_packet_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
+        let rpm = self.context.get_render_packet_mask(packet_number).unwrap();
+        RenderPacketMaskWasm::from(rpm)
     }
 
     pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
         // info!("get_render_packet_geo_len");
 
-        self.context.get_render_packet_geo_len(packet_number)
+        self.context
+            .get_render_packet_geo_len(packet_number)
+            .unwrap()
     }
 
     pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
         // info!("get_render_packet_geo_ptr");
 
-        self.context.get_render_packet_geo_ptr(packet_number)
+        self.context
+            .get_render_packet_geo_ptr(packet_number)
+            .unwrap()
     }
 
     pub fn add_rgba_bitmap(&mut self, name: &str, width: usize, height: usize, data: Vec<u8>) {

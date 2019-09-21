@@ -35,27 +35,27 @@ pub fn render(
     let unit_angle = TAU / tessellation as f32;
 
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {
         let angle = unit_angle * i as f32;
         let vx = (angle.sin() * width) + position.0;
         let vy = (angle.cos() * height) + position.1;
 
-        rp.add_vertex(
+        rpg.add_vertex(
             matrix, position.0, position.1, colour, uvm.map[4], uvm.map[5],
         );
-        rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+        rpg.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
     }
 
     let angle: f32 = 0.0;
     let vx = (angle.sin() * width) + position.0;
     let vy = (angle.cos() * height) + position.1;
 
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix, position.0, position.1, colour, uvm.map[4], uvm.map[5],
     );
-    rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+    rpg.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
 
     Ok(())
 }

@@ -39,11 +39,11 @@ pub fn render(
     geometry.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
 
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
     for i in 0..num_vertices {
         let (x, y) = coords[i];
-        rp.add_vertex(matrix, x, y, &colours[i], uvm.map[4], uvm.map[5])
+        rpg.add_vertex(matrix, x, y, &colours[i], uvm.map[4], uvm.map[5])
     }
 
     Ok(())

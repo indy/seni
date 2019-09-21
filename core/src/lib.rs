@@ -67,7 +67,7 @@ pub use crate::compiler::{compile_preamble, compile_program, compile_program_wit
 pub use crate::context::Context;
 pub use crate::error::{Error, Result};
 pub use crate::gene::{next_generation, Genotype};
-pub use crate::geometry::Geometry;
+pub use crate::geometry::{Geometry, RenderPacketMask};
 pub use crate::packable::Packable;
 pub use crate::parser::{parse, WordLut};
 pub use crate::program::Program;
@@ -175,7 +175,7 @@ pub mod tests {
 
         assert_eq!(1, context.geometry.get_num_render_packets() as i32);
 
-        let num_floats = context.get_render_packet_geo_len(0);
+        let num_floats = context.get_render_packet_geo_len(0).unwrap();
         let floats_per_vert = 8;
         assert_eq!(expected_num_verts, num_floats / floats_per_vert);
     }

@@ -44,7 +44,7 @@ pub fn render(
     geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy);
 
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {
         let angle = r_start + (unit_angle * i as f32);
@@ -55,8 +55,8 @@ pub fn render(
         let vx = (angle.sin() * width) + position.0;
         let vy = (angle.cos() * height) + position.1;
 
-        rp.add_vertex(matrix, innervx, innervy, colour, uvm.map[4], uvm.map[5]);
-        rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+        rpg.add_vertex(matrix, innervx, innervy, colour, uvm.map[4], uvm.map[5]);
+        rpg.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
     }
 
     let angle: f32 = r_end;
@@ -66,8 +66,8 @@ pub fn render(
     let vx = (angle.sin() * width) + position.0;
     let vy = (angle.cos() * height) + position.1;
 
-    rp.add_vertex(matrix, innervx, innervy, colour, uvm.map[4], uvm.map[5]);
-    rp.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
+    rpg.add_vertex(matrix, innervx, innervy, colour, uvm.map[4], uvm.map[5]);
+    rpg.add_vertex(matrix, vx, vy, colour, uvm.map[4], uvm.map[5]);
 
     Ok(())
 }

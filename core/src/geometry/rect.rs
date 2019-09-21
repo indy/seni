@@ -39,9 +39,9 @@ pub fn render(
     );
 
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         position.0 - half_width,
         position.1 - half_height,
@@ -49,7 +49,7 @@ pub fn render(
         uvm.map[0],
         uvm.map[1],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         position.0 + half_width,
         position.1 - half_height,
@@ -57,7 +57,7 @@ pub fn render(
         uvm.map[2],
         uvm.map[3],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         position.0 - half_width,
         position.1 + half_height,
@@ -65,7 +65,7 @@ pub fn render(
         uvm.map[4],
         uvm.map[5],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         position.0 + half_width,
         position.1 + half_height,

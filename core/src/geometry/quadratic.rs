@@ -91,7 +91,7 @@ pub fn render(
     let v1y = (n1y * half_width) + ys;
     geometry.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y);
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
     for i in 0..(tessellation - 1) {
         let t_val = t_start + (i as f32 * unit);
@@ -119,10 +119,10 @@ pub fn render(
         let uv_t = tex_t * (i as f32);
         let u = lerp(uv_t, bu, du);
         let v = lerp(uv_t, bv, dv);
-        rp.add_vertex(matrix, v1x, v1y, &colour, u, v);
+        rpg.add_vertex(matrix, v1x, v1y, &colour, u, v);
         let u = lerp(uv_t, au, cu);
         let v = lerp(uv_t, av, cv);
-        rp.add_vertex(matrix, v2x, v2y, &colour, u, v);
+        rpg.add_vertex(matrix, v2x, v2y, &colour, u, v);
     }
 
     // final 2 vertices for the end point
@@ -144,9 +144,9 @@ pub fn render(
     let v2x = (n2x * half_width_end) + xs_next;
     let v2y = (n2y * half_width_end) + ys_next;
 
-    rp.add_vertex(matrix, v1x, v1y, &colour, du, dv);
+    rpg.add_vertex(matrix, v1x, v1y, &colour, du, dv);
 
-    rp.add_vertex(matrix, v2x, v2y, &colour, cu, cv);
+    rpg.add_vertex(matrix, v2x, v2y, &colour, cu, cv);
 
     Ok(())
 }

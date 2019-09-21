@@ -59,23 +59,22 @@ impl Context {
         self.geometry.set_mask(mask_filename, invert)
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
+    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<i32> {
         self.geometry.get_render_packet_command(packet_number)
     }
 
-    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> String {
-        self.geometry.get_render_packet_mask_filename(packet_number)
+    pub fn get_render_packet_mask(
+        &self,
+        packet_number: usize,
+    ) -> Result<&geometry::RenderPacketMask> {
+        self.geometry.get_render_packet_mask(packet_number)
     }
 
-    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> bool {
-        self.geometry.get_render_packet_mask_invert(packet_number)
-    }
-
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
+    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> Result<usize> {
         self.geometry.get_render_packet_geo_len(packet_number)
     }
 
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
+    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> Result<*const f32> {
         self.geometry.get_render_packet_geo_ptr(packet_number)
     }
 

@@ -13,9 +13,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::matrix::Matrix;
 use crate::rgb::Rgb;
+use log::error;
 
 pub mod bezier;
 pub mod bezier_bulging;
@@ -32,38 +33,55 @@ pub const RENDER_PACKET_FLOAT_PER_VERTEX: usize = 8;
 // 262144 * 4 == 1MB per render packet
 // 262144 / 8 == 32768 vertices per render packet
 
+pub struct RenderPacketGeometry {
+    pub geo: Vec<f32>,
+}
+
+pub struct RenderPacketMask {
+    pub filename: String,
+    pub invert: bool,
+}
+
+pub enum RenderPacket {
+    Geometry(RenderPacketGeometry),
+    Mask(RenderPacketMask),
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RPCommand {
     RenderGeometry = 1,
     SetMask = 2,
 }
 
-pub struct RenderPacket {
-    pub command: RPCommand,
-    pub geo: Vec<f32>,
-
-    pub mask_filename: String,
-    pub mask_invert: bool,
-}
-
 impl RenderPacket {
-    // note: this is hacky until mask stuff is up and running
-    // can then use a proper enum type for RenderPacket (or a trait)
-    //
     pub fn new(command: RPCommand) -> RenderPacket {
         match command {
-            RPCommand::RenderGeometry => RenderPacket {
-                command,
-                geo: Vec::with_capacity(RENDER_PACKET_MAX_SIZE),
-                mask_filename: "".to_string(),
-                mask_invert: false,
-            },
-            RPCommand::SetMask => RenderPacket {
-                command,
-                geo: Vec::with_capacity(0),
-                mask_filename: "".to_string(),
-                mask_invert: false,
-            },
+            RPCommand::RenderGeometry => RenderPacket::Geometry(RenderPacketGeometry::new()),
+            RPCommand::SetMask => RenderPacket::Mask(RenderPacketMask::new()),
+        }
+    }
+
+    pub fn get_mut_render_packet_geometry(&mut self) -> Result<&mut RenderPacketGeometry> {
+        match self {
+            RenderPacket::Geometry(rpg) => Ok(rpg),
+            RenderPacket::Mask(_) => Err(Error::Geometry),
+        }
+    }
+}
+
+impl RenderPacketMask {
+    pub fn new() -> RenderPacketMask {
+        RenderPacketMask {
+            filename: "".to_string(),
+            invert: false,
+        }
+    }
+}
+
+impl RenderPacketGeometry {
+    pub fn new() -> RenderPacketGeometry {
+        RenderPacketGeometry {
+            geo: Vec::with_capacity(RENDER_PACKET_MAX_SIZE),
         }
     }
 
@@ -154,10 +172,12 @@ impl Geometry {
 
     pub fn set_mask(&mut self, mask_filename: &str, invert: bool) -> Result<()> {
         // push a SET_MASK render packet
-        let mut rp_mask = RenderPacket::new(RPCommand::SetMask);
-        rp_mask.mask_filename = mask_filename.to_string();
-        rp_mask.mask_invert = invert;
-        self.render_packets.push(rp_mask);
+        let mut render_packet_mask = RenderPacketMask::new();
+        render_packet_mask.filename = mask_filename.to_string();
+        render_packet_mask.invert = invert;
+
+        self.render_packets
+            .push(RenderPacket::Mask(render_packet_mask));
         // push a GEOMETRY render packet
         self.render_packets
             .push(RenderPacket::new(RPCommand::RenderGeometry));
@@ -165,40 +185,71 @@ impl Geometry {
         Ok(())
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
+    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<i32> {
         let rp = &self.render_packets[packet_number];
-        rp.command as i32
+        let res = match rp {
+            RenderPacket::Geometry(_) => RPCommand::RenderGeometry,
+            RenderPacket::Mask(_) => RPCommand::SetMask,
+        };
+
+        Ok(res as i32)
     }
 
-    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> String {
+    pub fn get_render_packet_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
         let rp = &self.render_packets[packet_number];
-        rp.mask_filename.clone()
+        match rp {
+            RenderPacket::Geometry(_) => Err(Error::Geometry),
+            RenderPacket::Mask(rpm) => Ok(rpm),
+        }
     }
 
-    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> bool {
-        let rp = &self.render_packets[packet_number];
-        rp.mask_invert
+    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> Result<String> {
+        match &self.render_packets[packet_number] {
+            RenderPacket::Geometry(_) => {
+                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Mask");
+                Err(Error::Geometry)
+            }
+            RenderPacket::Mask(rpm) => Ok(rpm.filename.clone()),
+        }
     }
 
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        let rp = &self.render_packets[packet_number];
-        rp.geo.len()
+    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> Result<bool> {
+        match &self.render_packets[packet_number] {
+            RenderPacket::Geometry(_) => {
+                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Mask");
+                Err(Error::Geometry)
+            }
+            RenderPacket::Mask(rpm) => Ok(rpm.invert),
+        }
     }
 
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        let rp = &self.render_packets[packet_number];
-        rp.geo.as_ptr() as *const f32
+    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> Result<usize> {
+        match &self.render_packets[packet_number] {
+            RenderPacket::Geometry(rpg) => Ok(rpg.geo.len()),
+            RenderPacket::Mask(_) => {
+                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Geometry");
+                Err(Error::Geometry)
+            }
+        }
+    }
+
+    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> Result<*const f32> {
+        match &self.render_packets[packet_number] {
+            RenderPacket::Geometry(rpg) => Ok(rpg.geo.as_ptr() as *const f32),
+            RenderPacket::Mask(_) => {
+                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Geometry");
+                Err(Error::Geometry)
+            }
+        }
     }
 
     // the one place for cleaning up the render packets before they're sent off for rendering
     // do it here rather than spreading the complexity throughout all of the different commands
     //
     pub fn remove_useless_render_packets(&mut self) {
-        self.render_packets.retain(|rp| {
-            match rp.command {
-                RPCommand::RenderGeometry => !rp.geo.is_empty(),
-                RPCommand::SetMask => true,
-            }
+        self.render_packets.retain(|rp| match rp {
+            RenderPacket::Geometry(rpg) => !rpg.geo.is_empty(),
+            RenderPacket::Mask(_) => true,
         });
 
         // for (index, rp) in self.render_packets.iter().enumerate() {
@@ -228,17 +279,31 @@ impl Geometry {
         x: f32,
         y: f32,
     ) {
-        let mut last = self.render_packets.len() - 1;
-        let mut rp = &mut self.render_packets[last];
-        if !rp.can_vertices_fit(num_vertices) {
-            self.render_packets
-                .push(RenderPacket::new(RPCommand::RenderGeometry));
-            last += 1;
-        }
+        let last = self.render_packets.len() - 1;
+        let rp = &mut self.render_packets[last];
 
-        rp = &mut self.render_packets[last];
-        if !rp.is_empty() {
-            rp.form_degenerate_triangle(matrix, x, y);
+        match rp {
+            RenderPacket::Geometry(rpg) => {
+                if !rpg.can_vertices_fit(num_vertices) {
+                    if num_vertices >= RENDER_PACKET_MAX_SIZE {
+                        error!(
+                            "prepare_to_add_triangle_strip trying to add more than {} vertices",
+                            RENDER_PACKET_MAX_SIZE
+                        );
+                        return;
+                    }
+
+                    self.render_packets
+                        .push(RenderPacket::new(RPCommand::RenderGeometry));
+                    self.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
+                    return;
+                }
+
+                if !rpg.is_empty() {
+                    rpg.form_degenerate_triangle(matrix, x, y);
+                }
+            }
+            RenderPacket::Mask(_) => {}
         }
     }
 }

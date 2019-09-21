@@ -38,9 +38,9 @@ pub fn render(
     geometry.prepare_to_add_triangle_strip(matrix, 4, from.0 + (hw * nx), from.1 + (hw * ny));
 
     let last = geometry.render_packets.len() - 1;
-    let rp = &mut geometry.render_packets[last];
+    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
 
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         from.0 + (hw * nx),
         from.1 + (hw * ny),
@@ -48,7 +48,7 @@ pub fn render(
         uvm.map[0],
         uvm.map[1],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         from.0 + (hw * n2x),
         from.1 + (hw * n2y),
@@ -56,7 +56,7 @@ pub fn render(
         uvm.map[2],
         uvm.map[3],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         to.0 + (hw * nx),
         to.1 + (hw * ny),
@@ -64,7 +64,7 @@ pub fn render(
         uvm.map[4],
         uvm.map[5],
     );
-    rp.add_vertex(
+    rpg.add_vertex(
         matrix,
         to.0 + (hw * n2x),
         to.1 + (hw * n2y),
