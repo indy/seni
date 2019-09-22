@@ -1,0 +1,11 @@
+(define
+  col (interp/build from: [0 256] to: [0 1] mapping: linear)
+  )
+
+
+(loop (t from: 0 to: 256)
+  (define shade (col.interp/value t))
+  (rect position: [500 (- 1000 t)]
+        width: 1000
+        height: 1
+        colour: (col/rgb r: shade g: shade b: shade alpha: 1)))
