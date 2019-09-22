@@ -53,10 +53,5 @@ void main(void) {
     gl_FragColor.g = brushTex.r * linearColour.g * vColour.a * maskVal;
     gl_FragColor.b = brushTex.r * linearColour.b * vColour.a * maskVal;
     gl_FragColor.a = brushTex.r * linearColour.a * vColour.a * maskVal;
-
-    // gl_FragColor.r = brushTex.r * linearColour.r * vColour.a * maskTex.r;
-    // gl_FragColor.g = brushTex.r * linearColour.g * vColour.a * maskTex.g;
-    // gl_FragColor.b = brushTex.r * linearColour.b * vColour.a * maskTex.b;
-    // gl_FragColor.a = brushTex.r * linearColour.a * vColour.a * maskTex.a;
   }
 }

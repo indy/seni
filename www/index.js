@@ -148,6 +148,7 @@ function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
 
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
   shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+
   shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
   shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
 
@@ -313,6 +314,42 @@ const gConfig = {
   render_texture_height: 2048,
 };
 
+/*
+  sectionDim = number of sections along each axis
+  section = current section to render
+
+  e.g. sectionDim: 3 ==
+
+  |---+---+---|
+  | 0 | 1 | 2 |
+  |---+---+---|
+  | 3 | 4 | 5 |
+  |---+---+---|
+  | 6 | 7 | 8 |
+  |---+---+---|
+
+  Note: sections begin in the top left corner
+  (compared to the canvas co-ordinates which begin in the lower left corner)
+*/
+function getProjectionMatrixExtents(sectionDim, section) {
+  const pictureWidth = 1000;
+  const pictureHeight = 1000;
+
+  const sectionWidth = pictureWidth / sectionDim;
+  const sectionHeight = pictureHeight / sectionDim;
+
+  const sectionX = section % sectionDim;
+  const sectionY = (sectionDim - Math.floor(section / sectionDim)) - 1;
+
+  let left = sectionX * sectionWidth;
+  let right = left + sectionWidth;
+
+  let bottom = sectionY * sectionHeight;
+  let top = bottom + sectionHeight;
+
+  return [left, right, bottom, top];
+}
+
 class GLRenderer {
   constructor(canvasElement, shaders) {
     this.glDomElement = canvasElement;
@@ -380,7 +417,7 @@ class GLRenderer {
     });
   }
 
-  async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
+  async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, sectionDim, section) {
     const gl = this.gl;
 
     let shader = this.sketchShader;
@@ -401,21 +438,8 @@ class GLRenderer {
     // gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (section === undefined) {
-      // render the entirety of the scene
-      Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
-    } else {
-      switch (section) {
-        // bottom left
-      case 0: Matrix.ortho(this.pMatrix,   0,  500,   0,  500, 10, -10); break;
-        // bottom right
-      case 1: Matrix.ortho(this.pMatrix, 500, 1000,   0,  500, 10, -10); break;
-        // top left
-      case 2: Matrix.ortho(this.pMatrix,   0,  500, 500, 1000, 10, -10); break;
-        // top right
-      case 3: Matrix.ortho(this.pMatrix, 500, 1000, 500, 1000, 10, -10); break;
-      }
-    }
+    let [left, right, bottom, top] = getProjectionMatrixExtents(sectionDim, section);
+    Matrix.ortho(this.pMatrix, left, right, bottom, top, 10, -10);
 
     gl.uniformMatrix4fv(shader.pMatrixUniform,
                         false,
@@ -430,6 +454,7 @@ class GLRenderer {
 
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
     gl.uniform1i(shader.maskInvert, false);
+
 
     const glVertexBuffer = this.glVertexBuffer;
 
@@ -1589,21 +1614,10 @@ function updateSelectionUI(state) {
   });
 }
 
-async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h) {
+async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
   const stopFn = startTiming();
 
-  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers);
-  gGLRenderer.renderTextureToScreen(meta, w, h);
-
-  await gGLRenderer.copyImageDataTo(imageElement);
-
-  stopFn("rendering all buffers");
-}
-
-async function renderGeometryBuffersSection(meta, memory, buffers, imageElement, w, h, section) {
-  const stopFn = startTiming();
-
-  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, section);
+  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, sectionDim, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
@@ -1707,7 +1721,7 @@ async function renderScript(parameters, imageElement) {
   let height = parameters.assumeHeight ? parameters.assumeHeight : imageElement.clientHeight;
 
   let { meta, memory, buffers } = await renderJob(parameters);
-  await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height);
+  await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height, 1, 0);
 
   if (meta.title === '') {
     stopFn(`renderScript`);
@@ -1856,28 +1870,6 @@ function downloadDialogShow() {
 function downloadDialogHide() {
   const container = document.getElementById('download-dialog');
   container.classList.add('hidden');
-}
-
-async function renderHighResSection(state, section) {
-  const container = document.getElementById('download-dialog');
-  const loader = document.getElementById('download-dialog-loader');
-  const image = document.getElementById('render-img');
-
-  container.classList.remove('hidden');
-  loader.classList.remove('hidden');
-  image.classList.add('hidden');
-
-  const stopFn = startTiming();
-
-  const { meta, memory, buffers } = await renderJob({
-    script: state.script,
-    genotype: undefined,
-  });
-  const [width, height] = state.highResolution;
-  await renderGeometryBuffersSection(meta, memory, buffers, image, width, height, section);
-  stopFn(`renderHighResSection-${meta.title}-${section}`);
-  image.classList.remove('hidden');
-  loader.classList.add('hidden');
 }
 
 // updates the controller's script variable and then generates the traits
@@ -2038,12 +2030,40 @@ function createEditor(controller, editorTextArea) {
   });
 }
 
-function ensureFilenameIsPNG(filename) {
-  if(filename.endsWith(".png")) {
-    return filename;
+function countDigits(num) {
+  if(num < 10) {
+    return 1;
+  } else if (num < 100) {
+    return 2;
+  } else if (num < 1000) {
+    return 3;
+  } else if (num < 10000) {
+    return 4;
   } else {
-    return filename + ".png";
+    console.error(`countDigits given an insanely large number: ${num}`);
+    return 5;
   }
+}
+
+function filenameForPng(filename, image_dim, i) {
+  // remove .png if there is any
+  let name = filename.match(/\.png$/) ? filename.slice(0, -4) : filename;
+
+  if (image_dim !== 1) {
+    // add numbering to filename
+    name = name + "-";
+
+    const largestPossibleValue = (image_dim * image_dim) - 1;
+    let leadingZeros = countDigits(largestPossibleValue) - countDigits(i);
+
+    for (let i = 0; i < leadingZeros; i++) {
+      name = name + "0";
+    }
+
+    name = "" + name + i;
+  }
+
+  return name + ".png";
 }
 
 function fitRenderImgToRenderPanel() {
@@ -2189,15 +2209,16 @@ function setupUI(controller) {
 
     const [width, height] = [image_resolution, image_resolution];
 
-    await renderGeometryBuffers(meta, memory, buffers, image, width, height);
+    for(let i = 0; i < image_dim * image_dim; i++) {
+      await renderGeometryBuffers(meta, memory, buffers, image, width, height, image_dim, i);
+
+      const image_name_elem = document.getElementById('download-dialog-field-filename');
+      const filename = filenameForPng(image_name_elem.value, image_dim, i);
+      gGLRenderer.localDownload(filename);
+    }
 
     stopFn(`renderHighRes-${meta.title}`);
-
     loader.classList.add('hidden');
-
-    const image_name_elem = document.getElementById('download-dialog-field-filename');
-    const filename = ensureFilenameIsPNG(image_name_elem.value);
-    gGLRenderer.localDownload(filename);
 
     // todo: is this the best place to reset the genotype?
     await controller.dispatch(actionSetGenotype, { genotype: undefined });
