@@ -91,6 +91,8 @@ pub enum Keyword {
     CanvasWidth,
     #[strum(serialize = "canvas/height")]
     CanvasHeight,
+    #[strum(serialize = "canvas/size")]
+    CanvasSize,
     #[strum(serialize = "math/PI")]
     MathPi,
     #[strum(serialize = "math/TAU")]
@@ -447,7 +449,7 @@ mod tests {
     fn test_keyword_enums() {
         assert_eq!(Keyword::False as i32, 128);
         assert_eq!(Keyword::True as i32, 129);
-        assert_eq!(Keyword::Width as i32, 304);
+        assert_eq!(Keyword::Width as i32, 305);
     }
 
     #[test]

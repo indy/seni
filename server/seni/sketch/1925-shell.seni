@@ -35,9 +35,9 @@
                     (col/value from: col-fn-3 t: t)])))
 
 (fn (render)
-  (rect position: [500 500]
-        width: 1000
-        height: 1000
+  (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+        width: canvas/width
+        height: canvas/height
         colour: (col/value from: col-fn-1 t: 0.5))
   (on-matrix-stack
     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])

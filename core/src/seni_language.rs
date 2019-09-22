@@ -852,12 +852,12 @@ Parameter | Default | Description
 
 Parameter | Default | Description
 --- | --- | ---
-    | from          |           |             |
-    | position      | [500 500] |             |
-    | width         | 1000      |             |
-    | height        | 1000      |             |
-    | fn            |           |             |
-    | shuffle-seed  | 0.0       |             |
+    | from          |               |             |
+    | position      | [canvas/width / 2, canvas/height / 2] |             |
+    | width         | canvas/width  |             |
+    | height        | canvas/height |             |
+    | fn            |               |             |
+    | shuffle-seed  | 0.0           |             |
 
 ## bitmap/value
 

@@ -15,6 +15,7 @@
 
 use crate::bitmap;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct, ProcColourType};
+use crate::constants;
 use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
@@ -3067,9 +3068,9 @@ fn bitmap_each_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         // input arguments
         vec![
             (Keyword::From, Var::Bool(false)),
-            (Keyword::Position, Var::V2D(500.0, 500.0)),
-            (Keyword::Width, Var::Float(1000.0)),
-            (Keyword::Height, Var::Float(1000.0)),
+            (Keyword::Position, Var::V2D(constants::CANVAS_DIM / 2.0, constants::CANVAS_DIM / 2.0)),
+            (Keyword::Width, Var::Float(constants::CANVAS_DIM)),
+            (Keyword::Height, Var::Float(constants::CANVAS_DIM)),
             (Keyword::Fn, Var::Bool(false)),
             (Keyword::ShuffleSeed, Var::Float(0.0)),
         ],
@@ -3444,7 +3445,7 @@ fn gen_int_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         // input arguments
         vec![
             (Keyword::Min, Var::Float(0.0)),
-            (Keyword::Max, Var::Float(1000.0)),
+            (Keyword::Max, Var::Float(constants::CANVAS_DIM)),
         ],
         // stack offset
         1,

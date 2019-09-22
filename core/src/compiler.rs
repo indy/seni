@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::colour::{Colour, ColourFormat};
+use crate::constants;
 use crate::error::{Error, Result};
 use crate::gene::Genotype;
 use crate::iname::Iname;
@@ -703,6 +704,7 @@ impl Compiler {
     fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
         compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
+        compilation.add_global_mapping_for_keyword(Keyword::CanvasSize)?;
 
         compilation.add_global_mapping_for_keyword(Keyword::MathPi)?;
         compilation.add_global_mapping_for_keyword(Keyword::MathTau)?;
@@ -845,8 +847,9 @@ impl Compiler {
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
-        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, 1000.0)?;
-        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, 1000.0)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, constants::CANVAS_DIM)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, constants::CANVAS_DIM)?;
+        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasSize, constants::CANVAS_DIM)?;
 
         self.compile_global_bind_kw_f32(compilation, Keyword::MathPi, mathutil::PI)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::MathTau, mathutil::TAU)?;
@@ -2914,7 +2917,7 @@ mod tests {
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();
-        assert_eq!(preamble_program.code.len(), 80);
+        assert_eq!(preamble_program.code.len(), 82);
     }
 
     #[test]
@@ -2956,9 +2959,9 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(15),
-                load_const_f32(10.0),
                 store_global(16),
+                load_const_f32(10.0),
+                store_global(17),
                 stop(),
             ]
         );
@@ -2968,11 +2971,11 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(15),
-                load_const_f32(10.0),
                 store_global(16),
-                load_global_i32(15),
+                load_const_f32(10.0),
+                store_global(17),
                 load_global_i32(16),
+                load_global_i32(17),
                 add(),
                 stop(),
             ]
@@ -2985,11 +2988,11 @@ mod tests {
             compile("(fn (foo a: 0 b: 0) (+ a b))"),
             vec![
                 jump(14),
-                load_const_name(224),
+                load_const_name(225),
                 store_arg(0),
                 load_const_f32(0.0),
                 store_arg(1),
-                load_const_name(225),
+                load_const_name(226),
                 store_arg(2),
                 load_const_f32(0.0),
                 store_arg(3),
@@ -3051,11 +3054,11 @@ mod tests {
             ),
             vec![
                 jump(14),
-                load_const_name(224),
+                load_const_name(225),
                 store_arg(0),
                 load_const_f32(99.0),
                 store_arg(1),
-                load_const_name(225),
+                load_const_name(226),
                 store_arg(2),
                 load_const_f32(88.0),
                 store_arg(3),
@@ -3085,8 +3088,8 @@ mod tests {
             vec![
                 jump(1),
                 squish(0),
-                store_global(15),
-                load_global_i32(15),
+                store_global(16),
+                load_global_i32(16),
                 vec_non_empty(),
                 jump_if(12),
                 vec_load_first(),
@@ -3115,7 +3118,7 @@ mod tests {
             ),
             vec![
                 jump(30),
-                load_const_name(247),
+                load_const_name(248),
                 store_arg(0),
                 load_const_f32(4.0),
                 store_arg(1),
@@ -3268,10 +3271,10 @@ mod tests {
             load_const_f32(0.0),
             load_const_f32(0.0),
             native(Native::ColRGB, 4),
-            store_global(15),
+            store_global(16),
             load_const_i32(0),
             load_const_f32(0.5),
-            load_global_i32(15),
+            load_global_i32(16),
             native(Native::ColSetAlpha, 2),
             stop(),
         ];
@@ -3299,11 +3302,11 @@ mod tests {
     fn test_fn_invocation_2() {
         let expected_bytecode = vec![
             jump(14),
-            load_const_name(224),
+            load_const_name(225),
             store_arg(0),
             load_const_f32(99.0),
             store_arg(1),
-            load_const_name(225),
+            load_const_name(226),
             store_arg(2),
             load_const_f32(88.0),
             store_arg(3),
@@ -3313,15 +3316,15 @@ mod tests {
             add(),
             ret(),
             load_const_f32(1.0),
-            store_global(15),
-            load_const_f32(2.0),
             store_global(16),
+            load_const_f32(2.0),
+            store_global(17),
             load_const_i32(1),
             load_const_i32(2),
             call(),
-            load_global_i32(15),
-            store_arg(1),
             load_global_i32(16),
+            store_arg(1),
+            load_global_i32(17),
             store_arg(3),
             load_const_i32(10),
             call_0(),
@@ -3360,11 +3363,11 @@ mod tests {
     fn test_fromname_fn_invocation() {
         let expected_bytecode = vec![
             jump(14),
-            load_const_name(260),
+            load_const_name(261),
             store_arg(0),
             load_const_f32(99.0),
             store_arg(1),
-            load_const_name(247),
+            load_const_name(248),
             store_arg(2),
             load_const_f32(88.0),
             store_arg(3),
@@ -3374,11 +3377,11 @@ mod tests {
             add(),
             ret(),
             load_const_f32(33.0),
-            store_global(15),
+            store_global(16),
             load_const_i32(1),
             load_const_i32(2),
             call(),
-            load_global_i32(15),
+            load_global_i32(16),
             store_arg(1),
             load_const_f32(10.0),
             store_arg(3),

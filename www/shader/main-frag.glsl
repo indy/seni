@@ -11,6 +11,7 @@ varying vec2 vWorldPos;
 uniform sampler2D brush;
 uniform sampler2D mask;
 
+uniform float canvas_dim;
 uniform bool maskInvert;
 uniform bool uOutputLinearColourSpace;
 
@@ -45,7 +46,7 @@ void main(void) {
   } else {
     // all modern scripts should assume correct colour space conversions
     vec4 linearColour = vec4(srgb_to_linear(vColour.rgb), 1.0);
-    vec4 maskTex = texture2D(mask, vWorldPos / 1000.0);
+    vec4 maskTex = texture2D(mask, vWorldPos / canvas_dim);
 
     float maskVal = maskInvert ? 1.0 - maskTex.r : maskTex.r;
 

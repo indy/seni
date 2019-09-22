@@ -49,9 +49,8 @@
 
 
 (bitmap/each from: "skull-c.png"
-             position: [500 500]
-             width: 900
-             height: 900
+             width: (* canvas/width 0.9)
+             height: (* canvas/height 0.9)
              fn: (address-of per-pixel))
 
 (fn (per-pixel colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])

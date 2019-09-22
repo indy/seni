@@ -35,6 +35,7 @@ mod bitmap_cache;
 pub mod colour;
 mod colour_palettes;
 mod compiler;
+pub mod constants;
 mod context;
 mod ease;
 pub mod error;

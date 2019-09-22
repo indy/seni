@@ -12,9 +12,6 @@
 
 (each (per-pixel-func from: per-pixel-funcs)
       (bitmap/each from: texture
-                   position: [500 500]
-                   width: 1000
-                   height: 1000
                    shuffle-seed: 321
                    fn: per-pixel-func))
 

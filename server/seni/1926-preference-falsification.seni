@@ -7,10 +7,7 @@
                          (address-of pass-1)])
 
 (each (per-pixel-func from: per-pixel-funcs)
-      (texture.bitmap/each position: [500 500]
-                           width: 1000
-                           height: 1000
-                           shuffle-seed: 321
+      (texture.bitmap/each shuffle-seed: 321
                            fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])

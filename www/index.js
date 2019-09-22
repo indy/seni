@@ -152,6 +152,9 @@ function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
   shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
   shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
 
+  shader.canvasDimUniform = gl.getUniformLocation(shader.program, 'canvas_dim');
+
+
   shader.maskInvert = gl.getUniformLocation(shader.program, 'maskInvert');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
@@ -331,9 +334,9 @@ const gConfig = {
   Note: sections begin in the top left corner
   (compared to the canvas co-ordinates which begin in the lower left corner)
 */
-function getProjectionMatrixExtents(sectionDim, section) {
-  const pictureWidth = 1000;
-  const pictureHeight = 1000;
+function getProjectionMatrixExtents(canvasDim, sectionDim, section) {
+  const pictureWidth = canvasDim;
+  const pictureHeight = canvasDim;
 
   const sectionWidth = pictureWidth / sectionDim;
   const sectionHeight = pictureHeight / sectionDim;
@@ -438,7 +441,10 @@ class GLRenderer {
     // gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    let [left, right, bottom, top] = getProjectionMatrixExtents(sectionDim, section);
+    // todo: get the canvasDim from the Rust side
+    const canvasDim = 1024.0;
+
+    let [left, right, bottom, top] = getProjectionMatrixExtents(canvasDim, sectionDim, section);
     Matrix.ortho(this.pMatrix, left, right, bottom, top, 10, -10);
 
     gl.uniformMatrix4fv(shader.pMatrixUniform,
@@ -455,6 +461,7 @@ class GLRenderer {
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
     gl.uniform1i(shader.maskInvert, false);
 
+    gl.uniform1f(shader.canvasDimUniform, canvasDim);
 
     const glVertexBuffer = this.glVertexBuffer;
 
