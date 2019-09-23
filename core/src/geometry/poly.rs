@@ -36,10 +36,10 @@ pub fn render(
     }
 
     let (x, y) = coords[0];
-    geometry.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
+    geometry.prepare_to_add_triangle_strip(matrix, num_vertices, x, y)?;
 
-    let last = geometry.render_packets.len() - 1;
-    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
+    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..num_vertices {
         let (x, y) = coords[i];

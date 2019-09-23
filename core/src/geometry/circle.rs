@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
@@ -30,12 +30,12 @@ pub fn render(
     tessellation: usize,
     uvm: &UvMapping,
 ) -> Result<()> {
-    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, position.0, position.1);
+    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, position.0, position.1)?;
 
     let unit_angle = TAU / tessellation as f32;
 
-    let last = geometry.render_packets.len() - 1;
-    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
+    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {
         let angle = unit_angle * i as f32;

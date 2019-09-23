@@ -14,7 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::ease::{easing, Easing};
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
@@ -85,10 +85,10 @@ pub fn render(
     let half_width = (to_m * to_interp) + to_c;
     let v1x = (n1x * half_width) + xs;
     let v1y = (n1y * half_width) + ys;
-    geometry.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y);
-    let last = geometry.render_packets.len() - 1;
+    geometry.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y)?;
 
-    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
+    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..(tessellation - 1) {
         let t_val = t_start + (i as f32 * unit);

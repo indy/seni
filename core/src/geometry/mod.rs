@@ -278,9 +278,8 @@ impl Geometry {
         num_vertices: usize,
         x: f32,
         y: f32,
-    ) {
-        let last = self.render_packets.len() - 1;
-        let rp = &mut self.render_packets[last];
+    ) -> Result<()> {
+        let rp = self.render_packets.last_mut().ok_or(Error::Geometry)?;
 
         match rp {
             RenderPacket::Geometry(rpg) => {
@@ -290,20 +289,23 @@ impl Geometry {
                             "prepare_to_add_triangle_strip trying to add more than {} vertices",
                             RENDER_PACKET_MAX_SIZE
                         );
-                        return;
+                        return Err(Error::Geometry);
                     }
 
                     self.render_packets
                         .push(RenderPacket::new(RPCommand::RenderGeometry));
-                    self.prepare_to_add_triangle_strip(matrix, num_vertices, x, y);
-                    return;
+                    self.prepare_to_add_triangle_strip(matrix, num_vertices, x, y)?;
+                    return Ok(());
                 }
 
                 if !rpg.is_empty() {
                     rpg.form_degenerate_triangle(matrix, x, y);
                 }
+                Ok(())
             }
-            RenderPacket::Mask(_) => {}
+            RenderPacket::Mask(_) => {
+                Ok(())
+            }
         }
     }
 }

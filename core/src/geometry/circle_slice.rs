@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::geometry::Geometry;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
@@ -41,10 +41,10 @@ pub fn render(
     let mut innervx = (r_start.sin() * inner_width) + position.0;
     let mut innervy = (r_start.cos() * inner_height) + position.1;
 
-    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy);
+    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy)?;
 
-    let last = geometry.render_packets.len() - 1;
-    let rpg = geometry.render_packets[last].get_mut_render_packet_geometry()?;
+    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {
         let angle = r_start + (unit_angle * i as f32);
