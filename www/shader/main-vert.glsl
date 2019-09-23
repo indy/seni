@@ -1,18 +1,17 @@
-attribute vec2 aVertexPosition;
-attribute vec4 aVertexColour;
-attribute vec2 aVertexTexture;
+attribute vec2 pos;
+attribute vec4 col;
+attribute vec2 uv;
 
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
+uniform mat4 proj_matrix;
 
-varying vec4 vColour;
-varying vec2 vTextureCoord;
-varying vec2 vWorldPos;
+varying vec4 frag_col;
+varying vec2 frag_uv;
+varying vec2 world_pos;
 
 void main(void) {
-  gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
+  gl_Position = proj_matrix * vec4(pos, 0.0, 1.0);
 
-  vColour = aVertexColour;
-  vTextureCoord = aVertexTexture;
-  vWorldPos = aVertexPosition;
+  frag_col = col;
+  frag_uv = uv;
+  world_pos = pos;
 }

@@ -4,16 +4,16 @@
 
 precision highp float;
 
-varying vec4 vColour;
-varying vec2 vTextureCoord;
-varying vec2 vWorldPos;
+varying vec4 frag_col;
+varying vec2 frag_uv;
+varying vec2 world_pos;
 
 uniform sampler2D brush;
 uniform sampler2D mask;
 
 uniform float canvas_dim;
-uniform bool maskInvert;
-uniform bool uOutputLinearColourSpace;
+uniform bool mask_invert;
+uniform bool output_linear_colour_space;
 
 // https://en.wikipedia.org/wiki/SRGB
 vec3 srgb_to_linear(vec3 srgb) {
@@ -29,30 +29,30 @@ vec3 srgb_to_linear(vec3 srgb) {
 
 
 void main(void) {
-  vec4 brushTex = texture2D(brush, vTextureCoord);
+  vec4 brush_col = texture2D(brush, frag_uv);
 
-  // note: you _never_ want uOutputLinearColourSpace to be set to true
+  // note: you _never_ want output_linear_colour_space to be set to true
   // it's only here because some of the older sketchs didn't correctly
   // convert from linear colour space to sRGB colour space during rendering
   // and this shader needs to reproduce them as intended at time of creation
   //
-  if (uOutputLinearColourSpace) {
+  if (output_linear_colour_space) {
     // purely for legacy, no new development will occur in this branch of the if conditional
     //
-    gl_FragColor.r = brushTex.r * vColour.r * vColour.a;
-    gl_FragColor.g = brushTex.r * vColour.g * vColour.a;
-    gl_FragColor.b = brushTex.r * vColour.b * vColour.a;
-    gl_FragColor.a = brushTex.r * vColour.a;
+    gl_FragColor.r = brush_col.r * frag_col.r * frag_col.a;
+    gl_FragColor.g = brush_col.r * frag_col.g * frag_col.a;
+    gl_FragColor.b = brush_col.r * frag_col.b * frag_col.a;
+    gl_FragColor.a = brush_col.r * frag_col.a;
   } else {
     // all modern scripts should assume correct colour space conversions
-    vec4 linearColour = vec4(srgb_to_linear(vColour.rgb), 1.0);
-    vec4 maskTex = texture2D(mask, vWorldPos / canvas_dim);
+    vec4 linear_col = vec4(srgb_to_linear(frag_col.rgb), 1.0);
+    vec4 mask_col = texture2D(mask, world_pos / canvas_dim);
 
-    float maskVal = maskInvert ? 1.0 - maskTex.r : maskTex.r;
+    float mask_val = mask_invert ? 1.0 - mask_col.r : mask_col.r;
 
-    gl_FragColor.r = brushTex.r * linearColour.r * vColour.a * maskVal;
-    gl_FragColor.g = brushTex.r * linearColour.g * vColour.a * maskVal;
-    gl_FragColor.b = brushTex.r * linearColour.b * vColour.a * maskVal;
-    gl_FragColor.a = brushTex.r * linearColour.a * vColour.a * maskVal;
+    gl_FragColor.r = brush_col.r * linear_col.r * frag_col.a * mask_val;
+    gl_FragColor.g = brush_col.r * linear_col.g * frag_col.a * mask_val;
+    gl_FragColor.b = brush_col.r * linear_col.b * frag_col.a * mask_val;
+    gl_FragColor.a = brush_col.r * linear_col.a * frag_col.a * mask_val;
   }
 }

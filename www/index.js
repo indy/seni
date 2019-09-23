@@ -142,25 +142,24 @@ function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
     return null;
   }
 
-  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
-  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColour');
-  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
+  shader.colourAttribute = gl.getAttribLocation(shader.program, 'col');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
 
-  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
-  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
+  // shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
 
   shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
   shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
 
   shader.canvasDimUniform = gl.getUniformLocation(shader.program, 'canvas_dim');
 
-
-  shader.maskInvert = gl.getUniformLocation(shader.program, 'maskInvert');
+  shader.maskInvert = gl.getUniformLocation(shader.program, 'mask_invert');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
-  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'output_linear_colour_space');
 
   return shader;
 }
@@ -186,17 +185,16 @@ function setupBlitShaders(gl, vertexSrc, fragmentSrc) {
     return null;
   }
 
-  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
-  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
 
-  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
-  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'texture');
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'rendered_image');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
-  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'output_linear_colour_space');
 
   return shader;
 }
@@ -372,7 +370,7 @@ class GLRenderer {
 
     this.glVertexBuffer = gl.createBuffer();
 
-    this.mvMatrix = Matrix.create();
+    // this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
 
     this.renderTexture = createRenderTexture(gl, gConfig);
@@ -451,9 +449,9 @@ class GLRenderer {
                         false,
                         this.pMatrix);
 
-    gl.uniformMatrix4fv(shader.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
+    // gl.uniformMatrix4fv(shader.mvMatrixUniform,
+    //                     false,
+    //                     this.mvMatrix);
 
     gl.uniform1i(shader.brushUniform, TEXTURE_UNIT_BRUSH_TEXTURE);
     gl.uniform1i(shader.maskUniform, TEXTURE_UNIT_MASK_TEXTURE);
@@ -558,10 +556,6 @@ class GLRenderer {
     gl.uniformMatrix4fv(shader.pMatrixUniform,
                         false,
                         this.pMatrix);
-
-    gl.uniformMatrix4fv(shader.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
 
     gl.uniform1i(shader.textureUniform, TEXTURE_UNIT_RENDER_TO_TEXTURE);
 

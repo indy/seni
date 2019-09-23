@@ -1,9 +1,9 @@
 precision highp float;
 
-varying vec2 vTextureCoord;
+varying vec2 frag_uv;
 
-uniform sampler2D texture;
-uniform bool uOutputLinearColourSpace;
+uniform sampler2D rendered_image;
+uniform bool output_linear_colour_space;
 
 // https:en.wikipedia.org/wiki/SRGB
 vec3 linear_to_srgb(vec3 linear) {
@@ -27,16 +27,16 @@ vec3 ToneMapFilmic_Hejl2015(vec3 hdr, float whitePt) {
 
 void main()
 {
-  vec4 col = texture2D( texture, vTextureCoord );
+  vec4 rendered_image_col = texture2D( rendered_image, frag_uv );
 
-  // note: you _never_ want uOutputLinearColourSpace to be set to true
+  // note: you _never_ want output_linear_colour_space to be set to true
   // it's only here because some of the older sketchs didn't correctly
   // convert from linear colour space to sRGB colour space during rendering
   // and this shader needs to reproduce them as intended at time of creation
   //
-  if (uOutputLinearColourSpace) {
-    gl_FragColor = col;
+  if (output_linear_colour_space) {
+    gl_FragColor = rendered_image_col;
   } else {
-    gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
+    gl_FragColor = vec4(linear_to_srgb(rendered_image_col.rgb), 1.0);
   }
 }
