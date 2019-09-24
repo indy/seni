@@ -43,9 +43,8 @@ function compile({ script, genotype }) {
   }
 
   const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
-  const texturesToLoad = JSON.parse(gState.bridge.get_textures_to_load_as_json());
 
-  return [{}, { bitmapsToTransfer, texturesToLoad }];
+  return [{}, { bitmapsToTransfer }];
 }
 
 function receiveBitmapData( { filename, imageData } ) {

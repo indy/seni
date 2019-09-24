@@ -117,13 +117,6 @@ pub fn bitmaps_to_transfer(program: &Program, context: &Context) -> Vec<String> 
     context.bitmap_cache.uncached(bitmap_strings)
 }
 
-pub fn textures_to_load(program: &Program, _context: &Context) -> Vec<String> {
-    // no need to dedupe this here as the host system will take care of that
-    let texture_strings = program.data.texture_strings();
-
-    texture_strings
-}
-
 pub fn build_traits(s: &str) -> Result<TraitList> {
     let (ast, word_lut) = parse(s)?;
     let trait_list = TraitList::compile(&ast, &word_lut)?;

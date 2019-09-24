@@ -145,15 +145,10 @@ function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
   shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
   shader.colourAttribute = gl.getAttribLocation(shader.program, 'col');
   shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
-
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
-  // shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-
   shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
   shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
-
   shader.canvasDimUniform = gl.getUniformLocation(shader.program, 'canvas_dim');
-
   shader.maskInvert = gl.getUniformLocation(shader.program, 'mask_invert');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
@@ -187,7 +182,6 @@ function setupBlitShaders(gl, vertexSrc, fragmentSrc) {
 
   shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
   shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
-
   shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
   shader.textureUniform  = gl.getUniformLocation(shader.program, 'rendered_image');
 
@@ -229,24 +223,6 @@ function textureUnitToGl(gl, unit) {
   };
 
   return texUnit;
-}
-
-function handleTextureLoaded(gl, image, unit) {
-  const texture = gl.createTexture();
-
-  let texUnit = textureUnitToGl(gl, unit);
-
-  gl.activeTexture(texUnit);
-
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-                   gl.LINEAR_MIPMAP_NEAREST);
-  gl.generateMipmap(gl.TEXTURE_2D);
-
-  return texture;
 }
 
 function createRenderTexture(gl, config) {
@@ -399,26 +375,40 @@ class GLRenderer {
   }
 
   async ensureTexture(unit, src) {
-    let that = this;
-
     let normalized_src = normalize_bitmap_url(src);
+    let texUnit = textureUnitToGl(this.gl, unit);
 
-    if (that.loadedTextureCache[normalized_src] === undefined) {
-      let image = await that.loadImage(normalized_src);
-      const texture = handleTextureLoaded(that.gl, image, unit);
-      that.loadedTextureCache[normalized_src] = texture;
+    if (this.loadedTextureCache[normalized_src] === undefined) {
+      // console.log(`ensureTexture loading: ${normalized_src}`);
+      let image = await this.loadImage(normalized_src);
+
+      let gl = this.gl;
+
+      const texture = gl.createTexture();
+
+      gl.activeTexture(texUnit);
+
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+                       gl.LINEAR_MIPMAP_NEAREST);
+      gl.generateMipmap(gl.TEXTURE_2D);
+
+      this.loadedTextureCache[normalized_src] = texture;
     }
 
-    const texture = that.loadedTextureCache[normalized_src];
-    return new Promise((resolve, reject) => {
-      let texUnit = textureUnitToGl(that.gl, unit);
-      that.gl.activeTexture(texUnit);
-      that.gl.bindTexture(that.gl.TEXTURE_2D, texture);
-      resolve(texture);
-    });
+    const texture = this.loadedTextureCache[normalized_src];
+    this.gl.activeTexture(texUnit);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
   }
 
   async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, sectionDim, section) {
+    let that = this;
+    const RPCommand_RenderGeometry = 1;
+    const RPCommand_SetMask = 2;
+
     const gl = this.gl;
 
     let shader = this.sketchShader;
@@ -449,10 +439,6 @@ class GLRenderer {
                         false,
                         this.pMatrix);
 
-    // gl.uniformMatrix4fv(shader.mvMatrixUniform,
-    //                     false,
-    //                     this.mvMatrix);
-
     gl.uniform1i(shader.brushUniform, TEXTURE_UNIT_BRUSH_TEXTURE);
     gl.uniform1i(shader.maskUniform, TEXTURE_UNIT_MASK_TEXTURE);
 
@@ -470,19 +456,10 @@ class GLRenderer {
     const textureItemSize = 2;
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
-    const RPCommand_RenderGeometry = 1;
-    const RPCommand_SetMask = 2;
+    await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
-
-    let that = this;
-
-    let texture_INITIAL = await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
-
-    // let texUnitA = textureUnitToGl(that.gl, TEXTURE_UNIT_MASK_TEXTURE);
-    // that.gl.activeTexture(texUnitA);
-    // that.gl.bindTexture(that.gl.TEXTURE_2D, texture_INITIAL);
-
-    buffers.forEach(async buffer => {
+    for(let b = 0; b < buffers.length; b++) {
+      let buffer = buffers[b];
       switch(buffer.command) {
       case RPCommand_RenderGeometry:
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
@@ -508,18 +485,11 @@ class GLRenderer {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
         break;
       case RPCommand_SetMask:
+        await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
         gl.uniform1i(shader.maskInvert, buffer.mask_invert);
-        let texture = await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
-
-        // this doesn't work, these lines have to be in a promise. I don't know why but it just is
-        //
-        // let texUnit = textureUnitToGl(that.gl, TEXTURE_UNIT_MASK_TEXTURE);
-        // that.gl.activeTexture(texUnit);
-        // that.gl.bindTexture(that.gl.TEXTURE_2D, texture);
-
         break;
       }
-    });
+    }
   }
 
   renderTextureToScreen(meta, canvasWidth, canvasHeight) {
@@ -1703,6 +1673,14 @@ function loadBitmapImageData(url) {
   });
 }
 
+function sleepy(timeout) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve();
+    }, timeout);
+  });
+}
+
 function normalize_bitmap_url(url) {
   const re = /^[\w-/]+.png/;
 
@@ -1744,13 +1722,7 @@ async function renderJob(parameters) {
   // request a compile job but make sure to retain the worker as it will be performing the rendering
   //
   parameters.__retain = true;
-  const { bitmapsToTransfer, texturesToLoad, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
-
-  // ensure that any required textures have been loaded
-  //
-  texturesToLoad.map(async filename => {
-    await gGLRenderer.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, filename);
-  });
+  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
 
   // convert each bitmap path to a function that returns a promise
   //
@@ -2435,7 +2407,6 @@ async function main() {
 
   try {
     await gGLRenderer.ensureTexture(TEXTURE_UNIT_BRUSH_TEXTURE, 'brush.png');
-    await gGLRenderer.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
     setupUI(controller);
 

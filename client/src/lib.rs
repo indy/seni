@@ -25,7 +25,7 @@ use wasm_bindgen::prelude::*;
 use core::{
     bitmaps_to_transfer, build_traits, next_generation, program_from_source,
     program_from_source_and_genotype, run_program_with_preamble, simplified_unparse,
-    textures_to_load, unparse,
+    unparse,
 };
 use core::{BitmapInfo, Context, Genotype, Packable, Program, RenderPacketMask, TraitList, Vm};
 
@@ -173,16 +173,6 @@ impl Bridge {
         if let Some(program) = &self.program {
             let bitmaps_to_transfer = bitmaps_to_transfer(program, &self.context);
             vec_strings_as_json(&bitmaps_to_transfer)
-        } else {
-            "[]".to_string()
-        }
-    }
-
-    // return the list of textures to load onto the GPU
-    pub fn get_textures_to_load_as_json(&self) -> String {
-        if let Some(program) = &self.program {
-            let textures_to_load = textures_to_load(program, &self.context);
-            vec_strings_as_json(&textures_to_load)
         } else {
             "[]".to_string()
         }

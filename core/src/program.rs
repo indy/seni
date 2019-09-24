@@ -338,14 +338,6 @@ impl Data {
             .collect()
     }
 
-    pub fn texture_strings(&self) -> Vec<String> {
-        self.strings
-            .values()
-            .cloned()
-            .filter(|s| s.starts_with("mask/") && s.ends_with(".png")) // hack
-            .collect()
-    }
-
     pub fn string_from_iname(&self, iname: Iname) -> Result<String> {
         match self.strings.get(&iname) {
             Some(s) => Ok(s.to_string()),
