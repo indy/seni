@@ -19,7 +19,8 @@
 importScripts('client.js');
 
 // global state
-let gState = {};
+let seniBridge = undefined;
+let seniMemory = undefined;
 
 const jobRender_1_Compile = 'RENDER_1_COMPILE';
 const jobRender_2_ReceiveBitmapData = 'RENDER_2_RECEIVEBITMAPDATA';
@@ -36,13 +37,13 @@ const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
 function compile({ script, genotype }) {
   if (genotype) {
     // console.log("render: using a genotype");
-    gState.bridge.compile_program_from_source_and_genotype(script, genotype);
+    seniBridge.compile_program_from_source_and_genotype(script, genotype);
 
   } else {
-    gState.bridge.compile_program_from_source(script);
+    seniBridge.compile_program_from_source(script);
   }
 
-  const bitmapsToTransfer = JSON.parse(gState.bridge.get_bitmap_transfers_as_json());
+  const bitmapsToTransfer = JSON.parse(seniBridge.get_bitmap_transfers_as_json());
 
   return [{}, { bitmapsToTransfer }];
 }
@@ -55,7 +56,7 @@ function receiveBitmapData( { filename, imageData } ) {
     pixels.push(imageData.data[i]);
   }
 
-  gState.bridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
+  seniBridge.add_rgba_bitmap(filename, imageData.width, imageData.height, pixels);
 
   return [{}, { result: "shabba" }];
 }
@@ -66,15 +67,15 @@ const RPCommand_SetMask = 2;
 function renderPackets({  }) {
   const buffers = [];
 
-  const numRenderPackets = gState.bridge.run_program();
+  const numRenderPackets = seniBridge.run_program();
 
   for (let i = 0; i < numRenderPackets; i++) {
     const buffer = {};
-    buffer.command = gState.bridge.get_render_packet_command(i);
+    buffer.command = seniBridge.rp_command(i);
 
     switch (buffer.command) {
     case RPCommand_RenderGeometry:
-      const renderPacketGeometry = gState.bridge.get_render_packet_geometry(i);
+      const renderPacketGeometry = seniBridge.rp_geometry(i);
 
       buffer.geo_len = renderPacketGeometry.get_geo_len();
       buffer.geo_ptr = renderPacketGeometry.get_geo_ptr();
@@ -82,7 +83,7 @@ function renderPackets({  }) {
       renderPacketGeometry.free();
       break;
     case RPCommand_SetMask:
-      const renderPacketMask = gState.bridge.get_render_packet_mask(i);
+      const renderPacketMask = seniBridge.rp_mask(i);
 
       buffer.mask_filename = renderPacketMask.get_filename();
       buffer.mask_invert = renderPacketMask.get_invert();
@@ -99,10 +100,10 @@ function renderPackets({  }) {
 
   const meta = {
     title: '',
-    output_linear_colour_space: gState.bridge.output_linear_colour_space()
+    output_linear_colour_space: seniBridge.output_linear_colour_space()
   };
 
-  gState.bridge.script_cleanup();
+  seniBridge.script_cleanup();
 
   // make a copy of the wasm memory
   //
@@ -113,20 +114,20 @@ function renderPackets({  }) {
   // WTF note: Expected a perfomance cost in Chrome due to the slice operation
   // but it seemed to either have no effect or to make the rendering faster!
   //
-  const wasmMemory = gState.memory.buffer;
+  const wasmMemory = seniMemory.buffer;
   const memory = wasmMemory.slice();
 
   return [{}, { meta, memory, buffers }];
 }
 
 function unparse({ script, genotype }) {
-  const newScript = gState.bridge.unparse_with_genotype(script, genotype);
+  const newScript = seniBridge.unparse_with_genotype(script, genotype);
 
   return [{}, { script: newScript }];
 }
 
 function buildTraits({ script }) {
-  const traits = gState.bridge.build_traits(script);
+  const traits = seniBridge.build_traits(script);
   const validTraits = traits !== "";
 
   return [{}, { validTraits, traits }];
@@ -138,7 +139,7 @@ function getGenotypesFromWasm(populationSize) {
   let s;
 
   for (let i = 0; i < populationSize; i++) {
-    s = gState.bridge.get_genotype(i);
+    s = seniBridge.get_genotype(i);
     if (s === "") {
       console.error(`getGenotypesFromWasm: error getting genotype: ${i}`);
     }
@@ -151,7 +152,7 @@ function getGenotypesFromWasm(populationSize) {
 function createInitialGeneration({ populationSize, traits }) {
   const seed = Math.floor(Math.random() * 1024);
 
-  gState.bridge.create_initial_generation(traits, populationSize, seed);
+  seniBridge.create_initial_generation(traits, populationSize, seed);
 
   const genotypes = getGenotypesFromWasm(populationSize);
 
@@ -159,7 +160,7 @@ function createInitialGeneration({ populationSize, traits }) {
 }
 
 function singleGenotypeFromSeed({ seed, traits }) {
-  gState.bridge.single_genotype_from_seed(traits, seed);
+  seniBridge.single_genotype_from_seed(traits, seed);
 
   const genotypes = getGenotypesFromWasm(1);
 
@@ -167,20 +168,20 @@ function singleGenotypeFromSeed({ seed, traits }) {
 }
 
 function simplifyScript({ script }) {
-  const newScript = gState.bridge.simplify_script(script);
+  const newScript = seniBridge.simplify_script(script);
 
   return [{}, { script: newScript }];
 }
 
 function newGeneration({genotypes, populationSize, traits, mutationRate, rng}) {
-  gState.bridge.next_generation_prepare();
+  seniBridge.next_generation_prepare();
   for (let i = 0; i < genotypes.length; i++) {
-    gState.bridge.next_generation_add_genotype(genotypes[i]);
+    seniBridge.next_generation_add_genotype(genotypes[i]);
   }
 
-  gState.bridge.next_generation_build(traits,
-                                      genotypes.length, populationSize,
-                                      mutationRate, rng);
+  seniBridge.next_generation_build(traits,
+                                   genotypes.length, populationSize,
+                                   mutationRate, rng);
 
   const newGenotypes = getGenotypesFromWasm(populationSize);
 
@@ -198,12 +199,12 @@ const options = {
 /*
   function freeModule() {
 
-  Module._free(gState.bridge.ptr);
-  Module._free(gState.bridge.vbuf);
-  Module._free(gState.bridge.cbuf);
-  Module._free(gState.bridge.tbuf);
+  Module._free(seniBridge.ptr);
+  Module._free(seniBridge.vbuf);
+  Module._free(seniBridge.cbuf);
+  Module._free(seniBridge.tbuf);
 
-  gState.bridge.senShutdown();
+  seniBridge.senShutdown();
   }
 */
 
@@ -247,8 +248,8 @@ function messageHandler(type, data) {
   postMessage will always return an array of two items: [status, result]
 
   status = {
-    error: { message: "something fucked up" }
-    systemInitialised: true
+  error: { message: "something fucked up" }
+  systemInitialised: true
   }
 */
 
@@ -284,8 +285,8 @@ wasm_bindgen('./client_bg.wasm')
 
     init_client_system();
 
-    gState.bridge = new Bridge();
-    gState.memory = client_bg.memory;
+    seniBridge = new Bridge();
+    seniMemory = client_bg.memory;
 
     // send the job system an initialised message so
     // that it can start sending jobs to this worker

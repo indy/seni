@@ -169,7 +169,8 @@ pub mod tests {
 
         assert_eq!(1, context.geometry.get_num_render_packets() as i32);
 
-        let num_floats = context.get_render_packet_geo_len(0).unwrap();
+        let geo = context.get_render_packet_geometry(0).unwrap();
+        let num_floats = geo.get_geo_len();
         let floats_per_vert = 8;
         assert_eq!(expected_num_verts, num_floats / floats_per_vert);
     }

@@ -234,7 +234,7 @@ impl Bridge {
 
     // --------------------------------------------------------------------------------
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
+    pub fn rp_command(&self, packet_number: usize) -> i32 {
         let command = self
             .context
             .get_render_packet_command(packet_number)
@@ -243,12 +243,12 @@ impl Bridge {
         command as i32
     }
 
-    pub fn get_render_packet_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
+    pub fn rp_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
         let rpm = self.context.get_render_packet_mask(packet_number).unwrap();
         RenderPacketMaskWasm::from(rpm)
     }
 
-    pub fn get_render_packet_geometry(&self, packet_number: usize) -> RenderPacketGeometryWasm {
+    pub fn rp_geometry(&self, packet_number: usize) -> RenderPacketGeometryWasm {
         let geometry = self
             .context
             .get_render_packet_geometry(packet_number)
