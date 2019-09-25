@@ -74,14 +74,20 @@ function renderPackets({  }) {
 
     switch (buffer.command) {
     case RPCommand_RenderGeometry:
-      buffer.geo_len = gState.bridge.get_render_packet_geo_len(i);
-      buffer.geo_ptr = gState.bridge.get_render_packet_geo_ptr(i);
+      const renderPacketGeometry = gState.bridge.get_render_packet_geometry(i);
+
+      buffer.geo_len = renderPacketGeometry.get_geo_len();
+      buffer.geo_ptr = renderPacketGeometry.get_geo_ptr();
+
+      renderPacketGeometry.free();
       break;
     case RPCommand_SetMask:
       const renderPacketMask = gState.bridge.get_render_packet_mask(i);
 
       buffer.mask_filename = renderPacketMask.get_filename();
       buffer.mask_invert = renderPacketMask.get_invert();
+
+      renderPacketMask.free();
       break;
     default:
       console.error(`unknown buffer command: ${buffer.command}`);

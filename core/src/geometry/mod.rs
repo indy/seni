@@ -185,61 +185,32 @@ impl Geometry {
         Ok(())
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<i32> {
+    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<RPCommand> {
         let rp = &self.render_packets[packet_number];
         let res = match rp {
             RenderPacket::Geometry(_) => RPCommand::RenderGeometry,
             RenderPacket::Mask(_) => RPCommand::SetMask,
         };
 
-        Ok(res as i32)
+        Ok(res)
+    }
+
+    pub fn get_render_packet_geometry(
+        &self,
+        packet_number: usize,
+    ) -> Result<&RenderPacketGeometry> {
+        let rp = &self.render_packets[packet_number];
+        match rp {
+            RenderPacket::Geometry(rpg) => Ok(rpg),
+            _ => Err(Error::Geometry),
+        }
     }
 
     pub fn get_render_packet_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
         let rp = &self.render_packets[packet_number];
         match rp {
-            RenderPacket::Geometry(_) => Err(Error::Geometry),
             RenderPacket::Mask(rpm) => Ok(rpm),
-        }
-    }
-
-    pub fn get_render_packet_mask_filename(&self, packet_number: usize) -> Result<String> {
-        match &self.render_packets[packet_number] {
-            RenderPacket::Geometry(_) => {
-                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Mask");
-                Err(Error::Geometry)
-            }
-            RenderPacket::Mask(rpm) => Ok(rpm.filename.clone()),
-        }
-    }
-
-    pub fn get_render_packet_mask_invert(&self, packet_number: usize) -> Result<bool> {
-        match &self.render_packets[packet_number] {
-            RenderPacket::Geometry(_) => {
-                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Mask");
-                Err(Error::Geometry)
-            }
-            RenderPacket::Mask(rpm) => Ok(rpm.invert),
-        }
-    }
-
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> Result<usize> {
-        match &self.render_packets[packet_number] {
-            RenderPacket::Geometry(rpg) => Ok(rpg.geo.len()),
-            RenderPacket::Mask(_) => {
-                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Geometry");
-                Err(Error::Geometry)
-            }
-        }
-    }
-
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> Result<*const f32> {
-        match &self.render_packets[packet_number] {
-            RenderPacket::Geometry(rpg) => Ok(rpg.geo.as_ptr() as *const f32),
-            RenderPacket::Mask(_) => {
-                error!("geometry::get_render_packet_mask_filename expected RenderPacket::Geometry");
-                Err(Error::Geometry)
-            }
+            _ => Err(Error::Geometry),
         }
     }
 
@@ -303,9 +274,7 @@ impl Geometry {
                 }
                 Ok(())
             }
-            RenderPacket::Mask(_) => {
-                Ok(())
-            }
+            RenderPacket::Mask(_) => Ok(()),
         }
     }
 }

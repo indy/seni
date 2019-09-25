@@ -30,7 +30,12 @@ pub fn render(
     tessellation: usize,
     uvm: &UvMapping,
 ) -> Result<()> {
-    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, position.0, position.1)?;
+    geometry.prepare_to_add_triangle_strip(
+        matrix,
+        (tessellation * 2) + 2,
+        position.0,
+        position.1,
+    )?;
 
     let unit_angle = TAU / tessellation as f32;
 

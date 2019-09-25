@@ -24,10 +24,12 @@ use wasm_bindgen::prelude::*;
 
 use core::{
     bitmaps_to_transfer, build_traits, next_generation, program_from_source,
-    program_from_source_and_genotype, run_program_with_preamble, simplified_unparse,
-    unparse,
+    program_from_source_and_genotype, run_program_with_preamble, simplified_unparse, unparse,
 };
-use core::{BitmapInfo, Context, Genotype, Packable, Program, RenderPacketMask, TraitList, Vm};
+use core::{
+    BitmapInfo, Context, Genotype, Packable, Program, RenderPacketGeometry, RenderPacketMask,
+    TraitList, Vm,
+};
 
 use log::{error, info};
 
@@ -65,6 +67,32 @@ cfg_if! {
         extern crate wee_alloc;
         #[global_allocator]
         static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+    }
+}
+
+#[wasm_bindgen]
+pub struct RenderPacketGeometryWasm {
+    geo_len: usize,
+    geo_ptr: *const f32,
+}
+
+#[wasm_bindgen]
+impl RenderPacketGeometryWasm {
+    pub fn get_geo_len(&self) -> usize {
+        self.geo_len
+    }
+
+    pub fn get_geo_ptr(&self) -> *const f32 {
+        self.geo_ptr
+    }
+}
+
+impl From<&RenderPacketGeometry> for RenderPacketGeometryWasm {
+    fn from(rp: &RenderPacketGeometry) -> RenderPacketGeometryWasm {
+        RenderPacketGeometryWasm {
+            geo_len: rp.get_geo_len(),
+            geo_ptr: rp.get_geo_ptr(),
+        }
     }
 }
 
@@ -207,9 +235,12 @@ impl Bridge {
     // --------------------------------------------------------------------------------
 
     pub fn get_render_packet_command(&self, packet_number: usize) -> i32 {
-        self.context
+        let command = self
+            .context
             .get_render_packet_command(packet_number)
-            .unwrap()
+            .unwrap();
+
+        command as i32
     }
 
     pub fn get_render_packet_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
@@ -217,20 +248,12 @@ impl Bridge {
         RenderPacketMaskWasm::from(rpm)
     }
 
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> usize {
-        // info!("get_render_packet_geo_len");
-
-        self.context
-            .get_render_packet_geo_len(packet_number)
-            .unwrap()
-    }
-
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> *const f32 {
-        // info!("get_render_packet_geo_ptr");
-
-        self.context
-            .get_render_packet_geo_ptr(packet_number)
-            .unwrap()
+    pub fn get_render_packet_geometry(&self, packet_number: usize) -> RenderPacketGeometryWasm {
+        let geometry = self
+            .context
+            .get_render_packet_geometry(packet_number)
+            .unwrap();
+        RenderPacketGeometryWasm::from(geometry)
     }
 
     pub fn add_rgba_bitmap(&mut self, name: &str, width: usize, height: usize, data: Vec<u8>) {

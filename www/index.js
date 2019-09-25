@@ -85,10 +85,12 @@ const Matrix = {
 // --------------------------------------------------------------------------------
 // renderer
 
-
 const TEXTURE_UNIT_RENDER_TO_TEXTURE = 0;
 const TEXTURE_UNIT_BRUSH_TEXTURE = 1;
 const TEXTURE_UNIT_MASK_TEXTURE = 2;
+
+const RPCommand_RenderGeometry = 1;
+const RPCommand_SetMask = 2;
 
 function initGL(canvas) {
   try {
@@ -405,10 +407,6 @@ class GLRenderer {
   }
 
   async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, sectionDim, section) {
-    let that = this;
-    const RPCommand_RenderGeometry = 1;
-    const RPCommand_SetMask = 2;
-
     const gl = this.gl;
 
     let shader = this.sketchShader;
@@ -456,7 +454,7 @@ class GLRenderer {
     const textureItemSize = 2;
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
-    await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
+    await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
     for(let b = 0; b < buffers.length; b++) {
       let buffer = buffers[b];
@@ -485,7 +483,7 @@ class GLRenderer {
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
         break;
       case RPCommand_SetMask:
-        await that.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
+        await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
         gl.uniform1i(shader.maskInvert, buffer.mask_invert);
         break;
       }

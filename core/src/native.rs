@@ -3068,7 +3068,10 @@ fn bitmap_each_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
         // input arguments
         vec![
             (Keyword::From, Var::Bool(false)),
-            (Keyword::Position, Var::V2D(constants::CANVAS_DIM / 2.0, constants::CANVAS_DIM / 2.0)),
+            (
+                Keyword::Position,
+                Var::V2D(constants::CANVAS_DIM / 2.0, constants::CANVAS_DIM / 2.0),
+            ),
             (Keyword::Width, Var::Float(constants::CANVAS_DIM)),
             (Keyword::Height, Var::Float(constants::CANVAS_DIM)),
             (Keyword::Fn, Var::Bool(false)),

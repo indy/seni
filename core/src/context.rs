@@ -59,7 +59,7 @@ impl Context {
         self.geometry.set_mask(mask_filename, invert)
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<i32> {
+    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<geometry::RPCommand> {
         self.geometry.get_render_packet_command(packet_number)
     }
 
@@ -70,12 +70,11 @@ impl Context {
         self.geometry.get_render_packet_mask(packet_number)
     }
 
-    pub fn get_render_packet_geo_len(&self, packet_number: usize) -> Result<usize> {
-        self.geometry.get_render_packet_geo_len(packet_number)
-    }
-
-    pub fn get_render_packet_geo_ptr(&self, packet_number: usize) -> Result<*const f32> {
-        self.geometry.get_render_packet_geo_ptr(packet_number)
+    pub fn get_render_packet_geometry(
+        &self,
+        packet_number: usize,
+    ) -> Result<&geometry::RenderPacketGeometry> {
+        self.geometry.get_render_packet_geometry(packet_number)
     }
 
     pub fn render_line(
