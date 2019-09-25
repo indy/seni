@@ -63,6 +63,7 @@ function receiveBitmapData( { filename, imageData } ) {
 
 const RPCommand_RenderGeometry = 1;
 const RPCommand_SetMask = 2;
+const RPCommand_LinearColourSpace = 3;
 
 function renderPackets({  }) {
   const buffers = [];
@@ -90,6 +91,11 @@ function renderPackets({  }) {
 
       renderPacketMask.free();
       break;
+    case RPCommand_LinearColourSpace:
+      const linearColourSpace = seniBridge.rp_linear_colour_space(i);
+
+      buffer.linearColourSpace = linearColourSpace;
+      break;
     default:
       console.error(`unknown buffer command: ${buffer.command}`);
       break;
@@ -99,8 +105,7 @@ function renderPackets({  }) {
   };
 
   const meta = {
-    title: '',
-    output_linear_colour_space: seniBridge.output_linear_colour_space()
+    title: ''
   };
 
   seniBridge.script_cleanup();

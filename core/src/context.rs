@@ -29,7 +29,6 @@ pub struct Context {
     pub mappings: Mappings,
     pub geometry: geometry::Geometry,
     pub bitmap_cache: BitmapCache,
-    pub output_linear_colour_space: bool,
 }
 
 impl Default for Context {
@@ -39,7 +38,6 @@ impl Default for Context {
             mappings: Default::default(),
             geometry: Default::default(),
             bitmap_cache: Default::default(),
-            output_linear_colour_space: false,
         }
     }
 }
@@ -52,15 +50,24 @@ impl Context {
     pub fn reset_for_piece(&mut self) {
         self.matrix_stack.reset();
         self.geometry.reset();
-        self.output_linear_colour_space = false;
     }
 
-    pub fn set_mask(&mut self, mask_filename: &str, invert: bool) -> Result<()> {
-        self.geometry.set_mask(mask_filename, invert)
+    pub fn push_rp_mask(&mut self, render_packet_mask: geometry::RenderPacketMask) -> Result<()> {
+        self.geometry.push_rp_mask(render_packet_mask)
+    }
+
+    pub fn push_rp_linear_colour_space(&mut self, linear_colour_space: bool) -> Result<()> {
+        self.geometry
+            .push_rp_linear_colour_space(linear_colour_space)
     }
 
     pub fn get_render_packet_command(&self, packet_number: usize) -> Result<geometry::RPCommand> {
         self.geometry.get_render_packet_command(packet_number)
+    }
+
+    pub fn get_render_packet_linear_colour_space(&self, packet_number: usize) -> Result<bool> {
+        self.geometry
+            .get_render_packet_linear_colour_space(packet_number)
     }
 
     pub fn get_render_packet_mask(

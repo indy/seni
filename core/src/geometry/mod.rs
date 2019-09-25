@@ -45,26 +45,21 @@ pub struct RenderPacketMask {
 pub enum RenderPacket {
     Geometry(RenderPacketGeometry),
     Mask(RenderPacketMask),
+    LinearColourSpace(bool),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RPCommand {
     RenderGeometry = 1,
     SetMask = 2,
+    LinearColourSpace = 3,
 }
 
 impl RenderPacket {
-    pub fn new(command: RPCommand) -> RenderPacket {
-        match command {
-            RPCommand::RenderGeometry => RenderPacket::Geometry(RenderPacketGeometry::new()),
-            RPCommand::SetMask => RenderPacket::Mask(RenderPacketMask::new()),
-        }
-    }
-
     pub fn get_mut_render_packet_geometry(&mut self) -> Result<&mut RenderPacketGeometry> {
         match self {
             RenderPacket::Geometry(rpg) => Ok(rpg),
-            RenderPacket::Mask(_) => Err(Error::Geometry),
+            _ => Err(Error::Geometry),
         }
     }
 }
@@ -157,8 +152,7 @@ pub struct Geometry {
 impl Default for Geometry {
     fn default() -> Geometry {
         let mut render_packets: Vec<RenderPacket> = Vec::new();
-        render_packets.push(RenderPacket::new(RPCommand::RenderGeometry));
-
+        render_packets.push(RenderPacket::Geometry(RenderPacketGeometry::new()));
         Geometry { render_packets }
     }
 }
@@ -167,20 +161,19 @@ impl Geometry {
     pub fn reset(&mut self) {
         self.render_packets.clear();
         self.render_packets
-            .push(RenderPacket::new(RPCommand::RenderGeometry))
+            .push(RenderPacket::Geometry(RenderPacketGeometry::new()))
     }
 
-    pub fn set_mask(&mut self, mask_filename: &str, invert: bool) -> Result<()> {
-        // push a SET_MASK render packet
-        let mut render_packet_mask = RenderPacketMask::new();
-        render_packet_mask.filename = mask_filename.to_string();
-        render_packet_mask.invert = invert;
-
+    pub fn push_rp_mask(&mut self, render_packet_mask: RenderPacketMask) -> Result<()> {
         self.render_packets
             .push(RenderPacket::Mask(render_packet_mask));
-        // push a GEOMETRY render packet
+
+        Ok(())
+    }
+
+    pub fn push_rp_linear_colour_space(&mut self, linear_colour_space: bool) -> Result<()> {
         self.render_packets
-            .push(RenderPacket::new(RPCommand::RenderGeometry));
+            .push(RenderPacket::LinearColourSpace(linear_colour_space));
 
         Ok(())
     }
@@ -190,6 +183,7 @@ impl Geometry {
         let res = match rp {
             RenderPacket::Geometry(_) => RPCommand::RenderGeometry,
             RenderPacket::Mask(_) => RPCommand::SetMask,
+            RenderPacket::LinearColourSpace(_) => RPCommand::LinearColourSpace,
         };
 
         Ok(res)
@@ -214,6 +208,14 @@ impl Geometry {
         }
     }
 
+    pub fn get_render_packet_linear_colour_space(&self, packet_number: usize) -> Result<bool> {
+        let rp = &self.render_packets[packet_number];
+        match rp {
+            RenderPacket::LinearColourSpace(linear_colour_space) => Ok(*linear_colour_space),
+            _ => Err(Error::Geometry),
+        }
+    }
+
     // the one place for cleaning up the render packets before they're sent off for rendering
     // do it here rather than spreading the complexity throughout all of the different commands
     //
@@ -221,6 +223,7 @@ impl Geometry {
         self.render_packets.retain(|rp| match rp {
             RenderPacket::Geometry(rpg) => !rpg.geo.is_empty(),
             RenderPacket::Mask(_) => true,
+            RenderPacket::LinearColourSpace(_) => true,
         });
 
         // for (index, rp) in self.render_packets.iter().enumerate() {
@@ -264,8 +267,7 @@ impl Geometry {
                     }
 
                     self.render_packets
-                        .push(RenderPacket::new(RPCommand::RenderGeometry));
-                    self.prepare_to_add_triangle_strip(matrix, num_vertices, x, y)?;
+                        .push(RenderPacket::Geometry(RenderPacketGeometry::new()));
                     return Ok(());
                 }
 
@@ -274,7 +276,11 @@ impl Geometry {
                 }
                 Ok(())
             }
-            RenderPacket::Mask(_) => Ok(()),
+            _ => {
+                self.render_packets
+                    .push(RenderPacket::Geometry(RenderPacketGeometry::new()));
+                return Ok(());
+            }
         }
     }
 }

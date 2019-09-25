@@ -91,6 +91,7 @@ const TEXTURE_UNIT_MASK_TEXTURE = 2;
 
 const RPCommand_RenderGeometry = 1;
 const RPCommand_SetMask = 2;
+const RPCommand_LinearColourSpace = 3;
 
 function initGL(canvas) {
   try {
@@ -440,6 +441,8 @@ class GLRenderer {
     gl.uniform1i(shader.brushUniform, TEXTURE_UNIT_BRUSH_TEXTURE);
     gl.uniform1i(shader.maskUniform, TEXTURE_UNIT_MASK_TEXTURE);
 
+    // setting output_linear_colour_space in meta because the blit shader also requires it
+    meta.output_linear_colour_space = false;
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
     gl.uniform1i(shader.maskInvert, false);
 
@@ -486,6 +489,13 @@ class GLRenderer {
         await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
         gl.uniform1i(shader.maskInvert, buffer.mask_invert);
         break;
+      case RPCommand_LinearColourSpace:
+        // setting output_linear_colour_space in meta because the blit shader also requires it
+        meta.output_linear_colour_space = buffer.linearColourSpace;
+        gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+        break;
+      default:
+        console.error(`unknown RenderPacket command ${command}`);
       }
     }
   }

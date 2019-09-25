@@ -228,10 +228,6 @@ impl Bridge {
         }
     }
 
-    pub fn output_linear_colour_space(&self) -> bool {
-        self.context.output_linear_colour_space
-    }
-
     // --------------------------------------------------------------------------------
 
     pub fn rp_command(&self, packet_number: usize) -> i32 {
@@ -241,6 +237,15 @@ impl Bridge {
             .unwrap();
 
         command as i32
+    }
+
+    pub fn rp_linear_colour_space(&self, packet_number: usize) -> bool {
+        let linear_colour_space = self
+            .context
+            .get_render_packet_linear_colour_space(packet_number)
+            .unwrap();
+
+        linear_colour_space
     }
 
     pub fn rp_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {

@@ -20,6 +20,7 @@ use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::focal;
+use crate::geometry::RenderPacketMask;
 use crate::iname::Iname;
 use crate::interp;
 use crate::keywords::Keyword;
@@ -801,7 +802,7 @@ fn meta_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 
     if is_arg_given(default_mask, 1) {
         let scalar: f32 = vm.stack_peek(1)?;
-        context.output_linear_colour_space = scalar > 0.0;
+        context.push_rp_linear_colour_space(scalar > 0.0)?;
     }
 
     Ok(None)
@@ -3239,10 +3240,12 @@ fn mask_set_execute(vm: &mut Vm, context: &mut Context, program: &Program) -> Re
     let from: Iname = vm.stack_peek(1)?;
     let invert_f32: f32 = vm.stack_peek(2)?; // hacky: should just work with a boolean
 
-    let invert: bool = invert_f32 > 0.0;
+    let render_packet_mask = RenderPacketMask {
+        filename: program.data.string_from_iname(from)?,
+        invert: invert_f32 > 0.0,
+    };
 
-    let mask_filename = program.data.string_from_iname(from)?;
-    context.set_mask(&mask_filename, invert)?;
+    context.push_rp_mask(render_packet_mask)?;
 
     Ok(None)
 }
