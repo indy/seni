@@ -702,6 +702,7 @@ impl Compiler {
     }
 
     fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
+        compilation.add_global_mapping_for_keyword(Keyword::CanvasCentre)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
         compilation.add_global_mapping_for_keyword(Keyword::CanvasSize)?;
@@ -847,6 +848,12 @@ impl Compiler {
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
+        self.compile_global_bind_kw_v2d(
+            compilation,
+            Keyword::CanvasCentre,
+            constants::CANVAS_DIM,
+            constants::CANVAS_DIM,
+        )?;
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, constants::CANVAS_DIM)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, constants::CANVAS_DIM)?;
         self.compile_global_bind_kw_f32(compilation, Keyword::CanvasSize, constants::CANVAS_DIM)?;
@@ -2521,6 +2528,20 @@ impl Compiler {
         Ok(())
     }
 
+    fn compile_global_bind_kw_v2d(
+        &self,
+        compilation: &mut Compilation,
+        kw: Keyword,
+        value0: f32,
+        value1: f32,
+    ) -> Result<()> {
+        compilation.emit(Opcode::LOAD, Mem::Constant, value0)?;
+        compilation.emit(Opcode::LOAD, Mem::Constant, value1)?;
+        compilation.emit_squish(2)?;
+        self.store_globally_kw(compilation, kw)?;
+        Ok(())
+    }
+
     fn compile_global_bind_kw_f32(
         &self,
         compilation: &mut Compilation,
@@ -2785,11 +2806,11 @@ mod tests {
         }
     }
 
-    fn load_const_name(val: i32) -> Bytecode {
+    fn load_const_keyword(val: Keyword) -> Bytecode {
         Bytecode {
             op: Opcode::LOAD,
             arg0: BytecodeArg::Mem(Mem::Constant),
-            arg1: BytecodeArg::Name(Iname::new(val)),
+            arg1: BytecodeArg::Name(Iname::new(val as i32)),
         }
     }
 
@@ -2988,11 +3009,11 @@ mod tests {
             compile("(fn (foo a: 0 b: 0) (+ a b))"),
             vec![
                 jump(14),
-                load_const_name(225),
+                load_const_keyword(Keyword::A),
                 store_arg(0),
                 load_const_f32(0.0),
                 store_arg(1),
-                load_const_name(226),
+                load_const_keyword(Keyword::B),
                 store_arg(2),
                 load_const_f32(0.0),
                 store_arg(3),
@@ -3054,11 +3075,11 @@ mod tests {
             ),
             vec![
                 jump(14),
-                load_const_name(225),
+                load_const_keyword(Keyword::A),
                 store_arg(0),
                 load_const_f32(99.0),
                 store_arg(1),
-                load_const_name(226),
+                load_const_keyword(Keyword::B),
                 store_arg(2),
                 load_const_f32(88.0),
                 store_arg(3),
@@ -3118,7 +3139,7 @@ mod tests {
             ),
             vec![
                 jump(30),
-                load_const_name(248),
+                load_const_keyword(Keyword::By),
                 store_arg(0),
                 load_const_f32(4.0),
                 store_arg(1),
@@ -3302,11 +3323,11 @@ mod tests {
     fn test_fn_invocation_2() {
         let expected_bytecode = vec![
             jump(14),
-            load_const_name(225),
+            load_const_keyword(Keyword::A),
             store_arg(0),
             load_const_f32(99.0),
             store_arg(1),
-            load_const_name(226),
+            load_const_keyword(Keyword::B),
             store_arg(2),
             load_const_f32(88.0),
             store_arg(3),
@@ -3363,11 +3384,11 @@ mod tests {
     fn test_fromname_fn_invocation() {
         let expected_bytecode = vec![
             jump(14),
-            load_const_name(261),
+            load_const_keyword(Keyword::From),
             store_arg(0),
             load_const_f32(99.0),
             store_arg(1),
-            load_const_name(248),
+            load_const_keyword(Keyword::By),
             store_arg(2),
             load_const_f32(88.0),
             store_arg(3),
