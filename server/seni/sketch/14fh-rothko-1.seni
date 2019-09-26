@@ -1,7 +1,7 @@
 (meta linear-colour-space: 1)
 
 
-(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+(rect position: canvas/centre
       width: canvas/width
       height: canvas/height
       colour: (col/rgb r: 0 g: 0 b: 0 alpha: 1))

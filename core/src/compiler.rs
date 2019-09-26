@@ -33,47 +33,47 @@ use std::fmt;
 const NONSENSE: i32 = 666;
 
 pub fn compile_preamble() -> Result<Program> {
-    let mut compilation = Compilation::new();
+    let mut c = Compilation::new();
     let compiler = Compiler::new();
 
-    compiler.register_top_level_preamble(&mut compilation)?;
-    compiler.compile_preamble(&mut compilation)?;
+    compiler.register_top_level_preamble(&mut c)?;
+    compiler.compile_preamble(&mut c)?;
 
     Ok(Program {
-        code: compilation.code,
-        fn_info: compilation.fn_info,
+        code: c.code,
+        fn_info: c.fn_info,
         ..Default::default()
     })
 }
 
 pub fn compile_program(ast: &[Node], word_lut: &WordLut) -> Result<Program> {
-    let mut compilation = Compilation::new();
+    let mut c = Compilation::new();
     let compiler = Compiler::new();
 
-    compiler.compile_common(&mut compilation, &ast)?;
+    compiler.compile_common(&mut c, &ast)?;
 
     let mut data: Data = Default::default();
     data.strings = word_lut.get_script_inames();
 
     Ok(Program {
-        code: compilation.code,
-        fn_info: compilation.fn_info,
+        code: c.code,
+        fn_info: c.fn_info,
         data,
     })
 }
 
 pub fn compile_program_1(ast_node: &Node, word_lut: &WordLut) -> Result<Program> {
-    let mut compilation = Compilation::new();
+    let mut c = Compilation::new();
     let compiler = Compiler::new();
 
-    compiler.compile_common_1(&mut compilation, &ast_node)?;
+    compiler.compile_common_1(&mut c, &ast_node)?;
 
     let mut data: Data = Default::default();
     data.strings = word_lut.get_script_inames();
 
     Ok(Program {
-        code: compilation.code,
-        fn_info: compilation.fn_info,
+        code: c.code,
+        fn_info: c.fn_info,
         data,
     })
 }
@@ -83,27 +83,27 @@ pub fn compile_program_for_trait(
     word_lut: &WordLut,
     global_mapping: &BTreeMap<Iname, usize>,
 ) -> Result<Program> {
-    let mut compilation = Compilation::new();
+    let mut c = Compilation::new();
     let compiler = Compiler::new();
 
     let ast = only_semantic_nodes(ast);
 
-    compiler.compile_common_prologue(&mut compilation)?;
-    compiler.register_top_level_fns(&mut compilation, &ast)?;
-    compiler.register_top_level_defines(&mut compilation, &ast)?;
+    compiler.compile_common_prologue(&mut c)?;
+    compiler.register_top_level_fns(&mut c, &ast)?;
+    compiler.register_top_level_defines(&mut c, &ast)?;
 
-    compiler.compile_common_top_level_fns(&mut compilation, &ast)?;
-    compiler.compile_global_mappings_for_trait(&mut compilation, global_mapping)?;
-    compiler.compile_common_top_level_defines(&mut compilation, &ast)?;
-    compiler.compile_common_top_level_forms(&mut compilation, &ast)?;
-    compiler.compile_common_epilogue(&mut compilation)?;
+    compiler.compile_common_top_level_fns(&mut c, &ast)?;
+    compiler.compile_global_mappings_for_trait(&mut c, global_mapping)?;
+    compiler.compile_common_top_level_defines(&mut c, &ast)?;
+    compiler.compile_common_top_level_forms(&mut c, &ast)?;
+    compiler.compile_common_epilogue(&mut c)?;
 
     let mut data: Data = Default::default();
     data.strings = word_lut.get_script_inames();
 
     Ok(Program {
-        code: compilation.code,
-        fn_info: compilation.fn_info,
+        code: c.code,
+        fn_info: c.fn_info,
         data,
     })
 }
@@ -113,19 +113,19 @@ pub fn compile_program_with_genotype(
     word_lut: &WordLut,
     genotype: &mut Genotype,
 ) -> Result<Program> {
-    let mut compilation = Compilation::new();
+    let mut c = Compilation::new();
     let mut compiler = Compiler::new();
 
     compiler.use_genes = true;
     assign_genotype_to_ast(ast, genotype)?;
-    compiler.compile_common(&mut compilation, &ast)?;
+    compiler.compile_common(&mut c, &ast)?;
 
     let mut data: Data = Default::default();
     data.strings = word_lut.get_script_inames();
 
     Ok(Program {
-        code: compilation.code,
-        fn_info: compilation.fn_info,
+        code: c.code,
+        fn_info: c.fn_info,
         data,
     })
 }
@@ -276,7 +276,7 @@ impl Compilation {
         Ok(())
     }
 
-    // used when adding explicit global mappings during a trait compilation
+    // used when adding explicit global mappings during a trait c
     fn add_explicit_global_mapping(&mut self, iname: Iname, map_val: usize) {
         self.global_mappings.insert(iname, map_val);
     }
@@ -642,19 +642,19 @@ impl Compiler {
         }
     }
 
-    fn correct_function_addresses(&self, compilation: &mut Compilation) -> Result<()> {
+    fn correct_function_addresses(&self, c: &mut Compilation) -> Result<()> {
         let mut all_fixes: Vec<(usize, Opcode, Mem, i32)> = Vec::new(); // tuple of index, op, arg0, ???
         let mut arg1_fixes: Vec<(usize, i32)> = Vec::new(); // tuple of index,value pairs
 
         // go through the bytecode fixing up function call addresses
-        for (i, bc) in compilation.code.iter().enumerate() {
+        for (i, bc) in c.code.iter().enumerate() {
             // replace the temporarily stored index in the args of CALL and CALL_0 with
             // the actual values
 
             match bc.op {
                 Opcode::CALL => {
                     if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
-                        let fn_info = &compilation.fn_info[fn_info_index as usize];
+                        let fn_info = &c.fn_info[fn_info_index as usize];
 
                         // the previous two bytecodes will be LOADs of CONST.
                         // i - 2 == the address to call
@@ -665,14 +665,14 @@ impl Compiler {
                 }
                 Opcode::CALL_0 => {
                     if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
-                        let fn_info = &compilation.fn_info[fn_info_index as usize];
+                        let fn_info = &c.fn_info[fn_info_index as usize];
                         arg1_fixes.push((i - 1, fn_info.body_address as i32));
                     }
                 }
                 Opcode::PLACEHOLDER_STORE => {
                     // opcode's arg0 is the fn_info_index and arg1 is the label_value
                     if let BytecodeArg::Int(fn_info_index) = bc.arg0 {
-                        let fn_info = &compilation.fn_info[fn_info_index as usize];
+                        let fn_info = &c.fn_info[fn_info_index as usize];
                         if let BytecodeArg::Name(label_value) = bc.arg1 {
                             if let Some(data_index) = fn_info.get_argument_mapping(label_value) {
                                 all_fixes.push((
@@ -692,48 +692,48 @@ impl Compiler {
         }
 
         for (index, op, arg0, arg1) in all_fixes {
-            compilation.bytecode_modify_mem(index, op, arg0, arg1)?;
+            c.bytecode_modify_mem(index, op, arg0, arg1)?;
         }
         for (index, arg1) in arg1_fixes {
-            compilation.bytecode_modify_arg1_i32(index, arg1)?;
+            c.bytecode_modify_arg1_i32(index, arg1)?;
         }
 
         Ok(())
     }
 
-    fn register_top_level_preamble(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.add_global_mapping_for_keyword(Keyword::CanvasCentre)?;
-        compilation.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
-        compilation.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
-        compilation.add_global_mapping_for_keyword(Keyword::CanvasSize)?;
+    fn register_top_level_preamble(&self, c: &mut Compilation) -> Result<()> {
+        c.add_global_mapping_for_keyword(Keyword::CanvasCentre)?;
+        c.add_global_mapping_for_keyword(Keyword::CanvasWidth)?;
+        c.add_global_mapping_for_keyword(Keyword::CanvasHeight)?;
+        c.add_global_mapping_for_keyword(Keyword::CanvasSize)?;
 
-        compilation.add_global_mapping_for_keyword(Keyword::MathPi)?;
-        compilation.add_global_mapping_for_keyword(Keyword::MathTau)?;
+        c.add_global_mapping_for_keyword(Keyword::MathPi)?;
+        c.add_global_mapping_for_keyword(Keyword::MathTau)?;
 
-        compilation.add_global_mapping_for_keyword(Keyword::White)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Black)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Red)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Green)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Blue)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Yellow)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Magenta)?;
-        compilation.add_global_mapping_for_keyword(Keyword::Cyan)?;
+        c.add_global_mapping_for_keyword(Keyword::White)?;
+        c.add_global_mapping_for_keyword(Keyword::Black)?;
+        c.add_global_mapping_for_keyword(Keyword::Red)?;
+        c.add_global_mapping_for_keyword(Keyword::Green)?;
+        c.add_global_mapping_for_keyword(Keyword::Blue)?;
+        c.add_global_mapping_for_keyword(Keyword::Yellow)?;
+        c.add_global_mapping_for_keyword(Keyword::Magenta)?;
+        c.add_global_mapping_for_keyword(Keyword::Cyan)?;
 
-        compilation.add_global_mapping_for_keyword(Keyword::ColProceduralFnPresets)?;
-        compilation.add_global_mapping_for_keyword(Keyword::EaseAll)?;
-        compilation.add_global_mapping_for_keyword(Keyword::BrushAll)?;
+        c.add_global_mapping_for_keyword(Keyword::ColProceduralFnPresets)?;
+        c.add_global_mapping_for_keyword(Keyword::EaseAll)?;
+        c.add_global_mapping_for_keyword(Keyword::BrushAll)?;
 
         Ok(())
     }
 
-    fn register_top_level_fns(&self, compilation: &mut Compilation, ast: &[&Node]) -> Result<()> {
+    fn register_top_level_fns(&self, c: &mut Compilation, ast: &[&Node]) -> Result<()> {
         // clear all data
-        compilation.fn_info = Vec::new();
+        c.fn_info = Vec::new();
 
         // register top level fns
         for n in ast.iter() {
             if let Some(fn_info) = self.register_top_level_fns_1(n)? {
-                compilation.fn_info.push(fn_info);
+                c.fn_info.push(fn_info);
             }
         }
 
@@ -775,7 +775,7 @@ impl Compiler {
         Ok(None)
     }
 
-    fn register_names_in_define(&self, compilation: &mut Compilation, lhs: &Node) -> Result<()> {
+    fn register_names_in_define(&self, c: &mut Compilation, lhs: &Node) -> Result<()> {
         error_if_alterable(&lhs, "register_names_in_define")?;
 
         match lhs {
@@ -783,12 +783,12 @@ impl Compiler {
                 // (define foo 42)
                 //let s = name.to_string();
                 let iname = self.get_iname(lhs)?;
-                if let Some(_i) = compilation.get_global_mapping(iname) {
+                if let Some(_i) = c.get_global_mapping(iname) {
                     // name was already added to global_mappings
                     return Ok(());
                 }
 
-                if let Err(e) = compilation.add_global_mapping(iname) {
+                if let Err(e) = c.add_global_mapping(iname) {
                     return Err(e);
                 }
             }
@@ -798,7 +798,7 @@ impl Compiler {
                 let nodes = only_semantic_nodes(nodes);
 
                 for n in nodes {
-                    if let Err(e) = self.register_names_in_define(compilation, n) {
+                    if let Err(e) = self.register_names_in_define(c, n) {
                         return Err(e);
                     }
                 }
@@ -808,19 +808,15 @@ impl Compiler {
         Ok(())
     }
 
-    fn register_top_level_defines(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn register_top_level_defines(&self, c: &mut Compilation, ast: &[&Node]) -> Result<()> {
         for n in ast.iter() {
-            self.register_top_level_defines_1(compilation, n)?;
+            self.register_top_level_defines_1(c, n)?;
         }
 
         Ok(())
     }
 
-    fn register_top_level_defines_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
+    fn register_top_level_defines_1(&self, c: &mut Compilation, n: &Node) -> Result<()> {
         let define_keyword_string = Keyword::Define.to_string();
 
         if let Node::List(_, nodes) = n {
@@ -831,7 +827,7 @@ impl Compiler {
                     if text == &define_keyword_string {
                         let mut defs = &nodes[1..];
                         while defs.len() > 1 {
-                            if let Err(e) = self.register_names_in_define(compilation, &defs[0]) {
+                            if let Err(e) = self.register_names_in_define(c, &defs[0]) {
                                 return Err(e);
                             }
                             defs = &defs[2..];
@@ -843,68 +839,66 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_preamble(&self, compilation: &mut Compilation) -> Result<()> {
-        // ********************************************************************************
-        // NOTE: each entry should have a corresponding entry in
-        // register_top_level_preamble
-        // ********************************************************************************
-        self.compile_global_bind_kw_v2d(
-            compilation,
-            Keyword::CanvasCentre,
-            constants::CANVAS_DIM,
-            constants::CANVAS_DIM,
-        )?;
-        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasWidth, constants::CANVAS_DIM)?;
-        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasHeight, constants::CANVAS_DIM)?;
-        self.compile_global_bind_kw_f32(compilation, Keyword::CanvasSize, constants::CANVAS_DIM)?;
-
-        self.compile_global_bind_kw_f32(compilation, Keyword::MathPi, mathutil::PI)?;
-        self.compile_global_bind_kw_f32(compilation, Keyword::MathTau, mathutil::TAU)?;
-
-        self.compile_global_bind_kw_col(compilation, Keyword::White, 1.0, 1.0, 1.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Black, 0.0, 0.0, 0.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Red, 1.0, 0.0, 0.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Green, 0.0, 1.0, 0.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Blue, 0.0, 0.0, 1.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Yellow, 1.0, 1.0, 0.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Magenta, 1.0, 0.0, 1.0, 1.0)?;
-        self.compile_global_bind_kw_col(compilation, Keyword::Cyan, 0.0, 1.0, 1.0, 1.0)?;
-
-        self.compile_global_bind_procedural_presets(compilation)?;
-        self.compile_global_bind_ease_all(compilation)?;
-        self.compile_global_bind_brush_all(compilation)?;
+    fn compile_preamble(&self, c: &mut Compilation) -> Result<()> {
+        let dim = constants::CANVAS_DIM;
+        let half_dim = constants::CANVAS_DIM / 2.0;
 
         // ********************************************************************************
         // NOTE: each entry should have a corresponding entry in
         // register_top_level_preamble
         // ********************************************************************************
+        self.compile_global_bind_kw_v2d(c, Keyword::CanvasCentre, half_dim, half_dim)?;
+        self.compile_global_bind_kw_f32(c, Keyword::CanvasWidth, dim)?;
+        self.compile_global_bind_kw_f32(c, Keyword::CanvasHeight, dim)?;
+        self.compile_global_bind_kw_f32(c, Keyword::CanvasSize, dim)?;
 
-        // slap a stop onto the end of this compilation
-        compilation.emit(Opcode::STOP, 0, 0)?;
+        self.compile_global_bind_kw_f32(c, Keyword::MathPi, mathutil::PI)?;
+        self.compile_global_bind_kw_f32(c, Keyword::MathTau, mathutil::TAU)?;
+
+        self.compile_global_bind_kw_col(c, Keyword::White, 1.0, 1.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Black, 0.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Red, 1.0, 0.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Green, 0.0, 1.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Blue, 0.0, 0.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Yellow, 1.0, 1.0, 0.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Magenta, 1.0, 0.0, 1.0, 1.0)?;
+        self.compile_global_bind_kw_col(c, Keyword::Cyan, 0.0, 1.0, 1.0, 1.0)?;
+
+        self.compile_global_bind_procedural_presets(c)?;
+        self.compile_global_bind_ease_all(c)?;
+        self.compile_global_bind_brush_all(c)?;
+
+        // ********************************************************************************
+        // NOTE: each entry should have a corresponding entry in
+        // register_top_level_preamble
+        // ********************************************************************************
+
+        // slap a stop onto the end of this c
+        c.emit(Opcode::STOP, 0, 0)?;
 
         Ok(())
     }
 
     fn store_global_keyword_vector(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         global_name: Keyword,
         kws: Vec<Keyword>,
     ) -> Result<()> {
         let len = kws.len() as i32;
         for kw in kws {
-            compilation.emit(Opcode::LOAD, Mem::Constant, Iname::from(kw))?;
+            c.emit(Opcode::LOAD, Mem::Constant, Iname::from(kw))?;
         }
-        compilation.emit_squish(len)?;
+        c.emit_squish(len)?;
 
-        self.store_globally_kw(compilation, global_name)?;
+        self.store_globally_kw(c, global_name)?;
 
         Ok(())
     }
 
-    fn compile_global_bind_procedural_presets(&self, compilation: &mut Compilation) -> Result<()> {
+    fn compile_global_bind_procedural_presets(&self, c: &mut Compilation) -> Result<()> {
         self.store_global_keyword_vector(
-            compilation,
+            c,
             Keyword::ColProceduralFnPresets,
             vec![
                 Keyword::Chrome,
@@ -919,9 +913,9 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_global_bind_ease_all(&self, compilation: &mut Compilation) -> Result<()> {
+    fn compile_global_bind_ease_all(&self, c: &mut Compilation) -> Result<()> {
         self.store_global_keyword_vector(
-            compilation,
+            c,
             Keyword::EaseAll,
             vec![
                 Keyword::Linear,
@@ -963,9 +957,9 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_global_bind_brush_all(&self, compilation: &mut Compilation) -> Result<()> {
+    fn compile_global_bind_brush_all(&self, c: &mut Compilation) -> Result<()> {
         self.store_global_keyword_vector(
-            compilation,
+            c,
             Keyword::BrushAll,
             vec![
                 Keyword::BrushFlat,
@@ -981,159 +975,147 @@ impl Compiler {
         Ok(())
     }
 
-    pub fn compile_common(&self, compilation: &mut Compilation, ast: &[Node]) -> Result<()> {
+    pub fn compile_common(&self, c: &mut Compilation, ast: &[Node]) -> Result<()> {
         let ast = only_semantic_nodes(ast);
-        self.compile_common_prologue(compilation)?;
+        self.compile_common_prologue(c)?;
 
-        self.register_top_level_fns(compilation, &ast)?;
-        self.register_top_level_defines(compilation, &ast)?;
+        self.register_top_level_fns(c, &ast)?;
+        self.register_top_level_defines(c, &ast)?;
 
-        self.compile_common_top_level_fns(compilation, &ast)?;
-        self.compile_common_top_level_defines(compilation, &ast)?;
-        self.compile_common_top_level_forms(compilation, &ast)?;
-        self.compile_common_epilogue(compilation)?;
+        self.compile_common_top_level_fns(c, &ast)?;
+        self.compile_common_top_level_defines(c, &ast)?;
+        self.compile_common_top_level_forms(c, &ast)?;
+        self.compile_common_epilogue(c)?;
 
         Ok(())
     }
 
-    fn compile_common_1(&self, compilation: &mut Compilation, n: &Node) -> Result<()> {
-        self.compile_common_prologue(compilation)?;
+    fn compile_common_1(&self, c: &mut Compilation, n: &Node) -> Result<()> {
+        self.compile_common_prologue(c)?;
 
-        // single node version of self.register_top_level_fns(compilation, ast)?;
-        compilation.fn_info = Vec::new();
+        // single node version of self.register_top_level_fns(c, ast)?;
+        c.fn_info = Vec::new();
         if let Some(fn_info) = self.register_top_level_fns_1(n)? {
-            compilation.fn_info.push(fn_info);
+            c.fn_info.push(fn_info);
         }
 
-        // single node version of self.register_top_level_defines(compilation, ast)?;
-        self.register_top_level_defines_1(compilation, n)?;
+        // single node version of self.register_top_level_defines(c, ast)?;
+        self.register_top_level_defines_1(c, n)?;
 
-        //// single node version of self.compile_common_top_level_fns(compilation, ast)?;
+        //// single node version of self.compile_common_top_level_fns(c, ast)?;
         {
             // a placeholder, filled in at the end of this function
-            compilation.emit(Opcode::JUMP, 0, 0)?;
-            let start_index = compilation.code.len() - 1;
+            c.emit(Opcode::JUMP, 0, 0)?;
+            let start_index = c.code.len() - 1;
 
             // compile the top-level functions
             if self.is_list_beginning_with(n, Keyword::Fn) {
-                self.compile(compilation, n)?; // todo: the c-impl returns a node to continue from
+                self.compile(c, n)?; // todo: the c-impl returns a node to continue from
             }
 
-            // jump to the compilation's starting address
-            let jump_address = compilation.code.len() as i32;
-            compilation.bytecode_modify_arg0_i32(start_index, jump_address)?;
+            // jump to the c's starting address
+            let jump_address = c.code.len() as i32;
+            c.bytecode_modify_arg0_i32(start_index, jump_address)?;
         }
 
-        //// single node version of self.compile_common_top_level_defines(compilation, ast)?;
+        //// single node version of self.compile_common_top_level_defines(c, ast)?;
         {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(_, children) = n {
                     let children = only_semantic_nodes(children);
-                    self.compile_define(compilation, &children[1..], Mem::Global)?;
+                    self.compile_define(c, &children[1..], Mem::Global)?;
                 }
             }
         }
 
-        //// single node version of self.compile_common_top_level_forms(compilation, ast)?;
+        //// single node version of self.compile_common_top_level_forms(c, ast)?;
         {
             if !self.is_list_beginning_with(n, Keyword::Define)
                 && !self.is_list_beginning_with(n, Keyword::Fn)
             {
-                self.compile(compilation, n)?;
+                self.compile(c, n)?;
             }
         }
 
-        self.compile_common_epilogue(compilation)?;
+        self.compile_common_epilogue(c)?;
 
         Ok(())
     }
 
-    fn compile_common_prologue(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.clear_global_mappings()?;
-        compilation.clear_local_mappings()?;
-        // compilation->current_fn_info = NULL;
+    fn compile_common_prologue(&self, c: &mut Compilation) -> Result<()> {
+        c.clear_global_mappings()?;
+        c.clear_local_mappings()?;
+        // c->current_fn_info = NULL;
 
-        self.register_top_level_preamble(compilation)?;
+        self.register_top_level_preamble(c)?;
 
         Ok(())
     }
 
-    fn compile_common_top_level_fns(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn compile_common_top_level_fns(&self, c: &mut Compilation, ast: &[&Node]) -> Result<()> {
         // a placeholder, filled in at the end of this function
-        compilation.emit(Opcode::JUMP, 0, 0)?;
-        let start_index = compilation.code.len() - 1;
+        c.emit(Opcode::JUMP, 0, 0)?;
+        let start_index = c.code.len() - 1;
 
         // compile the top-level functions
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Fn) {
-                self.compile(compilation, n)?; // todo: the c-impl returns a node to continue from
+                self.compile(c, n)?; // todo: the c-impl returns a node to continue from
             }
         }
 
-        // jump to the compilation's starting address
-        let jump_address = compilation.code.len() as i32;
-        compilation.bytecode_modify_arg0_i32(start_index, jump_address)?;
+        // jump to the c's starting address
+        let jump_address = c.code.len() as i32;
+        c.bytecode_modify_arg0_i32(start_index, jump_address)?;
 
         Ok(())
     }
 
     fn compile_global_mappings_for_trait(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         global_mapping: &BTreeMap<Iname, usize>,
     ) -> Result<()> {
         for (iname, map_val) in global_mapping {
-            compilation.add_explicit_global_mapping(*iname, *map_val);
+            c.add_explicit_global_mapping(*iname, *map_val);
         }
         Ok(())
     }
 
-    fn compile_common_top_level_defines(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn compile_common_top_level_defines(&self, c: &mut Compilation, ast: &[&Node]) -> Result<()> {
         for n in ast.iter() {
             if self.is_list_beginning_with(n, Keyword::Define) {
                 if let Node::List(_, children) = n {
                     let children = only_semantic_nodes(children);
-                    self.compile_define(compilation, &children[1..], Mem::Global)?;
+                    self.compile_define(c, &children[1..], Mem::Global)?;
                 }
             }
         }
         Ok(())
     }
 
-    fn compile_common_top_level_forms(
-        &self,
-        compilation: &mut Compilation,
-        ast: &[&Node],
-    ) -> Result<()> {
+    fn compile_common_top_level_forms(&self, c: &mut Compilation, ast: &[&Node]) -> Result<()> {
         for n in ast.iter() {
             if !self.is_list_beginning_with(n, Keyword::Define)
                 && !self.is_list_beginning_with(n, Keyword::Fn)
             {
-                self.compile(compilation, n)?;
+                self.compile(c, n)?;
             }
         }
         Ok(())
     }
 
-    fn compile_common_epilogue(&self, compilation: &mut Compilation) -> Result<()> {
-        compilation.emit(Opcode::STOP, 0, 0)?;
+    fn compile_common_epilogue(&self, c: &mut Compilation) -> Result<()> {
+        c.emit(Opcode::STOP, 0, 0)?;
 
         // now update the addreses used by CALL and CALL_0
-        self.correct_function_addresses(compilation)?;
+        self.correct_function_addresses(c)?;
 
         Ok(())
     }
 
-    fn compile(&self, compilation: &mut Compilation, ast: &Node) -> Result<()> {
-        // todo: move this out of compile and into the compilation struct
+    fn compile(&self, c: &mut Compilation, ast: &Node) -> Result<()> {
+        // todo: move this out of compile and into the c struct
         match ast {
             Node::List(meta, children) => {
                 let children = only_semantic_nodes(children);
@@ -1145,7 +1127,7 @@ impl Compiler {
                     // we have an alterable colour constructor so just load in the colour value stored in the gene
                     //
                     let col = self.get_colour(ast)?;
-                    compilation.emit(Opcode::LOAD, Mem::Constant, col)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, col)?;
                 } else {
                     if self.use_genes && meta.gene_info.is_some() {
                         ast.error_here(
@@ -1153,36 +1135,36 @@ impl Compiler {
                         );
                         return Err(Error::Compiler);
                     }
-                    self.compile_list(compilation, &children[..])?
+                    self.compile_list(c, &children[..])?
                 }
             }
             Node::Float(_, _, _) => {
                 let f = self.get_float(ast)?;
-                return compilation.emit(Opcode::LOAD, Mem::Constant, f);
+                return c.emit(Opcode::LOAD, Mem::Constant, f);
             }
             Node::Vector(_, children) => {
                 let children = only_semantic_nodes(children);
 
                 if children.len() == 2 {
-                    return self.compile_2d(compilation, ast, &children[..]);
+                    return self.compile_2d(c, ast, &children[..]);
                 } else {
-                    return self.compile_vector(compilation, ast, &children[..]);
+                    return self.compile_vector(c, ast, &children[..]);
                 }
             }
             Node::String(_, _, _) => {
                 let iname = self.get_iname(ast)?;
-                return compilation.emit_name_as_string(Opcode::LOAD, Mem::Constant, iname);
+                return c.emit_name_as_string(Opcode::LOAD, Mem::Constant, iname);
             }
             Node::Name(_, text, _) => {
                 let iname = self.get_iname(ast)?;
 
-                return if self.compile_user_defined_name(compilation, iname)? {
+                return if self.compile_user_defined_name(c, iname)? {
                     Ok(())
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
-                    compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, *kw)?;
                     Ok(())
                 } else if let Some(native) = self.name_to_native.get(&iname) {
-                    compilation.emit(Opcode::NATIVE, *native, 0)?;
+                    c.emit(Opcode::NATIVE, *native, 0)?;
                     Ok(())
                 } else {
                     ast.error_here(&format!(
@@ -1195,13 +1177,13 @@ impl Compiler {
             Node::FromName(_, text, _) => {
                 let iname = self.get_iname(ast)?;
 
-                return if self.compile_user_defined_name(compilation, iname)? {
+                return if self.compile_user_defined_name(c, iname)? {
                     Ok(())
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
-                    compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, *kw)?;
                     Ok(())
                 } else if let Some(native) = self.name_to_native.get(&iname) {
-                    compilation.emit(Opcode::NATIVE, *native, 0)?;
+                    c.emit(Opcode::NATIVE, *native, 0)?;
                     Ok(())
                 } else {
                     ast.error_here(&format!(
@@ -1220,7 +1202,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_list(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_list(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         if children.is_empty() {
             // should this be an error?
             error!("compile_list no children (should this be an error?)");
@@ -1230,7 +1212,7 @@ impl Compiler {
         match &children[0] {
             Node::List(_, kids) => {
                 let kids = only_semantic_nodes(kids);
-                self.compile_list(compilation, &kids[..])?
+                self.compile_list(c, &kids[..])?
             }
             Node::FromName(_, _, _) => {
                 // syntax sugar for the 'from' parameter
@@ -1245,20 +1227,16 @@ impl Compiler {
 
                 let iname = self.get_iname(&children[1])?;
 
-                if let Some(fn_info_index) = compilation.get_fn_info_index(&children[1]) {
-                    self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
-                    self.compile_fn_invocation_implicit_from(
-                        compilation,
-                        fn_info_index,
-                        &children[0],
-                    )?;
+                if let Some(fn_info_index) = c.get_fn_info_index(&children[1]) {
+                    self.compile_fn_invocation_prologue(c, fn_info_index)?;
+                    self.compile_fn_invocation_implicit_from(c, fn_info_index, &children[0])?;
                     self.compile_fn_invocation_args(
-                        compilation,
+                        c,
                         &children[0],
                         &children[2..],
                         fn_info_index,
                     )?;
-                    self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
+                    self.compile_fn_invocation_epilogue(c, fn_info_index)?;
                 } else if let Some(native) = self.name_to_native.get(&iname) {
                     // get the list of arguments
                     // match up the nodes and compile them in argument order
@@ -1278,7 +1256,7 @@ impl Compiler {
                             default_mask |= 1 << i;
                         }
                     }
-                    compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
 
                     // iterating in reverse so that when the native function
                     // is run it can pop the arguments from the stack in the
@@ -1286,103 +1264,71 @@ impl Compiler {
                     // now add the arguments to the stack
                     for (kw, default_value) in args.iter().rev() {
                         if *kw == Keyword::From {
-                            self.compile(compilation, &children[0])?;
+                            self.compile(c, &children[0])?;
                         } else if let Some(idx) = self.get_parameter_index(label_vals, *kw) {
                             // todo: does this need to be self?
                             // compile the node at the given index
-                            self.compile(compilation, label_vals[idx])?;
+                            self.compile(c, label_vals[idx])?;
                         } else {
                             // compile the default argument value from the Var in args
-                            self.compile_var_as_load(compilation, default_value)?;
+                            self.compile_var_as_load(c, default_value)?;
                         }
                     }
 
-                    compilation.emit(Opcode::NATIVE, *native, num_args)?;
+                    c.emit(Opcode::NATIVE, *native, num_args)?;
 
                     // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
                     // subtract num_args and the default_mask, also take into account that a value might be returned
-                    compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
+                    c.opcode_offset -= (num_args as i32 + 1) - stack_offset;
                 }
             }
             Node::Name(_, _, _) => {
                 let iname = self.get_iname(&children[0])?;
 
-                if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
+                if let Some(fn_info_index) = c.get_fn_info_index(&children[0]) {
                     // todo: get_fn_info_index is re-checking that this is a Node::Name
 
-                    self.compile_fn_invocation_prologue(compilation, fn_info_index)?;
+                    self.compile_fn_invocation_prologue(c, fn_info_index)?;
                     self.compile_fn_invocation_args(
-                        compilation,
+                        c,
                         &children[0],
                         &children[1..],
                         fn_info_index,
                     )?;
-                    self.compile_fn_invocation_epilogue(compilation, fn_info_index)?;
+                    self.compile_fn_invocation_epilogue(c, fn_info_index)?;
                 } else if let Some(kw) = self.name_to_keyword.get(&iname) {
                     match *kw {
-                        Keyword::Define => {
-                            self.compile_define(compilation, &children[1..], Mem::Local)?
-                        }
-                        Keyword::If => {
-                            self.compile_if(compilation, &children[0], &children[1..])?
-                        }
-                        Keyword::Each => self.compile_each(compilation, &children[1..])?,
-                        Keyword::Loop => self.compile_loop(compilation, &children[1..])?,
-                        Keyword::Fence => self.compile_fence(compilation, &children[1..])?,
+                        Keyword::Define => self.compile_define(c, &children[1..], Mem::Local)?,
+                        Keyword::If => self.compile_if(c, &children[0], &children[1..])?,
+                        Keyword::Each => self.compile_each(c, &children[1..])?,
+                        Keyword::Loop => self.compile_loop(c, &children[1..])?,
+                        Keyword::Fence => self.compile_fence(c, &children[1..])?,
                         Keyword::OnMatrixStack => {
-                            self.compile_on_matrix_stack(compilation, &children[1..])?
+                            self.compile_on_matrix_stack(c, &children[1..])?
                         }
-                        Keyword::Fn => self.compile_fn(compilation, &children[1..])?,
-                        Keyword::Plus => {
-                            self.compile_math(compilation, &children[1..], Opcode::ADD)?
+                        Keyword::Fn => self.compile_fn(c, &children[1..])?,
+                        Keyword::Plus => self.compile_math(c, &children[1..], Opcode::ADD)?,
+                        Keyword::Minus => self.compile_math(c, &children[1..], Opcode::SUB)?,
+                        Keyword::Mult => self.compile_math(c, &children[1..], Opcode::MUL)?,
+                        Keyword::Divide => self.compile_math(c, &children[1..], Opcode::DIV)?,
+                        Keyword::Mod => self.compile_math(c, &children[1..], Opcode::MOD)?,
+                        Keyword::Equal => self.compile_math(c, &children[1..], Opcode::EQ)?,
+                        Keyword::Lt => self.compile_math(c, &children[1..], Opcode::LT)?,
+                        Keyword::Gt => self.compile_math(c, &children[1..], Opcode::GT)?,
+                        Keyword::And => self.compile_math(c, &children[1..], Opcode::AND)?,
+                        Keyword::Or => self.compile_math(c, &children[1..], Opcode::OR)?,
+                        Keyword::Not => {
+                            self.compile_next_one(c, &children[0], &children[1..], Opcode::NOT)?
                         }
-                        Keyword::Minus => {
-                            self.compile_math(compilation, &children[1..], Opcode::SUB)?
+                        Keyword::Sqrt => {
+                            self.compile_next_one(c, &children[0], &children[1..], Opcode::SQRT)?
                         }
-                        Keyword::Mult => {
-                            self.compile_math(compilation, &children[1..], Opcode::MUL)?
-                        }
-                        Keyword::Divide => {
-                            self.compile_math(compilation, &children[1..], Opcode::DIV)?
-                        }
-                        Keyword::Mod => {
-                            self.compile_math(compilation, &children[1..], Opcode::MOD)?
-                        }
-                        Keyword::Equal => {
-                            self.compile_math(compilation, &children[1..], Opcode::EQ)?
-                        }
-                        Keyword::Lt => {
-                            self.compile_math(compilation, &children[1..], Opcode::LT)?
-                        }
-                        Keyword::Gt => {
-                            self.compile_math(compilation, &children[1..], Opcode::GT)?
-                        }
-                        Keyword::And => {
-                            self.compile_math(compilation, &children[1..], Opcode::AND)?
-                        }
-                        Keyword::Or => {
-                            self.compile_math(compilation, &children[1..], Opcode::OR)?
-                        }
-                        Keyword::Not => self.compile_next_one(
-                            compilation,
-                            &children[0],
-                            &children[1..],
-                            Opcode::NOT,
-                        )?,
-                        Keyword::Sqrt => self.compile_next_one(
-                            compilation,
-                            &children[0],
-                            &children[1..],
-                            Opcode::SQRT,
-                        )?,
                         Keyword::AddressOf => {
-                            self.compile_address_of(compilation, &children[0], &children[1..])?
+                            self.compile_address_of(c, &children[0], &children[1..])?
                         }
-                        Keyword::FnCall => self.compile_fn_call(compilation, &children[1..])?,
-                        Keyword::VectorAppend => {
-                            self.compile_vector_append(compilation, &children[1..])?
-                        }
-                        Keyword::Quote => self.compile_quote(compilation, &children[1..])?,
+                        Keyword::FnCall => self.compile_fn_call(c, &children[1..])?,
+                        Keyword::VectorAppend => self.compile_vector_append(c, &children[1..])?,
+                        Keyword::Quote => self.compile_quote(c, &children[1..])?,
                         _ => {
                             // look up the name as a user defined variable
                             // normally get here when a script contains variables
@@ -1412,7 +1358,7 @@ impl Compiler {
                             default_mask |= 1 << i;
                         }
                     }
-                    compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
 
                     // iterating in reverse so that when the native function
                     // is run it can pop the arguments from the stack in the
@@ -1422,18 +1368,18 @@ impl Compiler {
                         if let Some(idx) = self.get_parameter_index(label_vals, *kw) {
                             // todo: does this need to be self?
                             // compile the node at the given index
-                            self.compile(compilation, label_vals[idx])?;
+                            self.compile(c, label_vals[idx])?;
                         } else {
                             // compile the default argument value from the Var in args
-                            self.compile_var_as_load(compilation, default_value)?;
+                            self.compile_var_as_load(c, default_value)?;
                         }
                     }
 
-                    compilation.emit(Opcode::NATIVE, *native, num_args)?;
+                    c.emit(Opcode::NATIVE, *native, num_args)?;
 
                     // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
                     // subtract num_args and the default_mask, also take into account that a value might be returned
-                    compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset;
+                    c.opcode_offset -= (num_args as i32 + 1) - stack_offset;
                 }
             }
             _ => {
@@ -1473,38 +1419,38 @@ impl Compiler {
         None
     }
 
-    fn compile_var_as_load(&self, compilation: &mut Compilation, var: &Var) -> Result<()> {
+    fn compile_var_as_load(&self, c: &mut Compilation, var: &Var) -> Result<()> {
         match var {
-            Var::Float(f) => compilation.emit(Opcode::LOAD, Mem::Constant, *f)?,
+            Var::Float(f) => c.emit(Opcode::LOAD, Mem::Constant, *f)?,
             Var::V2D(x, y) => {
-                compilation.emit(Opcode::LOAD, Mem::Constant, *x)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, *y)?;
-                compilation.emit_squish(2)?;
+                c.emit(Opcode::LOAD, Mem::Constant, *x)?;
+                c.emit(Opcode::LOAD, Mem::Constant, *y)?;
+                c.emit_squish(2)?;
             }
             Var::Colour(colour) => {
                 // the default_mask
-                compilation.emit(Opcode::LOAD, Mem::Constant, 0)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e0)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e1)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e2)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, colour.e3)?;
-                compilation.emit(Opcode::NATIVE, Native::ColRGB, 4)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, colour.e0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, colour.e1)?;
+                c.emit(Opcode::LOAD, Mem::Constant, colour.e2)?;
+                c.emit(Opcode::LOAD, Mem::Constant, colour.e3)?;
+                c.emit(Opcode::NATIVE, Native::ColRGB, 4)?;
                 // now update the opcode offset since this is using the NATIVE
                 let num_args = 4;
                 // subtract the 4 args + 1 default mask, but then add back the return value
-                compilation.opcode_offset -= (num_args + 1) - 1;
+                c.opcode_offset -= (num_args + 1) - 1;
             }
-            Var::Keyword(kw) => compilation.emit(Opcode::LOAD, Mem::Constant, *kw)?,
+            Var::Keyword(kw) => c.emit(Opcode::LOAD, Mem::Constant, *kw)?,
             // Var::Vector(vs) => {
             //     // pushing from the VOID means creating a new, empty vector
-            //     compilation.emit(Opcode::LOAD, Mem::Void, 0)?;
+            //     c.emit(Opcode::LOAD, Mem::Void, 0)?;
             //     for v in vs {
-            //         self.compile_var_as_load(compilation, v)?;
-            //         compilation.emit(Opcode::APPEND, 0, 0)?;
+            //         self.compile_var_as_load(c, v)?;
+            //         c.emit(Opcode::APPEND, 0, 0)?;
             //     }
             // }
             _ => {
-                error!("unimplemented var compilation {:?}", var);
+                error!("unimplemented var c {:?}", var);
                 return Err(Error::Compiler);
             }
         };
@@ -1512,12 +1458,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_define(
-        &self,
-        compilation: &mut Compilation,
-        children: &[&Node],
-        mem: Mem,
-    ) -> Result<()> {
+    fn compile_define(&self, c: &mut Compilation, children: &[&Node], mem: Mem) -> Result<()> {
         let mut defs = children;
         // defs are an even number of nodes representing binding/value pairs
         // (define a 10 b 20 c 30) -> a 10 b 20 c 30
@@ -1531,12 +1472,12 @@ impl Compiler {
             let lhs_node = &defs[0];
             let value_node = &defs[1];
 
-            self.compile(compilation, &value_node)?;
+            self.compile(c, &value_node)?;
 
             match lhs_node {
                 Node::Name(_, _, _) => {
                     // define foo 10
-                    self.store_from_stack_to_memory(compilation, &lhs_node, mem)?;
+                    self.store_from_stack_to_memory(c, &lhs_node, mem)?;
                 }
                 Node::Vector(_, kids) => {
                     let kids = only_semantic_nodes(kids);
@@ -1549,11 +1490,11 @@ impl Compiler {
 
                         // PILE will stack the elements in the rhs vector in order,
                         // so the lhs values have to be popped in reverse order
-                        compilation.emit(Opcode::PILE, num_kids, 0)?;
-                        compilation.opcode_offset = compilation.opcode_offset + num_kids as i32 - 1;
+                        c.emit(Opcode::PILE, num_kids, 0)?;
+                        c.opcode_offset = c.opcode_offset + num_kids as i32 - 1;
 
                         for k in kids.iter().rev() {
-                            self.store_from_stack_to_memory(compilation, &k, mem)?;
+                            self.store_from_stack_to_memory(c, &k, mem)?;
                         }
                     } else {
                         // all nodes in lhs vector definition should be names
@@ -1576,7 +1517,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_fence(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_fence(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (fence (x from: 0 to: 5 num: 5) (+ 42 38))
         if children.len() < 2 {
             if children.is_empty() {
@@ -1619,124 +1560,121 @@ impl Compiler {
             }
 
             // store the quantity
-            let num_address = compilation.add_internal_local_mapping()?;
+            let num_address = c.add_internal_local_mapping()?;
             if let Some(num_node) = maybe_num_node {
-                self.compile(compilation, num_node)?;
+                self.compile(c, num_node)?;
             } else {
-                compilation.emit(Opcode::LOAD, Mem::Constant, 2.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 2.0)?;
             }
 
-            compilation.emit(Opcode::STORE, Mem::Local, num_address)?;
+            c.emit(Opcode::STORE, Mem::Local, num_address)?;
 
             // reserve a memory location in local memory for a counter from 0 to quantity
-            let counter_address = compilation.add_internal_local_mapping()?;
+            let counter_address = c.add_internal_local_mapping()?;
 
-            compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
-            compilation.emit(Opcode::STORE, Mem::Local, counter_address)?;
+            c.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+            c.emit(Opcode::STORE, Mem::Local, counter_address)?;
 
             // delta that needs to be added at every iteration
             //
             // (to - from) / (num - 1)
             if let Some(to_node) = maybe_to_node {
-                self.compile(compilation, to_node)?;
+                self.compile(c, to_node)?;
             } else {
                 // else default to 1
-                compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
             }
 
             if let Some(from_node) = maybe_from_node {
-                self.compile(compilation, from_node)?;
+                self.compile(c, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
-            compilation.emit(Opcode::SUB, 0, 0)?;
+            c.emit(Opcode::SUB, 0, 0)?;
 
             if let Some(num_node) = maybe_num_node {
-                self.compile(compilation, num_node)?;
+                self.compile(c, num_node)?;
             } else {
                 // else default to 3
-                compilation.emit(Opcode::LOAD, Mem::Constant, 3.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 3.0)?;
             }
-            compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
-            compilation.emit(Opcode::SUB, 0, 0)?;
-            compilation.emit(Opcode::DIV, 0, 0)?;
-            let delta_address = compilation.add_internal_local_mapping()?;
-            compilation.emit(Opcode::STORE, Mem::Local, delta_address)?;
+            c.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+            c.emit(Opcode::SUB, 0, 0)?;
+            c.emit(Opcode::DIV, 0, 0)?;
+            let delta_address = c.add_internal_local_mapping()?;
+            c.emit(Opcode::STORE, Mem::Local, delta_address)?;
 
             // set looping variable x to 'from' value
             if let Some(from_node) = maybe_from_node {
-                self.compile(compilation, from_node)?;
+                self.compile(c, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
-            let from_address = compilation.add_internal_local_mapping()?;
+            let from_address = c.add_internal_local_mapping()?;
 
-            compilation.emit(Opcode::STORE, Mem::Local, from_address)?;
+            c.emit(Opcode::STORE, Mem::Local, from_address)?;
 
             // store the starting 'from' value in the locally scoped variable
-            compilation.emit(Opcode::LOAD, Mem::Local, from_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, from_address)?;
 
             let loop_variable_address =
-                self.store_from_stack_to_memory(compilation, name_node, Mem::Local)?;
+                self.store_from_stack_to_memory(c, name_node, Mem::Local)?;
 
             // compare looping variable against exit condition
             // and jump if looping variable >= exit value
-            let addr_loop_start = compilation.code.len();
+            let addr_loop_start = c.code.len();
 
-            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit(Opcode::LOAD, Mem::Local, num_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, num_address)?;
 
             // exit check
-            compilation.emit(Opcode::LT, 0, 0)?;
+            c.emit(Opcode::LT, 0, 0)?;
 
-            let addr_exit_check = compilation.code.len();
-            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
+            let addr_exit_check = c.code.len();
+            c.emit(Opcode::JUMP_IF, 0, 0)?;
 
             // looper = from + (counter * delta)
-            compilation.emit(Opcode::LOAD, Mem::Local, from_address)?;
-            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit(Opcode::LOAD, Mem::Local, delta_address)?;
-            compilation.emit(Opcode::MUL, 0, 0)?;
-            compilation.emit(Opcode::ADD, 0, 0)?;
-            compilation.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, from_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, delta_address)?;
+            c.emit(Opcode::MUL, 0, 0)?;
+            c.emit(Opcode::ADD, 0, 0)?;
+            c.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
 
-            let pre_body_opcode_offset = compilation.opcode_offset;
+            let pre_body_opcode_offset = c.opcode_offset;
 
             // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-            self.compile_rest(compilation, &children[1..])?;
+            self.compile_rest(c, &children[1..])?;
 
-            let post_body_opcode_offset = compilation.opcode_offset;
+            let post_body_opcode_offset = c.opcode_offset;
             let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
+                c.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
             // increment counter
-            compilation.emit(Opcode::LOAD, Mem::Local, counter_address)?;
-            compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
-            compilation.emit(Opcode::ADD, 0, 0)?;
-            compilation.emit(Opcode::STORE, Mem::Local, counter_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, counter_address)?;
+            c.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+            c.emit(Opcode::ADD, 0, 0)?;
+            c.emit(Opcode::STORE, Mem::Local, counter_address)?;
 
             // loop back to the comparison
-            let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start as i32), 0)?;
+            let mut c_len = c.code.len() as i32;
+            c.emit(Opcode::JUMP, -(c_len - addr_loop_start as i32), 0)?;
 
-            compilation_len = compilation.code.len() as i32;
-            compilation.bytecode_modify_arg0_i32(
-                addr_exit_check,
-                compilation_len - addr_exit_check as i32,
-            )?;
+            c_len = c.code.len() as i32;
+            c.bytecode_modify_arg0_i32(addr_exit_check, c_len - addr_exit_check as i32)?;
         }
         Ok(())
     }
 
-    fn compile_loop(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_loop(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (loop (x from: 0 upto: 120 inc: 30) (body))
         // compile_loop children == (x from: 0 upto: 120 inc: 30) (body)
         //
@@ -1793,77 +1731,74 @@ impl Compiler {
 
             // set looping variable x to 'from' value
             if let Some(from_node) = maybe_from_node {
-                self.compile(compilation, from_node)?;
+                self.compile(c, from_node)?;
             } else {
                 // else default to 0
-                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
             let loop_variable_address =
-                self.store_from_stack_to_memory(compilation, name_node, Mem::Local)?;
+                self.store_from_stack_to_memory(c, name_node, Mem::Local)?;
 
             // compare looping variable against exit condition
             // and jump if looping variable >= exit value
-            let addr_loop_start = compilation.code.len();
+            let addr_loop_start = c.code.len();
 
-            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
 
             if use_to {
                 // so jump if looping variable >= exit value
                 if let Some(to_node) = maybe_to_node {
-                    self.compile(compilation, to_node)?;
-                    compilation.emit(Opcode::LT, 0, 0)?;
+                    self.compile(c, to_node)?;
+                    c.emit(Opcode::LT, 0, 0)?;
                 }
             } else {
                 // so jump if looping variable > exit value
                 if let Some(upto_node) = maybe_upto_node {
-                    self.compile(compilation, upto_node)?;
-                    compilation.emit(Opcode::GT, 0, 0)?;
-                    compilation.emit(Opcode::NOT, 0, 0)?;
+                    self.compile(c, upto_node)?;
+                    c.emit(Opcode::GT, 0, 0)?;
+                    c.emit(Opcode::NOT, 0, 0)?;
                 }
             }
 
-            let addr_exit_check = compilation.code.len();
-            compilation.emit(Opcode::JUMP_IF, 0, 0)?; // bc_exit_check
+            let addr_exit_check = c.code.len();
+            c.emit(Opcode::JUMP_IF, 0, 0)?; // bc_exit_check
 
-            let pre_body_opcode_offset = compilation.opcode_offset;
+            let pre_body_opcode_offset = c.opcode_offset;
 
             // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-            self.compile_rest(compilation, &children[1..])?;
+            self.compile_rest(c, &children[1..])?;
 
-            let post_body_opcode_offset = compilation.opcode_offset;
+            let post_body_opcode_offset = c.opcode_offset;
             let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
+                c.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
             // increment the looping variable
-            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            c.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
 
             if let Some(increment_node) = maybe_increment_node {
-                self.compile(compilation, increment_node)?;
+                self.compile(c, increment_node)?;
             } else {
-                compilation.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 1.0)?;
             }
 
-            compilation.emit(Opcode::ADD, 0, 0)?;
-            compilation.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
+            c.emit(Opcode::ADD, 0, 0)?;
+            c.emit(Opcode::STORE, Mem::Local, loop_variable_address)?;
             // loop back to the comparison
-            let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start as i32), 0)?;
+            let mut c_len = c.code.len() as i32;
+            c.emit(Opcode::JUMP, -(c_len - addr_loop_start as i32), 0)?;
 
-            compilation_len = compilation.code.len() as i32;
-            compilation.bytecode_modify_arg0_i32(
-                addr_exit_check,
-                compilation_len - addr_exit_check as i32,
-            )?;
+            c_len = c.code.len() as i32;
+            c.bytecode_modify_arg0_i32(addr_exit_check, c_len - addr_exit_check as i32)?;
         }
         Ok(())
     }
 
-    fn compile_each(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_each(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         // (each (x from: [10 20 30 40 50])
         //       (+ x x))
         if children.len() < 2 {
@@ -1902,61 +1837,58 @@ impl Compiler {
 
             // set looping variable x to 'from' value
             if let Some(from_node) = maybe_from_node {
-                self.compile(compilation, from_node)?;
+                self.compile(c, from_node)?;
             } else {
                 // todo: ignore this, each should always have a from parameter
                 // else default to 0
-                compilation.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
+                c.emit(Opcode::LOAD, Mem::Constant, 0.0)?;
             }
 
-            compilation.emit(Opcode::VEC_NON_EMPTY, 0, 0)?;
-            let addr_exit_check_is_vec = compilation.code.len();
-            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
+            c.emit(Opcode::VEC_NON_EMPTY, 0, 0)?;
+            let addr_exit_check_is_vec = c.code.len();
+            c.emit(Opcode::JUMP_IF, 0, 0)?;
 
-            compilation.emit(Opcode::VEC_LOAD_FIRST, 0, 0)?;
+            c.emit(Opcode::VEC_LOAD_FIRST, 0, 0)?;
 
             // compare looping variable against exit condition
             // and jump if looping variable >= exit value
-            let addr_loop_start = compilation.code.len() as i32;
+            let addr_loop_start = c.code.len() as i32;
 
             let loop_variable_address =
-                self.store_from_stack_to_memory(compilation, name_node, Mem::Local)?;
+                self.store_from_stack_to_memory(c, name_node, Mem::Local)?;
 
-            let pre_body_opcode_offset = compilation.opcode_offset;
+            let pre_body_opcode_offset = c.opcode_offset;
 
             // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-            self.compile_rest(compilation, &children[1..])?;
+            self.compile_rest(c, &children[1..])?;
 
-            let post_body_opcode_offset = compilation.opcode_offset;
+            let post_body_opcode_offset = c.opcode_offset;
             let opcode_delta = post_body_opcode_offset - pre_body_opcode_offset;
 
             // pop off any values that the body might leave on the stack
             for _i in 0..opcode_delta {
-                compilation.emit(Opcode::STORE, Mem::Void, 0)?;
+                c.emit(Opcode::STORE, Mem::Void, 0)?;
             }
 
-            compilation.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
-            compilation.emit(Opcode::VEC_HAS_NEXT, 0, 0)?;
+            c.emit(Opcode::LOAD, Mem::Local, loop_variable_address)?;
+            c.emit(Opcode::VEC_HAS_NEXT, 0, 0)?;
 
-            let addr_exit_check = compilation.code.len();
+            let addr_exit_check = c.code.len();
 
-            compilation.emit(Opcode::JUMP_IF, 0, 0)?;
+            c.emit(Opcode::JUMP_IF, 0, 0)?;
 
-            compilation.emit(Opcode::VEC_NEXT, 0, 0)?;
+            c.emit(Opcode::VEC_NEXT, 0, 0)?;
 
             // loop back to the comparison
-            let mut compilation_len = compilation.code.len() as i32;
-            compilation.emit(Opcode::JUMP, -(compilation_len - addr_loop_start), 0)?;
+            let mut c_len = c.code.len() as i32;
+            c.emit(Opcode::JUMP, -(c_len - addr_loop_start), 0)?;
 
-            compilation_len = compilation.code.len() as i32;
-            compilation.bytecode_modify_arg0_i32(
-                addr_exit_check,
-                compilation_len - addr_exit_check as i32,
-            )?;
+            c_len = c.code.len() as i32;
+            c.bytecode_modify_arg0_i32(addr_exit_check, c_len - addr_exit_check as i32)?;
             // fill in jump distance for the IS_VEC check
-            compilation.bytecode_modify_arg0_i32(
+            c.bytecode_modify_arg0_i32(
                 addr_exit_check_is_vec,
-                compilation_len - addr_exit_check_is_vec as i32,
+                c_len - addr_exit_check_is_vec as i32,
             )?;
         } else {
             parameters_node.error_here("compile_each expected a list that defines parameters");
@@ -1965,11 +1897,7 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_vector_in_quote(
-        &self,
-        compilation: &mut Compilation,
-        list_node: &Node,
-    ) -> Result<()> {
+    fn compile_vector_in_quote(&self, c: &mut Compilation, list_node: &Node) -> Result<()> {
         if let Node::List(_, children) = list_node {
             error_if_alterable(list_node, "compile_vector_in_quote")?;
 
@@ -1984,13 +1912,13 @@ impl Compiler {
             let len = children.len() as i32;
             for n in children {
                 if let Node::Name(_, _, iname) = n {
-                    compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, *iname)?;
                 } else {
-                    self.compile(compilation, n)?;
+                    self.compile(c, n)?;
                 }
             }
 
-            compilation.emit_squish(len)?;
+            c.emit_squish(len)?;
 
             Ok(())
         } else {
@@ -1999,22 +1927,18 @@ impl Compiler {
         }
     }
 
-    fn compile_quote(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_quote(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         let quoted_form = &children[0];
         match quoted_form {
-            Node::List(_, _) => self.compile_vector_in_quote(compilation, quoted_form)?,
-            Node::Name(_, _, iname) => compilation.emit(Opcode::LOAD, Mem::Constant, *iname)?,
-            _ => self.compile(compilation, quoted_form)?,
+            Node::List(_, _) => self.compile_vector_in_quote(c, quoted_form)?,
+            Node::Name(_, _, iname) => c.emit(Opcode::LOAD, Mem::Constant, *iname)?,
+            _ => self.compile(c, quoted_form)?,
         }
         Ok(())
     }
 
     // (++ vector value)
-    fn compile_vector_append(
-        &self,
-        compilation: &mut Compilation,
-        children: &[&Node],
-    ) -> Result<()> {
+    fn compile_vector_append(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         if children.len() != 2 {
             if children.is_empty() {
                 error!("compile_vector_append requires 2 args");
@@ -2025,25 +1949,25 @@ impl Compiler {
         }
 
         let vector = &children[0];
-        self.compile(compilation, vector)?;
+        self.compile(c, vector)?;
 
         let value = &children[1];
-        self.compile(compilation, value)?;
+        self.compile(c, value)?;
 
-        compilation.emit(Opcode::APPEND, 0, 0)?;
+        c.emit(Opcode::APPEND, 0, 0)?;
 
         if let Node::Name(_, _, iname) = vector {
             let mut mem_addr: Option<(Mem, usize)> = None;
 
-            if let Some(address) = compilation.get_local_mapping(*iname) {
+            if let Some(address) = c.get_local_mapping(*iname) {
                 mem_addr = Some((Mem::Local, *address));
             }
-            if let Some(address) = compilation.get_global_mapping(*iname) {
+            if let Some(address) = c.get_global_mapping(*iname) {
                 mem_addr = Some((Mem::Global, *address));
             }
 
             if let Some((mem, addr)) = mem_addr {
-                compilation.emit(Opcode::STORE, mem, addr)?;
+                c.emit(Opcode::STORE, mem, addr)?;
             }
         }
 
@@ -2051,7 +1975,7 @@ impl Compiler {
     }
 
     // (fn-call (aj z: 44))
-    fn compile_fn_call(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_fn_call(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         // fn_name should be a defined function's name
         // it will be known at compile time
 
@@ -2065,8 +1989,8 @@ impl Compiler {
             let fn_info_index = &kids[0];
             // place the fn_info_index onto the stack so that CALL_F can find the function
             // offset and num args
-            self.compile(compilation, fn_info_index)?;
-            compilation.emit(Opcode::CALL_F, 0, 0)?;
+            self.compile(c, fn_info_index)?;
+            c.emit(Opcode::CALL_F, 0, 0)?;
 
             // compile the rest of the arguments
 
@@ -2077,13 +2001,13 @@ impl Compiler {
                 let value = &label_vals[1];
 
                 // push value
-                self.compile(compilation, &value)?;
+                self.compile(c, &value)?;
 
                 // push the actual fn_info index so that the _FLU opcode can find it
-                self.compile(compilation, fn_info_index)?;
+                self.compile(c, fn_info_index)?;
 
                 if let Node::Label(_, _, iname) = label {
-                    compilation.emit(Opcode::STORE_F, Mem::Argument, *iname)?;
+                    c.emit(Opcode::STORE_F, Mem::Argument, *iname)?;
                 } else {
                     label.error_here("compile_fn_call: label required");
                     return Err(Error::Compiler);
@@ -2094,8 +2018,8 @@ impl Compiler {
 
             // place the fn_info_index onto the stack so that CALL_F_0 can find the
             // function's body offset
-            self.compile(compilation, fn_info_index)?;
-            compilation.emit(Opcode::CALL_F_0, 0, 0)?;
+            self.compile(c, fn_info_index)?;
+            c.emit(Opcode::CALL_F_0, 0, 0)?;
 
             return Ok(());
         }
@@ -2106,14 +2030,14 @@ impl Compiler {
 
     fn compile_address_of(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         parent: &Node,
         children: &[&Node],
     ) -> Result<()> {
         // fn_name should be a defined function's name, it will be known at compile time
-        if let Some(fn_info_index) = compilation.get_fn_info_index(&children[0]) {
-            // store the index into compilation->fn_info in the compilation
-            compilation.emit(Opcode::LOAD, Mem::Constant, fn_info_index as i32)?;
+        if let Some(fn_info_index) = c.get_fn_info_index(&children[0]) {
+            // store the index into c->fn_info in the c
+            c.emit(Opcode::LOAD, Mem::Constant, fn_info_index as i32)?;
             Ok(())
         } else {
             parent.error_here("address-of function not found");
@@ -2123,7 +2047,7 @@ impl Compiler {
 
     fn compile_explicit_0_arg_native_call(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         native: Native,
     ) -> Result<()> {
         let default_mask = 0;
@@ -2131,33 +2055,24 @@ impl Compiler {
         let (args, stack_offset) = parameter_info(native)?;
         let num_args = args.len();
 
-        compilation.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
-        compilation.emit(Opcode::NATIVE, native, num_args)?;
+        c.emit(Opcode::LOAD, Mem::Constant, default_mask)?;
+        c.emit(Opcode::NATIVE, native, num_args)?;
 
         // the vm's opcode_native will modify the stack, no need for the compiler to add STORE VOID opcodes
         // subtract num_args and the default_mask, also take into account that a value might be returned
-        compilation.opcode_offset -= (num_args as i32 + 1) - stack_offset; // should be -= 1
+        c.opcode_offset -= (num_args as i32 + 1) - stack_offset; // should be -= 1
 
         Ok(())
     }
 
-    fn compile_on_matrix_stack(
-        &self,
-        compilation: &mut Compilation,
-        children: &[&Node],
-    ) -> Result<()> {
-        self.compile_explicit_0_arg_native_call(compilation, Native::MatrixPush)?;
-        self.compile_rest(compilation, children)?;
-        self.compile_explicit_0_arg_native_call(compilation, Native::MatrixPop)?;
+    fn compile_on_matrix_stack(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
+        self.compile_explicit_0_arg_native_call(c, Native::MatrixPush)?;
+        self.compile_rest(c, children)?;
+        self.compile_explicit_0_arg_native_call(c, Native::MatrixPop)?;
         Ok(())
     }
 
-    fn compile_if(
-        &self,
-        compilation: &mut Compilation,
-        parent: &Node,
-        children: &[&Node],
-    ) -> Result<()> {
+    fn compile_if(&self, c: &mut Compilation, parent: &Node, children: &[&Node]) -> Result<()> {
         let if_node: &Node;
         let then_node: &Node;
         let else_node: Option<&Node>;
@@ -2180,51 +2095,51 @@ impl Compiler {
             return Err(Error::Compiler);
         }
 
-        self.compile(compilation, if_node)?;
+        self.compile(c, if_node)?;
 
         // insert jump to after the 'then' node if not true
-        let addr_jump_then = compilation.code.len();
-        compilation.emit(Opcode::JUMP_IF, 0, 0)?;
+        let addr_jump_then = c.code.len();
+        c.emit(Opcode::JUMP_IF, 0, 0)?;
 
         // the offset after the if
-        let offset_after_if = compilation.opcode_offset;
+        let offset_after_if = c.opcode_offset;
 
-        self.compile(compilation, then_node)?;
+        self.compile(c, then_node)?;
 
-        let offset_after_then = compilation.opcode_offset;
+        let offset_after_then = c.opcode_offset;
 
         if let Some(else_node) = else_node {
             // logically we're now going to go down one of possibly two paths
-            // so we can't just continue to add the compilation->opcode_offset since
+            // so we can't just continue to add the c->opcode_offset since
             // that would result in the offset taking both of the conditional's paths
-            compilation.opcode_offset = offset_after_if;
+            c.opcode_offset = offset_after_if;
 
             // insert a bc_jump_else opcode
-            let addr_jump_else = compilation.code.len();
+            let addr_jump_else = c.code.len();
 
-            compilation.emit(Opcode::JUMP, 0, 0)?;
+            c.emit(Opcode::JUMP, 0, 0)?;
 
-            let addr_jump_then_offset = compilation.code.len() as i32 - addr_jump_then as i32;
-            compilation.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+            let addr_jump_then_offset = c.code.len() as i32 - addr_jump_then as i32;
+            c.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
 
-            self.compile(compilation, else_node)?;
+            self.compile(c, else_node)?;
 
-            let offset_after_else = compilation.opcode_offset;
+            let offset_after_else = c.opcode_offset;
 
             if offset_after_then != offset_after_else {
                 // is this case actually going to happen?
                 // if so we can check which of the two paths has the lower opcode offset
                 // and pad out that path by inserting some LOAD CONST 9999 into the
-                // compilation
+                // c
                 parent.error_here("different opcode_offsets for the two paths in a conditional");
                 return Err(Error::Compiler);
             }
 
-            let addr_jump_else_offset = compilation.code.len() as i32 - addr_jump_else as i32;
-            compilation.bytecode_modify_arg0_i32(addr_jump_else, addr_jump_else_offset)?;
+            let addr_jump_else_offset = c.code.len() as i32 - addr_jump_else as i32;
+            c.bytecode_modify_arg0_i32(addr_jump_else, addr_jump_else_offset)?;
         } else {
-            let addr_jump_then_offset = compilation.code.len() as i32 - addr_jump_then as i32;
-            compilation.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+            let addr_jump_then_offset = c.code.len() as i32 - addr_jump_then as i32;
+            c.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
         }
 
         Ok(())
@@ -2237,9 +2152,9 @@ impl Compiler {
     - invoking code will then overwrite specific data in arg memory
     - invoking code will then CALL into the body_address
      */
-    fn compile_fn(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_fn(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         // fn (adder a: 0 b: 0) (+ a b)
-        compilation.clear_local_mappings()?;
+        c.clear_local_mappings()?;
 
         let signature = &children[0]; // (addr a: 0 b: 0)
         error_if_alterable(&signature, "compile_fn")?;
@@ -2254,22 +2169,22 @@ impl Compiler {
             }
 
             let fn_name = &kids[0];
-            if let Some(index) = compilation.get_fn_info_index(&fn_name) {
-                compilation.current_fn_info_index = Some(index);
+            if let Some(index) = c.get_fn_info_index(&fn_name) {
+                c.current_fn_info_index = Some(index);
 
                 // -------------
                 // the arguments
                 // -------------
                 let mut updated_fn_info: FnInfo;
                 {
-                    let fn_info: &FnInfo = &compilation.fn_info[index];
+                    let fn_info: &FnInfo = &c.fn_info[index];
                     updated_fn_info = FnInfo {
                         fn_name: fn_info.fn_name.to_string(),
                         ..Default::default()
                     }
                 }
 
-                updated_fn_info.arg_address = compilation.code.len();
+                updated_fn_info.arg_address = c.code.len();
 
                 // pairs of label/value declarations
                 let mut var_decls = &kids[1..];
@@ -2290,20 +2205,20 @@ impl Compiler {
 
                     updated_fn_info.argument_offsets.push(iname);
 
-                    // if let Some(label_i) = compilation.global_mappings.get(text) {
+                    // if let Some(label_i) = c.global_mappings.get(text) {
                     // } else {
                     //     // should be impossible to get here, the global mappings for the
                     //     // fn args should all have been registered in the
                     //     // register_top_level_fns function
                     // }
 
-                    compilation.emit(Opcode::LOAD, Mem::Constant, iname)?;
+                    c.emit(Opcode::LOAD, Mem::Constant, iname)?;
 
-                    compilation.emit(Opcode::STORE, Mem::Argument, counter)?;
+                    c.emit(Opcode::STORE, Mem::Argument, counter)?;
                     counter += 1;
 
-                    self.compile(compilation, value_node)?;
-                    compilation.emit(Opcode::STORE, Mem::Argument, counter)?;
+                    self.compile(c, value_node)?;
+                    c.emit(Opcode::STORE, Mem::Argument, counter)?;
                     counter += 1;
 
                     num_args += 1;
@@ -2311,24 +2226,24 @@ impl Compiler {
                 }
                 updated_fn_info.num_args = num_args;
 
-                compilation.emit(Opcode::RET_0, 0, 0)?;
+                c.emit(Opcode::RET_0, 0, 0)?;
 
                 // --------
                 // the body
                 // --------
 
-                updated_fn_info.body_address = compilation.code.len();
+                updated_fn_info.body_address = c.code.len();
 
-                compilation.fn_info[index] = updated_fn_info;
+                c.fn_info[index] = updated_fn_info;
 
                 // compile the body forms (woooaaaoohhh body form, body form for yoooouuuu)
-                self.compile_rest(compilation, &children[1..])?;
+                self.compile_rest(c, &children[1..])?;
 
                 // Don't need any STORE, MEM_SEG_VOID instructions as the RET will
                 // pop the frame and blow the stack
-                compilation.emit(Opcode::RET, 0, 0)?;
+                c.emit(Opcode::RET, 0, 0)?;
 
-                compilation.current_fn_info_index = None;
+                c.current_fn_info_index = None;
             } else {
                 fn_name.error_here("cannot find fn_info for node");
                 return Err(Error::Compiler);
@@ -2344,7 +2259,7 @@ impl Compiler {
 
     fn compile_fn_invocation_prologue(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         fn_info_index: usize,
     ) -> Result<()> {
         // NOTE: CALL and CALL_0 get their function offsets and num args from the
@@ -2356,31 +2271,31 @@ impl Compiler {
         // prepare the MEM_SEG_ARGUMENT with default values
 
         // for the function address
-        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
+        c.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         // for the num args
-        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
+        c.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
 
-        compilation.emit(Opcode::CALL, fn_info_index, fn_info_index)?;
+        c.emit(Opcode::CALL, fn_info_index, fn_info_index)?;
 
         Ok(())
     }
 
     fn compile_fn_invocation_implicit_from(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         fn_info_index: usize,
         from_name: &Node,
     ) -> Result<()> {
-        self.compile(compilation, from_name)?;
+        self.compile(c, from_name)?;
         let from_iname = Iname::from(Keyword::From);
-        compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, from_iname)?;
+        c.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, from_iname)?;
 
         Ok(())
     }
 
     fn compile_fn_invocation_args(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         parent: &Node,
         children: &[&Node],
         fn_info_index: usize,
@@ -2391,13 +2306,13 @@ impl Compiler {
             let arg = &arg_vals[0];
             if let Node::Label(_, _, iname) = arg {
                 let val = &arg_vals[1];
-                self.compile(compilation, val)?;
-                compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
+                self.compile(c, val)?;
+                c.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
                 arg_vals = &arg_vals[2..];
             } else if let Node::Name(_, _, iname) = arg {
                 let val = &arg_vals[0];
-                self.compile(compilation, val)?;
-                compilation.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
+                self.compile(c, val)?;
+                c.emit(Opcode::PLACEHOLDER_STORE, fn_info_index, *iname)?;
                 arg_vals = &arg_vals[1..];
             } else {
                 parent.error_here("compile_fn_invocation");
@@ -2409,26 +2324,26 @@ impl Compiler {
 
     fn compile_fn_invocation_epilogue(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         fn_info_index: usize,
     ) -> Result<()> {
         // call the body of the function
-        compilation.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
-        compilation.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;
+        c.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
+        c.emit(Opcode::CALL_0, fn_info_index, fn_info_index)?;
 
         Ok(())
     }
 
-    fn compile_rest(&self, compilation: &mut Compilation, children: &[&Node]) -> Result<()> {
+    fn compile_rest(&self, c: &mut Compilation, children: &[&Node]) -> Result<()> {
         for n in children {
-            self.compile(compilation, n)?;
+            self.compile(c, n)?;
         }
         Ok(())
     }
 
     fn compile_next_one(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         parent: &Node,
         children: &[&Node],
         op: Opcode,
@@ -2438,31 +2353,26 @@ impl Compiler {
             return Err(Error::Compiler);
         }
 
-        self.compile(compilation, &children[0])?;
-        compilation.emit(op, 0, 0)?;
+        self.compile(c, &children[0])?;
+        c.emit(op, 0, 0)?;
 
         Ok(())
     }
 
-    fn compile_math(
-        &self,
-        compilation: &mut Compilation,
-        children: &[&Node],
-        op: Opcode,
-    ) -> Result<()> {
-        self.compile(compilation, children[0])?;
+    fn compile_math(&self, c: &mut Compilation, children: &[&Node], op: Opcode) -> Result<()> {
+        self.compile(c, children[0])?;
         for n in &children[1..] {
-            self.compile(compilation, n)?;
-            compilation.emit(op, 0, 0)?;
+            self.compile(c, n)?;
+            c.emit(op, 0, 0)?;
         }
         Ok(())
     }
 
-    fn compile_alterable_element(&self, compilation: &mut Compilation, node: &Node) -> Result<()> {
+    fn compile_alterable_element(&self, c: &mut Compilation, node: &Node) -> Result<()> {
         match node {
             Node::Float(_, _, _) => {
                 let f = self.get_float(node)?;
-                compilation.emit(Opcode::LOAD, Mem::Constant, f)?;
+                c.emit(Opcode::LOAD, Mem::Constant, f)?;
             }
             Node::Vector(_, _elements) => {
                 unimplemented!();
@@ -2478,144 +2388,134 @@ impl Compiler {
         Ok(())
     }
 
-    fn compile_2d(
-        &self,
-        compilation: &mut Compilation,
-        node: &Node,
-        children: &[&Node],
-    ) -> Result<()> {
+    fn compile_2d(&self, c: &mut Compilation, node: &Node, children: &[&Node]) -> Result<()> {
         // the node may contain alterable info
         let use_gene = node.is_alterable() && self.use_genes;
 
         if node.has_gene() && use_gene {
             let (a, b) = self.get_2d(node)?;
-            compilation.emit(Opcode::LOAD, Mem::Constant, a)?;
-            compilation.emit(Opcode::LOAD, Mem::Constant, b)?;
+            c.emit(Opcode::LOAD, Mem::Constant, a)?;
+            c.emit(Opcode::LOAD, Mem::Constant, b)?;
         } else {
             for n in children {
                 if use_gene {
-                    self.compile_alterable_element(compilation, n)?;
+                    self.compile_alterable_element(c, n)?;
                 } else {
-                    self.compile(compilation, n)?;
+                    self.compile(c, n)?;
                 }
             }
         }
-        compilation.emit_squish(2)?;
+        c.emit_squish(2)?;
 
         Ok(())
     }
 
-    fn compile_vector(
-        &self,
-        compilation: &mut Compilation,
-        node: &Node,
-        children: &[&Node],
-    ) -> Result<()> {
+    fn compile_vector(&self, c: &mut Compilation, node: &Node, children: &[&Node]) -> Result<()> {
         // if this is an alterable vector, we'll have to pull values for each element from the genes
         let use_gene = node.has_gene() && self.use_genes;
         let len = children.len() as i32;
 
         for n in children {
             if use_gene {
-                self.compile_alterable_element(compilation, n)?;
+                self.compile_alterable_element(c, n)?;
             } else {
-                self.compile(compilation, n)?;
+                self.compile(c, n)?;
             }
         }
 
-        compilation.emit_squish(len)?;
+        c.emit_squish(len)?;
 
         Ok(())
     }
 
     fn compile_global_bind_kw_v2d(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         kw: Keyword,
         value0: f32,
         value1: f32,
     ) -> Result<()> {
-        compilation.emit(Opcode::LOAD, Mem::Constant, value0)?;
-        compilation.emit(Opcode::LOAD, Mem::Constant, value1)?;
-        compilation.emit_squish(2)?;
-        self.store_globally_kw(compilation, kw)?;
+        c.emit(Opcode::LOAD, Mem::Constant, value0)?;
+        c.emit(Opcode::LOAD, Mem::Constant, value1)?;
+        c.emit_squish(2)?;
+        self.store_globally_kw(c, kw)?;
         Ok(())
     }
 
     fn compile_global_bind_kw_f32(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         kw: Keyword,
         value: f32,
     ) -> Result<()> {
-        compilation.emit(Opcode::LOAD, Mem::Constant, value)?;
-        self.store_globally_kw(compilation, kw)?;
+        c.emit(Opcode::LOAD, Mem::Constant, value)?;
+        self.store_globally_kw(c, kw)?;
         Ok(())
     }
 
     fn compile_global_bind_kw_col(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         kw: Keyword,
         r: f32,
         g: f32,
         b: f32,
         a: f32,
     ) -> Result<()> {
-        compilation.emit(
+        c.emit(
             Opcode::LOAD,
             Mem::Constant,
             Colour::new(ColourFormat::Rgb, r, g, b, a),
         )?;
-        self.store_globally_kw(compilation, kw)?;
+        self.store_globally_kw(c, kw)?;
         Ok(())
     }
 
-    fn store_locally(&self, compilation: &mut Compilation, iname: Iname) -> Result<usize> {
-        let address: usize = match compilation.get_local_mapping(iname) {
+    fn store_locally(&self, c: &mut Compilation, iname: Iname) -> Result<usize> {
+        let address: usize = match c.get_local_mapping(iname) {
             Some(&local_mapping) => local_mapping, // already storing the binding name
-            None => compilation.add_local_mapping(iname)?,
+            None => c.add_local_mapping(iname)?,
         };
 
-        compilation.emit(Opcode::STORE, Mem::Local, address)?;
+        c.emit(Opcode::STORE, Mem::Local, address)?;
 
         Ok(address)
     }
 
-    fn store_globally_kw(&self, compilation: &mut Compilation, kw: Keyword) -> Result<usize> {
+    fn store_globally_kw(&self, c: &mut Compilation, kw: Keyword) -> Result<usize> {
         let iname = Iname::from(kw);
-        let address: usize = match compilation.get_global_mapping(iname) {
+        let address: usize = match c.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
-            None => compilation.add_global_mapping_for_keyword(kw)?,
+            None => c.add_global_mapping_for_keyword(kw)?,
         };
 
-        compilation.emit(Opcode::STORE, Mem::Global, address)?;
+        c.emit(Opcode::STORE, Mem::Global, address)?;
 
         Ok(address)
     }
 
-    fn store_globally(&self, compilation: &mut Compilation, iname: Iname) -> Result<usize> {
-        let address: usize = match compilation.get_global_mapping(iname) {
+    fn store_globally(&self, c: &mut Compilation, iname: Iname) -> Result<usize> {
+        let address: usize = match c.get_global_mapping(iname) {
             Some(&global_mapping) => global_mapping, // already storing the binding name
-            None => compilation.add_global_mapping(iname)?,
+            None => c.add_global_mapping(iname)?,
         };
 
-        compilation.emit(Opcode::STORE, Mem::Global, address)?;
+        c.emit(Opcode::STORE, Mem::Global, address)?;
 
         Ok(address)
     }
 
     fn store_from_stack_to_memory(
         &self,
-        compilation: &mut Compilation,
+        c: &mut Compilation,
         node: &Node,
         mem: Mem,
     ) -> Result<usize> {
         if let Node::Name(_, _, iname) = node {
             match mem {
-                Mem::Local => self.store_locally(compilation, *iname),
+                Mem::Local => self.store_locally(c, *iname),
                 // a call with mem == global means that this is a user defined global
-                Mem::Global => self.store_globally(compilation, *iname),
+                Mem::Global => self.store_globally(c, *iname),
                 _ => {
                     node.error_here("store_from_stack_to_memory invalid memory type");
                     Err(Error::Compiler)
@@ -2627,33 +2527,29 @@ impl Compiler {
         }
     }
 
-    fn compile_user_defined_name(
-        &self,
-        compilation: &mut Compilation,
-        iname: Iname,
-    ) -> Result<bool> {
-        if let Some(local_mapping) = compilation.get_local_mapping(iname) {
+    fn compile_user_defined_name(&self, c: &mut Compilation, iname: Iname) -> Result<bool> {
+        if let Some(local_mapping) = c.get_local_mapping(iname) {
             let val = *local_mapping;
-            compilation.emit(Opcode::LOAD, Mem::Local, val)?;
+            c.emit(Opcode::LOAD, Mem::Local, val)?;
             return Ok(true);
         }
 
         // check arguments if we're in a function
-        if let Some(current_fn_info_index) = compilation.current_fn_info_index {
+        if let Some(current_fn_info_index) = c.current_fn_info_index {
             let maybe_argument_mapping;
             {
-                let fn_info = &compilation.fn_info[current_fn_info_index];
+                let fn_info = &c.fn_info[current_fn_info_index];
                 maybe_argument_mapping = fn_info.get_argument_mapping(iname);
             }
             if let Some(argument_mapping) = maybe_argument_mapping {
-                compilation.emit(Opcode::LOAD, Mem::Argument, argument_mapping as i32)?;
+                c.emit(Opcode::LOAD, Mem::Argument, argument_mapping as i32)?;
                 return Ok(true);
             }
         }
 
-        if let Some(global_mapping) = compilation.get_global_mapping(iname) {
+        if let Some(global_mapping) = c.get_global_mapping(iname) {
             let val = *global_mapping;
-            compilation.emit(Opcode::LOAD, Mem::Global, val)?;
+            c.emit(Opcode::LOAD, Mem::Global, val)?;
             return Ok(true);
         }
 
@@ -2938,7 +2834,7 @@ mod tests {
     fn sanity_check_compile_preamble() {
         // stupid, brittle test just to check that the preamble is creating something
         let preamble_program = compile_preamble().unwrap();
-        assert_eq!(preamble_program.code.len(), 82);
+        assert_eq!(preamble_program.code.len(), 86);
     }
 
     #[test]
@@ -2980,9 +2876,9 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(16),
-                load_const_f32(10.0),
                 store_global(17),
+                load_const_f32(10.0),
+                store_global(18),
                 stop(),
             ]
         );
@@ -2992,11 +2888,11 @@ mod tests {
             vec![
                 jump(1),
                 load_const_f32(9.0),
-                store_global(16),
-                load_const_f32(10.0),
                 store_global(17),
-                load_global_i32(16),
+                load_const_f32(10.0),
+                store_global(18),
                 load_global_i32(17),
+                load_global_i32(18),
                 add(),
                 stop(),
             ]
@@ -3109,8 +3005,8 @@ mod tests {
             vec![
                 jump(1),
                 squish(0),
-                store_global(16),
-                load_global_i32(16),
+                store_global(17),
+                load_global_i32(17),
                 vec_non_empty(),
                 jump_if(12),
                 vec_load_first(),
@@ -3292,10 +3188,10 @@ mod tests {
             load_const_f32(0.0),
             load_const_f32(0.0),
             native(Native::ColRGB, 4),
-            store_global(16),
+            store_global(17),
             load_const_i32(0),
             load_const_f32(0.5),
-            load_global_i32(16),
+            load_global_i32(17),
             native(Native::ColSetAlpha, 2),
             stop(),
         ];
@@ -3337,15 +3233,15 @@ mod tests {
             add(),
             ret(),
             load_const_f32(1.0),
-            store_global(16),
-            load_const_f32(2.0),
             store_global(17),
+            load_const_f32(2.0),
+            store_global(18),
             load_const_i32(1),
             load_const_i32(2),
             call(),
-            load_global_i32(16),
-            store_arg(1),
             load_global_i32(17),
+            store_arg(1),
+            load_global_i32(18),
             store_arg(3),
             load_const_i32(10),
             call_0(),
@@ -3398,11 +3294,11 @@ mod tests {
             add(),
             ret(),
             load_const_f32(33.0),
-            store_global(16),
+            store_global(17),
             load_const_i32(1),
             load_const_i32(2),
             call(),
-            load_global_i32(16),
+            load_global_i32(17),
             store_arg(1),
             load_const_f32(10.0),
             store_arg(3),

@@ -36,7 +36,7 @@
 (wash colour: (col/rgb r: 0.184 g: 0.605 b: 0.804 alpha: 0.163) ~ (gen/col))
 
 (on-matrix-stack
- (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+ (translate vector: canvas/centre)
  (scale scalar: 0.996 ~ (gen/scalar min: 0.8 max: 2))
  (rotate angle: 88.202 ~ (gen/scalar min: 0 max: 360))
  (repeat/rotate-mirrored fn: (address-of draw)

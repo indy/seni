@@ -1,7 +1,7 @@
 (meta linear-colour-space: 1)
 
 ; apply a full-canvas dark texture
-(stroked-bezier-rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+(stroked-bezier-rect position: canvas/centre
                      overlap: 90
                      iterations: 80
                      tessellation: 20
@@ -11,7 +11,7 @@
                      colour: (col/rgb r: 0 g: 0 b: 0.1 alpha: 0.9))
 
 ; further darken the background
-(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+(rect position: canvas/centre
       width: canvas/width height: canvas/height
       colour: (col/rgb r: 0 g: 0 b: 0.0 alpha: 0.5))
 

@@ -55,5 +55,5 @@
 ;; render the Biomorph as 2 symmetrical halves
 (fn (render)
   (on-matrix-stack
-    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (translate vector: canvas/centre)
     (repeat/symmetry-vertical fn: (address-of render-half))))

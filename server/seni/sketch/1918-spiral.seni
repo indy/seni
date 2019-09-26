@@ -25,7 +25,7 @@
 
 (setup)
 (on-matrix-stack
-  (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+  (translate vector: canvas/centre)
   (loop (i to: 100)
     (scale scalar: 0.98)
     (rotate angle: 1)

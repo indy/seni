@@ -23,7 +23,7 @@
   focal-power 50 ~ (gen/scalar max: 200))
 
 (fn (render-background colour: (col/rgb r: 1.0 g: 1.0 b: 0.9))
-    (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+    (rect position: canvas/centre
           width: canvas/width
           height: canvas/height
           colour: colour))

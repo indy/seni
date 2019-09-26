@@ -63,7 +63,7 @@
     x-sub 7 ~ (gen/int min: 1 max: 8)
     y-sub 1 ~ (gen/int min: 1 max: 8))
   (on-matrix-stack
-    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (translate vector: canvas/centre)
     (loop (y from: y-sub to: (- num-squares y-sub))
       (loop (x from: x-sub to: (- num-squares x-sub))
         (define
@@ -74,7 +74,7 @@
                        volatility: (focal/value from: focal-point position: position)))))))
 
 (fn (render-background colour: (col/rgb r: 1 g: 1 b: 0.9))
-  (rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+  (rect position: canvas/centre
         width: canvas/width
         height: canvas/height
         colour: colour))

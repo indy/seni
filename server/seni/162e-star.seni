@@ -35,7 +35,7 @@
 
 (fn (render)
     (on-matrix-stack
-     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+     (translate vector: canvas/centre)
      (repeat/rotate-mirrored fn: (address-of draw)
                              copies: 6 ~ (gen/int min: 4 max: 12))))
 

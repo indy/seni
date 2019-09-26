@@ -45,7 +45,7 @@
 (fn (render)
     (wash colour: (col/rgb r: 0.810 g: 0.593 b: 0.355 alpha: 0.936))
     (on-matrix-stack
-     (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+     (translate vector: canvas/centre)
      (repeat/rotate-mirrored fn: (address-of draw)
                              copies: 7 ~ (gen/int min: 4 max: 10))))
 

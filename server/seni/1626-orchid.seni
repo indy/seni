@@ -38,7 +38,7 @@
         height: 1000
         colour: (col/value from: col-fn-1 t: 0.5))
   (on-matrix-stack
-    (translate vector: [(/ canvas/width 2) (/ canvas/height 2)])
+    (translate vector: canvas/centre)
     (repeat/rotate-mirrored fn: (address-of draw)
                             copies: 3)))
 

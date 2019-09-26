@@ -13,7 +13,7 @@
                                                595 ~ (gen/int max: canvas/height)]
                                 distance: 864 ~ (gen/int min: 200 max: canvas/width))
 
-  centre [(/ canvas/width 2) (/ canvas/height 2)])
+  centre canvas/centre)
 
 
 (fn (hexagon position: centre

@@ -1,6 +1,6 @@
 (meta linear-colour-space: 1)
 
-(define [cx cy] [(/ canvas/width 2) (/ canvas/height 2)])
+(define [cx cy] canvas/centre)
 
 (fn (render-circle position: [0 0]
                    n: 0
