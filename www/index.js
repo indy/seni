@@ -937,7 +937,6 @@ function createInitialState() {
   return {
     // the resolution of the high res image
     highResolution: [2048, 2048], // [4096, 4096],
-    placeholder: 'img/spinner.gif',
     populationSize: 24,
     mutationRate: 0.1,
 
@@ -968,7 +967,6 @@ class Controller {
     const clone = {};
 
     clone.highResolution = state.highResolution;
-    clone.placeholder = state.placeholder;
     clone.populationSize = state.populationSize;
     clone.mutationRate = state.mutationRate;
 
@@ -1531,47 +1529,48 @@ function showCurrentMode(state) {
   showButtonsFor(currentMode);
 }
 
-function showPlaceholderImages(state) {
-  const placeholder = state.placeholder;
+function removeAllChildren(e) {
+  while (e.firstChild) {
+    e.removeChild(e.firstChild);
+  }
+}
+
+function removePhenotypeSpinners(state) {
   const populationSize = state.populationSize;
   const phenotypes = gUI.phenotypes;
 
   for (let i = 0; i < populationSize; i++) {
-    const imageElement = phenotypes[i].imageElement;
-    imageElement.src = placeholder;
+    const pheno = phenotypes[i];
+    const phenotypeSpinner = pheno.phenotypeSpinner;
+    removeAllChildren(phenotypeSpinner);
   }
 }
 
-// needs the controller since imageLoadHandler rebinds controller.getState()
-// on every image load
-//
-function afterLoadingPlaceholderImages(state) {
-  const allImagesLoadedSince = timeStamp => {
-    const phenotypes = gUI.phenotypes;
+function showPhenotypeSpinners(state) {
+  const populationSize = state.populationSize;
+  const phenotypes = gUI.phenotypes;
 
-    return phenotypes.every(phenotype => {
-      const imageElement = phenotype.imageElement;
-      const loaded = imageElement.getAttribute('data-image-load-timestamp');
-      return loaded > timeStamp;
-    });
-  };
+  // add the svg spinner to the first element, measure it, remove it,
+  //
+  const p = phenotypes[0];
+  const e = p.phenotypeElement;
+  // measure the initial dimensions
+  let dim = e.clientWidth;
+  const phenotypeSpinner = p.phenotypeSpinner;
+  phenotypeSpinner.innerHTML = generateSVG(dim);
+  // now get the actual dimension for all elements
+  dim = e.clientWidth * 0.9;
 
-  const initialTimeStamp = performance.now();
+  removeAllChildren(phenotypeSpinner);
 
-  showPlaceholderImages(state);
+  for (let i = 0; i < populationSize; i++) {
+    const pheno = phenotypes[i];
+    // remove any of the current images (e.g. if we're in the 2nd or greater generation of evolving)
+    pheno.imageElement.src = "";
 
-  return new Promise((resolve, _) => { // todo: implement reject
-    setTimeout(function go() {
-      // wait until all of the placeholder load events have been received
-      // otherwise there may be image sizing issues, especially with the
-      // first img element
-      if (allImagesLoadedSince(initialTimeStamp)) {
-        resolve(state);
-      } else {
-        setTimeout(go, 20);
-      }
-    });
-  });
+    const phenotypeSpinner = pheno.phenotypeSpinner;
+    phenotypeSpinner.innerHTML = generateSVG(dim);
+  }
 }
 
 // update the selected phenotypes in the evolve screen according to the
@@ -1614,11 +1613,18 @@ async function renderGeneration(state) {
 
   const stopFn = startTiming();
 
+  const dim = phenotypes[0].phenotypeElement.clientWidth;
+
   for (let i = 0; i < phenotypes.length; i++) {
     const workerJob = renderScript({
       script,
       genotype: genotypes[i],
-    }, phenotypes[i].imageElement);
+      assumeWidth: dim,
+      assumeHeight: dim
+    }, phenotypes[i].imageElement).then(() => {
+      const spinner = phenotypes[i].phenotypeSpinner;
+      removeAllChildren(spinner);
+    });
 
     promises.push(workerJob);
   }
@@ -1630,7 +1636,7 @@ async function renderGeneration(state) {
 
 // invoked when the evolve screen is displayed after the edit screen
 async function setupEvolveUI(controller) {
-  await afterLoadingPlaceholderImages(controller.getState());
+  showPhenotypeSpinners(controller.getState());
   const state = await controller.dispatch(actionInitialGeneration);
   // render the phenotypes
   updateSelectionUI(state);
@@ -1701,6 +1707,7 @@ function normalize_bitmap_url(url) {
   }
 }
 
+// note: this is returning a Promise
 async function renderScript(parameters, imageElement) {
   const stopFn = startTiming();
 
@@ -1793,6 +1800,12 @@ async function ensureMode(controller, mode) {
   }
 
   if (controller.getState().currentMode !== mode) {
+    const currentState = controller.getState();
+    if (currentState.currentMode === SeniMode.evolve) {
+      console.log('leaving evolve mode');
+      removePhenotypeSpinners(currentState);
+    }
+
     const state = await controller.dispatch(actionSetMode, { mode });
     History.pushState(state);
 
@@ -1899,7 +1912,7 @@ async function onNextGen(controller) {
     // update the last history state
     History.replaceState(state);
 
-    showPlaceholderImages(state);
+    showPhenotypeSpinners(state);
 
     state = await controller.dispatch(actionNextGeneration, { rng: 4242 });
     if (state === undefined) {
@@ -1917,15 +1930,15 @@ async function onNextGen(controller) {
   }
 }
 
-function createPhenotypeElement(id, placeholderImage) {
+function createPhenotypeElement(id) {
   const container = document.createElement('div');
 
   container.className = 'card-holder';
   container.id = `pheno-${id}`;
   container.innerHTML = `
+      <div id="pheno-spinner-${id}"></div>
       <a href="#">
-        <img class="card-image phenotype"
-             data-id="${id}" src="${placeholderImage}">
+        <img class="card-image phenotype" data-id="${id}">
       </a>
       <div class="card-action">
         <a href="#" class="render left-side">Render</a>
@@ -1937,7 +1950,7 @@ function createPhenotypeElement(id, placeholderImage) {
 
 // invoked when restoring the evolve screen from the history api
 async function restoreEvolveUI(controller) {
-  await afterLoadingPlaceholderImages(controller.getState());
+  showPhenotypeSpinners(controller.getState());
   updateSelectionUI(controller.getState());
   // render the phenotypes
   await renderGeneration(controller.getState());
@@ -2109,7 +2122,7 @@ function setupUI(controller) {
   addClickEvent('shuffle-btn', async event => {
     try {
       event.preventDefault();
-      showPlaceholderImages(controller.getState());
+      showPhenotypeSpinners(controller.getState());
       const rng = Math.random() * 9999;
       const state = await controller.dispatch(actionShuffleGeneration, { rng });
       updateSelectionUI(state);
@@ -2220,11 +2233,6 @@ function setupUI(controller) {
     }
   }, false);
 
-  // invoked on every load event for an img tag
-  const imageLoadHandler = event => {
-    event.target.setAttribute('data-image-load-timestamp', event.timeStamp);
-  };
-
   // setup the evolve-container
   const evolveGallery = document.getElementById('evolve-gallery');
   evolveGallery.innerHTML = '';
@@ -2236,19 +2244,18 @@ function setupUI(controller) {
   const populationSize = controller.getState().populationSize;
   const phenotypes = [];
   for (let i = 0; i < populationSize; i++) {
-    const phenotypeElement = createPhenotypeElement(i, '');
-
+    const phenotypeElement = createPhenotypeElement(i);
     // get the image element
-    const imageElement =
-          phenotypeElement.getElementsByClassName('phenotype')[0];
-    imageElement.addEventListener('load', imageLoadHandler, false);
-    imageElement.setAttribute('data-image-load-timestamp', 0);
+    const imageElement = phenotypeElement.getElementsByClassName('phenotype')[0];
 
     row.appendChild(phenotypeElement);
 
+    const phenotypeSpinner = document.getElementById(`pheno-spinner-${i}`);
+
     phenotypes.push({
       phenotypeElement,
-      imageElement
+      imageElement,
+      phenotypeSpinner
     });
   }
 
@@ -2284,23 +2291,36 @@ async function getGallery(controller) {
   await createGalleryDisplayChunk(controller);
 }
 
+function generateSVG(dim) {
+  const colA1 = "#000000";
+  const colA2 = "#714141";
+  const colB1 = "#000000";
+  const colB2 = "#cf9f9f";
+
+  // original svg downloaded from https://icons8.com/preloaders/
+  return `<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" width="${dim}px" height="${dim}px" viewBox="-64 -64 256 256" xml:space="preserve"><rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF" /><g><linearGradient id="linear-gradient"><stop offset="0%" stop-color="${colA1}" fill-opacity="1"/><stop offset="100%" stop-color="${colA2}" fill-opacity="0.56"/></linearGradient><linearGradient id="linear-gradient2"><stop offset="0%" stop-color="${colB1}" fill-opacity="1"/><stop offset="100%" stop-color="${colB2}" fill-opacity="0.19"/></linearGradient><path d="M64 .98A63.02 63.02 0 1 1 .98 64 63.02 63.02 0 0 1 64 .98zm0 15.76A47.26 47.26 0 1 1 16.74 64 47.26 47.26 0 0 1 64 16.74z" fill-rule="evenodd" fill="url(#linear-gradient)"/><path d="M64.12 125.54A61.54 61.54 0 1 1 125.66 64a61.54 61.54 0 0 1-61.54 61.54zm0-121.1A59.57 59.57 0 1 0 123.7 64 59.57 59.57 0 0 0 64.1 4.43zM64 115.56a51.7 51.7 0 1 1 51.7-51.7 51.7 51.7 0 0 1-51.7 51.7zM64 14.4a49.48 49.48 0 1 0 49.48 49.48A49.48 49.48 0 0 0 64 14.4z" fill-rule="evenodd" fill="url(#linear-gradient2)"/><animateTransform attributeName="transform" type="rotate" from="0 64 64" to="360 64 64" dur="800ms" repeatCount="indefinite"></animateTransform></g></svg>`;
+}
+
 async function createGalleryDisplayChunk(controller) {
   const state = controller.getState();
 
-  const createGalleryElement = galleryItem => {
+  const createGalleryElement = item => {
     const container = document.createElement('div');
+    const id = item.id;
 
     container.className = 'card-holder';
-    container.id = `gallery-item-${galleryItem.id}`;
+    container.id = `gallery-item-${id}`;
 
     container.innerHTML = `
+      <div id="gallery-spinner-${id}"></div>
       <a href="#" class="show-edit">
-        <img class="card-image show-edit"
-             id="gallery-image-${galleryItem.id}"
-             src="${state.placeholder}">
+        <img
+             class="card-image show-edit"
+             id="gallery-image-${id}"
+        />
       </a>
       <div class="card-action">
-        <span>${galleryItem.name}</span>
+        <span>${item.name}</span>
       </div>`;
 
     return container;
@@ -2314,19 +2334,48 @@ async function createGalleryDisplayChunk(controller) {
 
   const promises = [];
 
+  // append children before later code requests clientWidth
   for (let i=state.galleryOldestToDisplay; i>least; i--) {
     const item = state.galleryItems[i];
     const e = createGalleryElement(item);
     row.appendChild(e);
+  }
 
+  // add the svg spinner to the first element, measure it, remove it,
+  //
+  let dim = 0;
+  {
+    const item = state.galleryItems[state.galleryOldestToDisplay];
+    const imageElement = document.getElementById(`gallery-image-${item.id}`);
+    dim = imageElement.clientWidth;
+
+    const svgContainerElement = document.getElementById(`gallery-spinner-${item.id}`);
+    svgContainerElement.innerHTML = generateSVG(dim);
+
+    dim = imageElement.clientWidth;
+    removeAllChildren(svgContainerElement);
+  }
+
+  for (let i=state.galleryOldestToDisplay; i>least; i--) {
+    const item = state.galleryItems[i];
+    const imageElement = document.getElementById(`gallery-image-${item.id}`);
+    const svgContainerElement = document.getElementById(`gallery-spinner-${item.id}`);
+
+    svgContainerElement.innerHTML = generateSVG(dim);
+
+    // renderScript is an async function so it will return a Promise
+    //
     const workerJob = renderScript({
       script: item.script,
       assumeWidth,
       assumeHeight
-    }, document.getElementById(`gallery-image-${item.id}`));
+    }, imageElement).then(() => {
+      removeAllChildren(svgContainerElement);
+    });
 
     promises.push(workerJob);
   }
+
   // console.log(`oldest id to display is now ${least}`);
   if (least === 0) {
     // hide the button
