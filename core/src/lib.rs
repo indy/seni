@@ -56,6 +56,8 @@ mod parser;
 mod path;
 mod prng;
 mod program;
+mod render_list;
+mod render_packet;
 mod repeat;
 mod rgb;
 mod trait_list;
@@ -68,12 +70,13 @@ pub use crate::compiler::{compile_preamble, compile_program, compile_program_wit
 pub use crate::context::Context;
 pub use crate::error::{Error, Result};
 pub use crate::gene::{next_generation, Genotype};
-pub use crate::geometry::{
-    Geometry, RPCommand, RenderPacketGeometry, RenderPacketImage, RenderPacketMask,
-};
+pub use crate::render_list::RenderList;
 pub use crate::packable::Packable;
 pub use crate::parser::{parse, WordLut};
 pub use crate::program::Program;
+pub use crate::render_packet::{
+    RPCommand, RenderPacket, RenderPacketGeometry, RenderPacketImage, RenderPacketMask,
+};
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
 pub use crate::vm::{VMProfiling, Var, Vm};
@@ -169,7 +172,7 @@ pub mod tests {
         let program = program_from_source(s).unwrap();
         let _ = run_program_with_preamble(vm, context, &program).unwrap();
 
-        assert_eq!(1, context.geometry.get_num_render_packets() as i32);
+        assert_eq!(1, context.render_list.get_num_render_packets() as i32);
 
         let geo = context.get_render_packet_geometry(0).unwrap();
         let num_floats = geo.get_geo_len();

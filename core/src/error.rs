@@ -33,6 +33,7 @@ pub enum Error {
     Packable,
     Parser,
     Program,
+    RenderList,
     Unparser,
     VM,
     // conversions from other errors
@@ -78,6 +79,7 @@ impl fmt::Display for Error {
             Error::Packable => write!(f, "seni core: Packable"),
             Error::Parser => write!(f, "seni core: Parser"),
             Error::Program => write!(f, "seni core: Program"),
+            Error::RenderList => write!(f, "seni core: RenderList"),
             Error::Unparser => write!(f, "seni core: Unparser"),
             Error::VM => write!(f, "seni core: VM"),
             // conversions from other errors

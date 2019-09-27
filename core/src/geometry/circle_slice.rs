@@ -14,14 +14,14 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::error::{Error, Result};
-use crate::geometry::Geometry;
+use crate::render_list::RenderList;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
-    geometry: &mut Geometry,
+    render_list: &mut RenderList,
     matrix: &Matrix,
     position: (f32, f32),
     width: f32,
@@ -41,9 +41,9 @@ pub fn render(
     let mut innervx = (r_start.sin() * inner_width) + position.0;
     let mut innervy = (r_start.cos() * inner_height) + position.1;
 
-    geometry.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy)?;
+    render_list.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy)?;
 
-    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rp = render_list.render_packets.last_mut().ok_or(Error::Geometry)?;
     let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {

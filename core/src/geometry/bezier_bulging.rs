@@ -16,13 +16,13 @@
 use crate::ease::Easing;
 use crate::error::Result;
 use crate::geometry::bezier;
-use crate::geometry::Geometry;
+use crate::render_list::RenderList;
 use crate::matrix::Matrix;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
-    geometry: &mut Geometry,
+    render_list: &mut RenderList,
     matrix: &Matrix,
     coords: &[f32; 8],
     line_width: f32,
@@ -37,7 +37,7 @@ pub fn render(
 
     // thin_fat
     bezier::render(
-        geometry,
+        render_list,
         matrix,
         coords,
         0.0,
@@ -52,7 +52,7 @@ pub fn render(
 
     // fat_thin
     bezier::render(
-        geometry,
+        render_list,
         matrix,
         coords,
         line_width,

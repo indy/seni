@@ -250,8 +250,8 @@ impl Bridge {
             match run_program_with_preamble(&mut self.vm, &mut self.context, &program) {
                 Ok(_) => {
                     self.vm.debug_str_clear();
-                    self.context.geometry.remove_useless_render_packets();
-                    self.context.geometry.get_num_render_packets()
+                    self.context.render_list.remove_useless_render_packets();
+                    self.context.render_list.get_num_render_packets()
                 }
                 Err(e) => {
                     error!("{}", e);

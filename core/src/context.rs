@@ -19,6 +19,8 @@ use crate::ease::Easing;
 use crate::error::{Error, Result};
 use crate::geometry;
 use crate::matrix::MatrixStack;
+use crate::render_list::RenderList;
+use crate::render_packet::{RPCommand, RenderPacketGeometry, RenderPacketImage, RenderPacketMask};
 use crate::rgb::Rgb;
 use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
@@ -27,7 +29,7 @@ use log::error;
 pub struct Context {
     pub matrix_stack: MatrixStack,
     pub mappings: Mappings,
-    pub geometry: geometry::Geometry,
+    pub render_list: RenderList,
     pub bitmap_cache: BitmapCache,
 }
 
@@ -36,7 +38,7 @@ impl Default for Context {
         Context {
             matrix_stack: Default::default(),
             mappings: Default::default(),
-            geometry: Default::default(),
+            render_list: Default::default(),
             bitmap_cache: Default::default(),
         }
     }
@@ -49,43 +51,34 @@ impl Context {
     //
     pub fn reset_for_piece(&mut self) {
         self.matrix_stack.reset();
-        self.geometry.reset();
+        self.render_list.reset();
     }
 
-    pub fn push_rp_mask(&mut self, render_packet_mask: geometry::RenderPacketMask) -> Result<()> {
-        self.geometry.push_rp_mask(render_packet_mask)
+    pub fn push_rp_mask(&mut self, render_packet_mask: RenderPacketMask) -> Result<()> {
+        self.render_list.push_rp_mask(render_packet_mask)
     }
 
-    pub fn push_rp_image(
-        &mut self,
-        render_packet_image: geometry::RenderPacketImage,
-    ) -> Result<()> {
-        self.geometry.push_rp_image(render_packet_image)
+    pub fn push_rp_image(&mut self, render_packet_image: RenderPacketImage) -> Result<()> {
+        self.render_list.push_rp_image(render_packet_image)
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<geometry::RPCommand> {
-        self.geometry.get_render_packet_command(packet_number)
+    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<RPCommand> {
+        self.render_list.get_render_packet_command(packet_number)
     }
 
-    pub fn get_render_packet_mask(
-        &self,
-        packet_number: usize,
-    ) -> Result<&geometry::RenderPacketMask> {
-        self.geometry.get_render_packet_mask(packet_number)
+    pub fn get_render_packet_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
+        self.render_list.get_render_packet_mask(packet_number)
     }
 
-    pub fn get_render_packet_image(
-        &self,
-        packet_number: usize,
-    ) -> Result<&geometry::RenderPacketImage> {
-        self.geometry.get_render_packet_image(packet_number)
+    pub fn get_render_packet_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
+        self.render_list.get_render_packet_image(packet_number)
     }
 
     pub fn get_render_packet_geometry(
         &self,
         packet_number: usize,
-    ) -> Result<&geometry::RenderPacketGeometry> {
-        self.geometry.get_render_packet_geometry(packet_number)
+    ) -> Result<&RenderPacketGeometry> {
+        self.render_list.get_render_packet_geometry(packet_number)
     }
 
     pub fn render_line(
@@ -104,7 +97,7 @@ impl Context {
             let to_col = Rgb::from_colour(to_col)?;
 
             geometry::line::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 from,
                 to,
@@ -130,7 +123,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::rect::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 position,
                 width,
@@ -157,7 +150,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::circle::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 position,
                 width,
@@ -189,7 +182,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::circle_slice::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 position,
                 width,
@@ -217,7 +210,7 @@ impl Context {
 
         if let Some(matrix) = self.matrix_stack.peek() {
             let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
-            geometry::poly::render(&mut self.geometry, matrix, &coords, &colours, uvm)
+            geometry::poly::render(&mut self.render_list, matrix, &coords, &colours, uvm)
         } else {
             error!("no matrix for render_poly");
             Err(Error::Context)
@@ -242,7 +235,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::quadratic::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 coords,
                 width_start,
@@ -278,7 +271,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::bezier::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 coords,
                 width_start,
@@ -312,7 +305,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::bezier_bulging::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 coords,
                 line_width,
@@ -348,7 +341,7 @@ impl Context {
             let colour = Rgb::from_colour(colour)?;
 
             geometry::stroked_bezier::render(
-                &mut self.geometry,
+                &mut self.render_list,
                 matrix,
                 tessellation,
                 coords,

@@ -26,10 +26,10 @@ use std::time::Instant;
 
 use core::{
     bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse,
-    BitmapInfo, Context, Packable, Program, VMProfiling, Vm,
+    BitmapInfo, Context, Packable, Program, VMProfiling, Var, Vm, RenderPacket,
 };
 
-type Result<T> = ::std::result::Result<T, Box<::std::error::Error>>;
+type Result<T> = ::std::result::Result<T, Box<dyn ::std::error::Error>>;
 
 fn main() {
     let start = Instant::now();
@@ -224,7 +224,7 @@ fn run_script(script: &Path, settings: &config::Config) -> Result<()> {
 
         let time_run_program = Instant::now();
 
-        context.reset();
+        context.reset_for_piece();
         vm.reset();
 
         // setup the env with the global variables in preamble
@@ -243,6 +243,8 @@ fn run_script(script: &Path, settings: &config::Config) -> Result<()> {
 
         let time_interpret = Instant::now();
         vm.interpret(&mut context, &program)?;
+
+        context.render_list.remove_useless_render_packets();
         let res = vm.top_stack_value()?;
         info!("interpret {:?}", time_interpret.elapsed());
 
@@ -254,10 +256,31 @@ fn run_script(script: &Path, settings: &config::Config) -> Result<()> {
             vm.println_profiling(&program)?;
         }
 
-        println!("res = {}", res);
+        show_program_results(&res, &context);
     }
 
     Ok(())
+}
+
+fn show_program_results(result: &Var, context: &Context) {
+    let num_render_packets = context.render_list.get_num_render_packets();
+
+    println!("result = {}", result);
+    println!("num_render_packets: {}", num_render_packets);
+
+    for (i, rp) in context.render_list.render_packets.iter().enumerate() {
+        match rp {
+            RenderPacket::Geometry(rpg) => {
+                println!("{}. Geometry: {} vertices", i, rpg.geo.len());
+            }
+            RenderPacket::Mask(rpm) => {
+                println!("{}. Mask: {}", i, rpm.filename);
+            }
+            RenderPacket::Image(_) => {
+                println!("{}. Image", i);
+            }
+        }
+    }
 }
 
 fn run_script_with_seed(_script: &Path, _seed: u32, _settings: &config::Config) -> Result<()> {

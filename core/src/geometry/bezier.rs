@@ -15,14 +15,14 @@
 
 use crate::ease::{easing, Easing};
 use crate::error::{Error, Result};
-use crate::geometry::Geometry;
+use crate::render_list::RenderList;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
-    geometry: &mut Geometry,
+    render_list: &mut RenderList,
     matrix: &Matrix,
     coords: &[f32; 8],
     width_start: f32,
@@ -85,9 +85,9 @@ pub fn render(
     let half_width = (to_m * to_interp) + to_c;
     let v1x = (n1x * half_width) + xs;
     let v1y = (n1y * half_width) + ys;
-    geometry.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y)?;
+    render_list.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y)?;
 
-    let rp = geometry.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rp = render_list.render_packets.last_mut().ok_or(Error::Geometry)?;
     let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..(tessellation - 1) {

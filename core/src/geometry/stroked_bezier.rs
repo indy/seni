@@ -17,7 +17,7 @@ use crate::colour::{Colour, ColourFormat};
 use crate::ease::Easing;
 use crate::error::Result;
 use crate::geometry::quadratic;
-use crate::geometry::Geometry;
+use crate::render_list::RenderList;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::prng;
@@ -25,7 +25,7 @@ use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
 pub fn render(
-    geometry: &mut Geometry,
+    render_list: &mut RenderList,
     matrix: &Matrix,
     tessellation: usize,
     coords: &[f32; 8],
@@ -87,7 +87,7 @@ pub fn render(
 
         let rgb_from_lab = Rgb::from_colour(&lab)?;
         quadratic::render(
-            geometry,
+            render_list,
             matrix,
             &quad_coords,
             stroke_line_width_start,
