@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 (define
   scalefactor 1.7 ~ (gen/scalar min: 0.5 max: 3)

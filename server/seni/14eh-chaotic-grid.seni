@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 (define
   num-squares-to-render 15 ~ (gen/int min: 2 max: 20)

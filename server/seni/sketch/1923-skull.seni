@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 
 (define texture "skull-b.png" ~ (gen/select from: '("skull-a.png" "skull-b.png" "skull-c.png")))

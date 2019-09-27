@@ -290,6 +290,8 @@ pub enum Keyword {
     AngleEnd,
     #[strum(serialize = "angle-start")]
     AngleStart,
+    #[strum(serialize = "brightness")]
+    Brightness,
     #[strum(serialize = "brush")]
     Brush,
     #[strum(serialize = "brush-subtype")]
@@ -304,6 +306,8 @@ pub enum Keyword {
     ColourVolatility,
     #[strum(serialize = "colours")]
     Colours,
+    #[strum(serialize = "contrast")]
+    Contrast,
     #[strum(serialize = "coords")]
     Coords,
     #[strum(serialize = "copies")]
@@ -366,6 +370,8 @@ pub enum Keyword {
     Preset,
     #[strum(serialize = "radius")]
     Radius,
+    #[strum(serialize = "saturation")]
+    Saturation,
     #[strum(serialize = "scalar")]
     Scalar,
     #[strum(serialize = "scalars")]

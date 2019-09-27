@@ -68,7 +68,9 @@ pub use crate::compiler::{compile_preamble, compile_program, compile_program_wit
 pub use crate::context::Context;
 pub use crate::error::{Error, Result};
 pub use crate::gene::{next_generation, Genotype};
-pub use crate::geometry::{Geometry, RPCommand, RenderPacketGeometry, RenderPacketMask};
+pub use crate::geometry::{
+    Geometry, RPCommand, RenderPacketGeometry, RenderPacketImage, RenderPacketMask,
+};
 pub use crate::packable::Packable;
 pub use crate::parser::{parse, WordLut};
 pub use crate::program::Program;

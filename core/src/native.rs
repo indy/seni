@@ -20,7 +20,7 @@ use crate::context::Context;
 use crate::ease::easing_from_keyword;
 use crate::error::{Error, Result};
 use crate::focal;
-use crate::geometry::RenderPacketMask;
+use crate::geometry::{RenderPacketImage, RenderPacketMask};
 use crate::iname::Iname;
 use crate::interp;
 use crate::keywords::Keyword;
@@ -54,8 +54,8 @@ pub enum Native {
     VectorLength,
     #[strum(serialize = "probe")]
     Probe,
-    #[strum(serialize = "meta")]
-    Meta,
+    #[strum(serialize = "image")]
+    Image,
     #[strum(serialize = "get-x")]
     GetX,
     #[strum(serialize = "get-y")]
@@ -310,7 +310,7 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Nth => nth_parameter_info(),
         Native::VectorLength => vector_length_parameter_info(),
         Native::Probe => probe_parameter_info(),
-        Native::Meta => meta_parameter_info(),
+        Native::Image => image_parameter_info(),
         Native::GetX => get_x_parameter_info(),
         Native::GetY => get_y_parameter_info(),
         // shapes
@@ -433,7 +433,7 @@ pub fn execute_native(
         Native::Nth => nth_execute(vm),
         Native::VectorLength => vector_length_execute(vm),
         Native::Probe => probe_execute(vm, context),
-        Native::Meta => meta_execute(vm, context),
+        Native::Image => image_execute(vm, context),
         Native::GetX => get_x_execute(vm, context),
         Native::GetY => get_y_execute(vm, context),
         // shapes
@@ -788,22 +788,34 @@ fn probe_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
     Ok(None)
 }
 
-fn meta_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+fn image_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
     Ok((
         // input arguments
-        vec![(Keyword::LinearColourSpace, Var::Float(0.0))],
+        vec![
+            (Keyword::LinearColourSpace, Var::Float(0.0)),
+            (Keyword::Contrast, Var::Float(1.0)),
+            (Keyword::Brightness, Var::Float(0.0)),
+            (Keyword::Saturation, Var::Float(1.0)),
+        ],
         // stack offset
         0,
     ))
 }
 
-fn meta_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
-    let default_mask: i32 = vm.stack_peek(2)?;
+fn image_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
+    let linear_colour_space: f32 = vm.stack_peek(1)?;
+    let contrast: f32 = vm.stack_peek(2)?;
+    let brightness: f32 = vm.stack_peek(3)?;
+    let saturation: f32 = vm.stack_peek(4)?;
 
-    if is_arg_given(default_mask, 1) {
-        let scalar: f32 = vm.stack_peek(1)?;
-        context.push_rp_linear_colour_space(scalar > 0.0)?;
-    }
+    let render_packet_image = RenderPacketImage {
+        linear_colour_space: linear_colour_space > 0.0,
+        contrast,
+        brightness,
+        saturation,
+    };
+
+    context.push_rp_image(render_packet_image)?;
 
     Ok(None)
 }

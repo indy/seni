@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 (define seed 329)
 (wash colour:  (col/rgb r: 0.331 g: 0.588 b: 0.516 alpha: 0.100) ~ (gen/col))

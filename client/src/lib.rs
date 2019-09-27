@@ -27,8 +27,8 @@ use core::{
     program_from_source_and_genotype, run_program_with_preamble, simplified_unparse, unparse,
 };
 use core::{
-    BitmapInfo, Context, Genotype, Packable, Program, RenderPacketGeometry, RenderPacketMask,
-    TraitList, Vm,
+    BitmapInfo, Context, Genotype, Packable, Program, RenderPacketGeometry, RenderPacketImage,
+    RenderPacketMask, TraitList, Vm,
 };
 
 use log::{error, info};
@@ -121,6 +121,41 @@ impl From<&RenderPacketMask> for RenderPacketMaskWasm {
         RenderPacketMaskWasm {
             filename: rpm.filename.clone(),
             invert: rpm.invert,
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub struct RenderPacketImageWasm {
+    linear_colour_space: bool,
+    contrast: f32,
+    brightness: f32,
+    saturation: f32,
+}
+
+#[wasm_bindgen]
+impl RenderPacketImageWasm {
+    pub fn get_linear_colour_space(&self) -> bool {
+        self.linear_colour_space
+    }
+    pub fn get_contrast(&self) -> f32 {
+        self.contrast
+    }
+    pub fn get_brightness(&self) -> f32 {
+        self.brightness
+    }
+    pub fn get_saturation(&self) -> f32 {
+        self.saturation
+    }
+}
+
+impl From<&RenderPacketImage> for RenderPacketImageWasm {
+    fn from(rpi: &RenderPacketImage) -> RenderPacketImageWasm {
+        RenderPacketImageWasm {
+            linear_colour_space: rpi.linear_colour_space,
+            contrast: rpi.contrast,
+            brightness: rpi.brightness,
+            saturation: rpi.saturation,
         }
     }
 }
@@ -239,18 +274,14 @@ impl Bridge {
         command as i32
     }
 
-    pub fn rp_linear_colour_space(&self, packet_number: usize) -> bool {
-        let linear_colour_space = self
-            .context
-            .get_render_packet_linear_colour_space(packet_number)
-            .unwrap();
-
-        linear_colour_space
-    }
-
     pub fn rp_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
         let rpm = self.context.get_render_packet_mask(packet_number).unwrap();
         RenderPacketMaskWasm::from(rpm)
+    }
+
+    pub fn rp_image(&self, packet_number: usize) -> RenderPacketImageWasm {
+        let rpi = self.context.get_render_packet_image(packet_number).unwrap();
+        RenderPacketImageWasm::from(rpi)
     }
 
     pub fn rp_geometry(&self, packet_number: usize) -> RenderPacketGeometryWasm {

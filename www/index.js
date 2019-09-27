@@ -89,9 +89,9 @@ const TEXTURE_UNIT_RENDER_TO_TEXTURE = 0;
 const TEXTURE_UNIT_BRUSH_TEXTURE = 1;
 const TEXTURE_UNIT_MASK_TEXTURE = 2;
 
-const RPCommand_RenderGeometry = 1;
-const RPCommand_SetMask = 2;
-const RPCommand_LinearColourSpace = 3;
+const RPCommand_Geometry = 1;
+const RPCommand_Mask = 2;
+const RPCommand_Image = 3;
 
 function initGL(canvas) {
   try {
@@ -192,6 +192,10 @@ function setupBlitShaders(gl, vertexSrc, fragmentSrc) {
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
   shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'output_linear_colour_space');
+
+  shader.brightnessUniform = gl.getUniformLocation(shader.program, 'brightness');
+  shader.contrastUniform = gl.getUniformLocation(shader.program, 'contrast');
+  shader.saturationUniform = gl.getUniformLocation(shader.program, 'saturation');
 
   return shader;
 }
@@ -443,6 +447,10 @@ class GLRenderer {
 
     // setting output_linear_colour_space in meta because the blit shader also requires it
     meta.output_linear_colour_space = false;
+    // the contrast/brightness/saturation values are only used by the blit shader
+    meta.contrast = 1.0;
+    meta.brightness = 0.0;
+    meta.saturation = 1.0;
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
     gl.uniform1i(shader.maskInvert, false);
 
@@ -462,7 +470,7 @@ class GLRenderer {
     for(let b = 0; b < buffers.length; b++) {
       let buffer = buffers[b];
       switch(buffer.command) {
-      case RPCommand_RenderGeometry:
+      case RPCommand_Geometry:
         // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
         // a new typed array view is created that views the specified ArrayBuffer
         const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
@@ -485,14 +493,19 @@ class GLRenderer {
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
         break;
-      case RPCommand_SetMask:
+      case RPCommand_Mask:
         await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
         gl.uniform1i(shader.maskInvert, buffer.mask_invert);
         break;
-      case RPCommand_LinearColourSpace:
-        // setting output_linear_colour_space in meta because the blit shader also requires it
+      case RPCommand_Image:
+
         meta.output_linear_colour_space = buffer.linearColourSpace;
+        meta.contrast = buffer.contrast;
+        meta.brightness = buffer.brightness;
+        meta.saturation = buffer.saturation;
+
         gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+        // todo(isg): apply the image modifications in the blit shader
         break;
       default:
         console.error(`unknown RenderPacket command ${command}`);
@@ -538,6 +551,10 @@ class GLRenderer {
     gl.uniform1i(shader.textureUniform, TEXTURE_UNIT_RENDER_TO_TEXTURE);
 
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+
+    gl.uniform1f(shader.brightnessUniform, meta.brightness);
+    gl.uniform1f(shader.contrastUniform, meta.contrast);
+    gl.uniform1f(shader.saturationUniform, meta.saturation);
 
     const glVertexBuffer = this.glVertexBuffer;
 
@@ -678,7 +695,7 @@ function seniMode() {
 
   // keywords are core to the seni language
   const keywords =
-        makeKeywords('begin define fn if fence loop on-matrix-stack quote meta');
+        makeKeywords('begin define fn if fence loop on-matrix-stack quote');
   const indentKeys = makeKeywords('define fence loop on-matrix-stack fn');
 
   // functions from the common seni library
@@ -687,7 +704,7 @@ bezier-bulging bezier-trailing box canvas/centre canvas/height canvas/width
 circle circle-slice col/analagous col/bezier-fn col/complementary col/convert
 col/darken col/alpha col/hsl col/hsluv col/hsv col/lab col/lighten
 col/procedural-fn col/quadratic-fn col/rgb col/set-alpha col/e0 col/e1 col/e2 col/set-e0 col/set-e1 col/set-e2
-col/split-complementary col/triad define math/degrees->radians fence fn focal/hline
+col/split-complementary col/triad define image math/degrees->radians fence fn focal/hline
 focal/point focal/vline if interp/bezier interp/bezier-fn interp/bezier-tangent
 interp/bezier-tangent-fn interp/circle interp/fn line list list/get list/length
 log loop math/PI math/TAU math/atan2 math/clamp math/cos math/distance-2d

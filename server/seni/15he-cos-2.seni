@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 (define
   ;; fn to convert the x co-ordinates into angles for cosine

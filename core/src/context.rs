@@ -56,18 +56,15 @@ impl Context {
         self.geometry.push_rp_mask(render_packet_mask)
     }
 
-    pub fn push_rp_linear_colour_space(&mut self, linear_colour_space: bool) -> Result<()> {
-        self.geometry
-            .push_rp_linear_colour_space(linear_colour_space)
+    pub fn push_rp_image(
+        &mut self,
+        render_packet_image: geometry::RenderPacketImage,
+    ) -> Result<()> {
+        self.geometry.push_rp_image(render_packet_image)
     }
 
     pub fn get_render_packet_command(&self, packet_number: usize) -> Result<geometry::RPCommand> {
         self.geometry.get_render_packet_command(packet_number)
-    }
-
-    pub fn get_render_packet_linear_colour_space(&self, packet_number: usize) -> Result<bool> {
-        self.geometry
-            .get_render_packet_linear_colour_space(packet_number)
     }
 
     pub fn get_render_packet_mask(
@@ -75,6 +72,13 @@ impl Context {
         packet_number: usize,
     ) -> Result<&geometry::RenderPacketMask> {
         self.geometry.get_render_packet_mask(packet_number)
+    }
+
+    pub fn get_render_packet_image(
+        &self,
+        packet_number: usize,
+    ) -> Result<&geometry::RenderPacketImage> {
+        self.geometry.get_render_packet_image(packet_number)
     }
 
     pub fn get_render_packet_geometry(

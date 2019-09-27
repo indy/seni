@@ -3,7 +3,12 @@ precision highp float;
 varying vec2 frag_uv;
 
 uniform sampler2D rendered_image;
+
 uniform bool output_linear_colour_space;
+
+uniform float brightness;
+uniform float contrast;
+uniform float saturation;
 
 // https:en.wikipedia.org/wiki/SRGB
 vec3 linear_to_srgb(vec3 linear) {
@@ -24,8 +29,6 @@ vec3 linear_to_srgb(vec3 linear) {
 //   vec4 vf = (vh * va + 0.004) / (vh * (va + 0.55) + 0.0491) - 0.0821;
 //   return vf.rgb / vf.www;
 // }
-
-
 
 mat4 brightness_mat4(float brightness) {
   return mat4(1, 0, 0, 0,
@@ -66,18 +69,11 @@ mat4 saturation_mat4(float saturation) {
 
 void main()
 {
-  /*
-    defaults:
-    const float brightness = 0.00;
-    const float contrast = 1.0;
-    const float saturation = 1.0;
-  */
-
-  const float brightness = 0.00;
-  const float contrast = 1.7;
-  const float saturation = 0.6;
-
-  vec4 rendered_image_col = texture2D(rendered_image, frag_uv);
+  vec4 balanced_col =
+    brightness_mat4(brightness) *
+    contrast_mat4(contrast) *
+    saturation_mat4(saturation) *
+    texture2D(rendered_image, frag_uv);
 
   // note: you _never_ want output_linear_colour_space to be set to true
   // it's only here because some of the older sketchs didn't correctly
@@ -85,13 +81,8 @@ void main()
   // and this shader needs to reproduce them as intended at time of creation
   //
   if (output_linear_colour_space) {
-    gl_FragColor = rendered_image_col;
+    gl_FragColor = balanced_col;
   } else {
-    vec4 balanced_col = brightness_mat4(brightness) *
-      contrast_mat4(contrast) *
-      saturation_mat4(saturation) *
-      rendered_image_col;
-
     gl_FragColor = vec4(linear_to_srgb(balanced_col.rgb), 1.0);
   }
 }

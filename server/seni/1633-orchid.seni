@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 (define
   coords1 [[348.427 279.760] ~ (gen/stray-2d from: [348.427 279.760] by: [10 10])

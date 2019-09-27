@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 ; apply a full-canvas dark texture
 (stroked-bezier-rect position: canvas/centre

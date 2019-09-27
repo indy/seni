@@ -1,4 +1,4 @@
-(meta linear-colour-space: 1)
+(image linear-colour-space: 1)
 
 
 (wash colour:  (col/rgb r: 0.596 g: 0.316 b: 0.625 alpha: 0.010) ~ (gen/col))

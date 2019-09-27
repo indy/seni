@@ -42,17 +42,27 @@ pub struct RenderPacketMask {
     pub invert: bool,
 }
 
+// the final image
+pub struct RenderPacketImage {
+    pub linear_colour_space: bool,
+    pub contrast: f32,
+    pub brightness: f32,
+    pub saturation: f32,
+}
+
 pub enum RenderPacket {
     Geometry(RenderPacketGeometry),
     Mask(RenderPacketMask),
-    LinearColourSpace(bool),
+    Image(RenderPacketImage),
 }
 
+// explicitly number the enum values to make sure they match up with values on the client-side
+//
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum RPCommand {
-    RenderGeometry = 1,
-    SetMask = 2,
-    LinearColourSpace = 3,
+    Geometry = 1,
+    Mask = 2,
+    Image = 3,
 }
 
 impl RenderPacket {
@@ -171,9 +181,9 @@ impl Geometry {
         Ok(())
     }
 
-    pub fn push_rp_linear_colour_space(&mut self, linear_colour_space: bool) -> Result<()> {
+    pub fn push_rp_image(&mut self, render_packet_image: RenderPacketImage) -> Result<()> {
         self.render_packets
-            .push(RenderPacket::LinearColourSpace(linear_colour_space));
+            .push(RenderPacket::Image(render_packet_image));
 
         Ok(())
     }
@@ -181,9 +191,9 @@ impl Geometry {
     pub fn get_render_packet_command(&self, packet_number: usize) -> Result<RPCommand> {
         let rp = &self.render_packets[packet_number];
         let res = match rp {
-            RenderPacket::Geometry(_) => RPCommand::RenderGeometry,
-            RenderPacket::Mask(_) => RPCommand::SetMask,
-            RenderPacket::LinearColourSpace(_) => RPCommand::LinearColourSpace,
+            RenderPacket::Geometry(_) => RPCommand::Geometry,
+            RenderPacket::Mask(_) => RPCommand::Mask,
+            RenderPacket::Image(_) => RPCommand::Image,
         };
 
         Ok(res)
@@ -208,10 +218,10 @@ impl Geometry {
         }
     }
 
-    pub fn get_render_packet_linear_colour_space(&self, packet_number: usize) -> Result<bool> {
+    pub fn get_render_packet_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
         let rp = &self.render_packets[packet_number];
         match rp {
-            RenderPacket::LinearColourSpace(linear_colour_space) => Ok(*linear_colour_space),
+            RenderPacket::Image(rpi) => Ok(rpi),
             _ => Err(Error::Geometry),
         }
     }
@@ -223,7 +233,7 @@ impl Geometry {
         self.render_packets.retain(|rp| match rp {
             RenderPacket::Geometry(rpg) => !rpg.geo.is_empty(),
             RenderPacket::Mask(_) => true,
-            RenderPacket::LinearColourSpace(_) => true,
+            RenderPacket::Image(_) => true,
         });
 
         // for (index, rp) in self.render_packets.iter().enumerate() {
@@ -233,9 +243,9 @@ impl Geometry {
         //             index,
         //             rp.geo.len()
         //         );
-        //     } else if rp.command == RPCommand::SetMask {
+        //     } else if rp.command == RPCommand::Mask {
         //         error!(
-        //             "cleanedup render packet {} SetMask {}",
+        //             "cleanedup render packet {} Mask {}",
         //             index, rp.mask_filename
         //         );
         //     }

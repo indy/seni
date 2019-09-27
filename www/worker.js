@@ -61,9 +61,9 @@ function receiveBitmapData( { filename, imageData } ) {
   return [{}, { result: "shabba" }];
 }
 
-const RPCommand_RenderGeometry = 1;
-const RPCommand_SetMask = 2;
-const RPCommand_LinearColourSpace = 3;
+const RPCommand_Geometry = 1;
+const RPCommand_Mask = 2;
+const RPCommand_Image = 3;
 
 function renderPackets({  }) {
   const buffers = [];
@@ -75,7 +75,7 @@ function renderPackets({  }) {
     buffer.command = seniBridge.rp_command(i);
 
     switch (buffer.command) {
-    case RPCommand_RenderGeometry:
+    case RPCommand_Geometry:
       const renderPacketGeometry = seniBridge.rp_geometry(i);
 
       buffer.geo_len = renderPacketGeometry.get_geo_len();
@@ -83,7 +83,7 @@ function renderPackets({  }) {
 
       renderPacketGeometry.free();
       break;
-    case RPCommand_SetMask:
+    case RPCommand_Mask:
       const renderPacketMask = seniBridge.rp_mask(i);
 
       buffer.mask_filename = renderPacketMask.get_filename();
@@ -91,10 +91,15 @@ function renderPackets({  }) {
 
       renderPacketMask.free();
       break;
-    case RPCommand_LinearColourSpace:
-      const linearColourSpace = seniBridge.rp_linear_colour_space(i);
+    case RPCommand_Image:
+      const renderPacketImage = seniBridge.rp_image(i);
 
-      buffer.linearColourSpace = linearColourSpace;
+      buffer.linearColourSpace = renderPacketImage.get_linear_colour_space();
+      buffer.contrast = renderPacketImage.get_contrast();
+      buffer.brightness = renderPacketImage.get_brightness();
+      buffer.saturation = renderPacketImage.get_saturation();
+
+      renderPacketImage.free();
       break;
     default:
       console.error(`unknown buffer command: ${buffer.command}`);
