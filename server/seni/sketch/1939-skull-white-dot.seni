@@ -1,0 +1,29 @@
+(image linear-colour-space: 1)
+
+
+(define texture "skull-b.png" ~ (gen/select from: '("skull-a.png" "skull-b.png" "skull-c.png")))
+
+(define per-pixel-funcs [(address-of pass-0)])
+(define rng (prng/build seed: 542))
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   shuffle-seed: 321
+                   fn: per-pixel-func))
+
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+    (define
+      w 1
+      a (col/e0 from: colour)
+      angle (+ 1.06 ~ (gen/scalar min: 0 max: 8) (* a math/PI)))
+    (circle position: [(* w (- (rng.prng/value) 0.5)) (* w (- (rng.prng/value) 0.5))]
+            colour
+            radius: 1)
+  (line from: [(* -13 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+               (* 7 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+        to: [(* -13 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+             (* 2 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+        width: (- 11.1 ~ (gen/scalar min: 0.1 max: 15) a)
+        brush: brush/d
+        brush-subtype: 1
+        colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))

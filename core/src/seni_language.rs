@@ -45,6 +45,7 @@ The public API for the Seni language
 
 # Misc
 
+- [image](#image) : colour manipulation for the final image
 - [debug/print](#debugprint) : prints debug
 - [nth](#nth)
 - [vector/length](#vectorlength)
@@ -177,6 +178,15 @@ The public API for the Seni language
 - [gen/col](#gencol)
 
 # Misc functions
+
+## image
+
+Parameter | Default | Description
+--- | --- | ---
+contrast | 1 |
+brightness | 0 |
+saturation | 1 |
+linear-colour-space | 0 | set to 1 for legacy sketches
 
 ## debug/print
 

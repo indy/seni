@@ -1,0 +1,67 @@
+(fn (interesting-circle position: [500 500]
+                        colour: red
+                        seed: 564
+                        radius: 300)
+  (define
+    rng (prng/build seed: seed)
+    outer-exterior (prng/build seed: (prng/value from: rng) min: 170 max: 210)
+    outer-interior (prng/build seed: (prng/value from: rng) min: 80 max: 170)
+    inner-exterior (prng/build seed: (prng/value from: rng) min: 100 max: 150)
+    inner-interior (prng/build seed: (prng/value from: rng) min: 0 max: 100)
+    srng (prng/build min: -1 max: 1 seed: seed))
+
+  (on-matrix-stack
+    (translate vector: position)
+    (scale scalar: (/ radius 210))
+    (loop (i to: 8)
+      (on-matrix-stack
+        (rotate angle: (* 360 (prng/value from: rng)))
+        ;; outer ring
+        (circle-slice tessellation: 30
+                      position: [0 0]
+                      colour: (col/lighten from: colour
+                                           value: (* 411 ~ (gen/stray-int from: 411 by: 10) (prng/value from: srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (prng/value from: outer-exterior)
+                      inner-width: (prng/value from: outer-interior)
+                      height: (prng/value from: outer-exterior)
+                      inner-height: (prng/value from: outer-interior))
+        ;; inner ring
+        (circle-slice tessellation: 10
+                      position: [0 0]
+                      colour: (col/lighten from: colour
+                                           value: (* 24 ~ (gen/stray-int from: 24 by: 10) (prng/value from: srng)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: (prng/value from: inner-exterior)
+                      inner-width: (prng/value from: inner-interior)
+                      height: (prng/value from: inner-exterior)
+                      inner-height: (prng/value from: inner-interior))))
+    ;; centre fill
+    (circle-slice tessellation: 10
+                  position: [0 0]
+                  colour: (col/lighten from: colour
+                                       value: (* 140 ~ (gen/stray-int from: 140 by: 10) (prng/value from: srng)))
+                  angle-start: 0
+                  angle-end: 360
+                  radius: 30)))
+
+(define texture "skull-a.png")
+(define per-pixel-funcs [(address-of pass-1)])
+(define rng (prng/build seed: 542))
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   shuffle-seed: 321
+                   fn: per-pixel-func))
+
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (define
+    w 1 ; wobble
+    e (colour.col/e0))
+  (if (> e 0)
+      (interesting-circle position: [(* w (- (rng.prng/value) 0.5)) (* w (- (rng.prng/value) 0.5))]
+                          seed: (rng.prng/value)
+                          radius: 0.5
+                          colour: (colour.col/set-alpha value: e))))
