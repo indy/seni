@@ -60,6 +60,7 @@ The public API for the Seni language
  - [rect](#rect) : draws rect centered at position
  - [circle](#circle)
  - [circle-slice](#circle-slice)
+ - [ring](#ring)
  - [poly](#poly)
  - [quadratic](#quadratic)
  - [bezier](#bezier)
@@ -278,6 +279,17 @@ Parameter | Default | Description
 | angle-end    |            0 |             |
 | inner-width  |            1 |             |
 | inner-height |            1 |             |
+
+## ring
+
+Parameter | Default | Description
+--- | --- | ---
+| inner-radius        |            200 |             |
+| outer-radius       |           300 |             |
+| position     |      [10 10] |             |
+| inner-colour       | RGB(0 0 0 1) |             |
+| outer-colour       | RGB(0 0 0 1) |             |
+| tessellation |           10 |             |
 
 ## poly
 

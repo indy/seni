@@ -334,8 +334,12 @@ pub enum Keyword {
     Inc,
     #[strum(serialize = "index")]
     Index,
+    #[strum(serialize = "inner-colour")]
+    InnerColour,
     #[strum(serialize = "inner-height")]
     InnerHeight,
+    #[strum(serialize = "inner-radius")]
+    InnerRadius,
     #[strum(serialize = "inner-width")]
     InnerWidth,
     #[strum(serialize = "invert")]
@@ -360,6 +364,10 @@ pub enum Keyword {
     Min,
     #[strum(serialize = "num")]
     Num,
+    #[strum(serialize = "outer-colour")]
+    OuterColour,
+    #[strum(serialize = "outer-radius")]
+    OuterRadius,
     #[strum(serialize = "overlap")]
     Overlap,
     #[strum(serialize = "point")]

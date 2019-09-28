@@ -71,6 +71,8 @@ pub enum Native {
     Circle,
     #[strum(serialize = "circle-slice")]
     CircleSlice,
+    #[strum(serialize = "ring")]
+    Ring,
     #[strum(serialize = "poly")]
     Poly,
     #[strum(serialize = "quadratic")]
@@ -318,6 +320,7 @@ pub fn parameter_info(native: Native) -> Result<(Vec<(Keyword, Var)>, i32)> {
         Native::Rect => rect_parameter_info(),
         Native::Circle => circle_parameter_info(),
         Native::CircleSlice => circle_slice_parameter_info(),
+        Native::Ring => ring_parameter_info(),
         Native::Poly => poly_parameter_info(),
         Native::Quadratic => quadratic_parameter_info(),
         Native::Bezier => bezier_parameter_info(),
@@ -441,6 +444,7 @@ pub fn execute_native(
         Native::Rect => rect_execute(vm, context),
         Native::Circle => circle_execute(vm, context),
         Native::CircleSlice => circle_slice_execute(vm, context),
+        Native::Ring => ring_execute(vm, context),
         Native::Poly => poly_execute(vm, context),
         Native::Quadratic => quadratic_execute(vm, context),
         Native::Bezier => bezier_execute(vm, context),
@@ -1042,6 +1046,42 @@ fn circle_slice_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var
         angle_end,
         inner_width,
         inner_height,
+    )?;
+
+    Ok(None)
+}
+
+fn ring_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
+    Ok((
+        // input arguments
+        vec![
+            (Keyword::InnerRadius, Var::Float(200.0)),
+            (Keyword::OuterRadius, Var::Float(300.0)),
+            (Keyword::Position, Var::V2D(10.0, 10.0)),
+            (Keyword::InnerColour, Var::Colour(Default::default())),
+            (Keyword::OuterColour, Var::Colour(Default::default())),
+            (Keyword::Tessellation, Var::Float(10.0)),
+        ],
+        // stack offset
+        0,
+    ))
+}
+
+fn ring_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
+    let inner_radius: f32 = vm.stack_peek(1)?;
+    let outer_radius: f32 = vm.stack_peek(2)?;
+    let position: (f32, f32) = vm.stack_peek(3)?;
+    let inner_col: Colour = vm.stack_peek(4)?;
+    let outer_col: Colour = vm.stack_peek(5)?;
+    let tessellation: usize = vm.stack_peek(6)?;
+
+    context.render_ring(
+        position,
+        inner_radius,
+        outer_radius,
+        &inner_col,
+        &outer_col,
+        tessellation,
     )?;
 
     Ok(None)

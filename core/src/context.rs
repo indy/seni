@@ -198,6 +198,37 @@ impl Context {
         }
     }
 
+    pub fn render_ring(
+        &mut self,
+        position: (f32, f32),
+        inner_radius: f32,
+        outer_radius: f32,
+        inner_colour: &Colour,
+        outer_colour: &Colour,
+        tessellation: usize,
+    ) -> Result<()> {
+        if let Some(matrix) = self.matrix_stack.peek() {
+            let uvm = self.mappings.get_uv_mapping(BrushType::Flat, 0);
+            let inner_colour = Rgb::from_colour(inner_colour)?;
+            let outer_colour = Rgb::from_colour(outer_colour)?;
+
+            geometry::ring::render(
+                &mut self.render_list,
+                matrix,
+                position,
+                inner_radius,
+                outer_radius,
+                &inner_colour,
+                &outer_colour,
+                tessellation,
+                uvm,
+            )
+        } else {
+            error!("no matrix for render_circle_slice");
+            Err(Error::Context)
+        }
+    }
+
     pub fn render_poly(&mut self, coords: &[Var], colours: &[Var]) -> Result<()> {
         let coords: Result<Vec<(f32, f32)>> = coords.iter().map(|c| var_to_f32_pair(c)).collect();
         let coords = coords?;
