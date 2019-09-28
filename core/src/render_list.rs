@@ -16,11 +16,18 @@
 use crate::error::{Error, Result};
 use crate::matrix::Matrix;
 use crate::render_packet::{
-    RPCommand, RenderPacket, RenderPacketGeometry, RenderPacketImage, RenderPacketMask,
-    RENDER_PACKET_MAX_SIZE,
+    RenderPacket, RenderPacketGeometry, RenderPacketImage, RenderPacketMask, RENDER_PACKET_MAX_SIZE,
 };
 use log::error;
 
+// explicitly number the enum values to make sure they match up with values on the client-side
+//
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum RPCommand {
+    Geometry = 1,
+    Mask = 2,
+    Image = 3,
+}
 
 pub struct RenderList {
     pub render_packets: Vec<RenderPacket>,
@@ -55,7 +62,7 @@ impl RenderList {
         Ok(())
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<RPCommand> {
+    pub fn get_rp_command(&self, packet_number: usize) -> Result<RPCommand> {
         let rp = &self.render_packets[packet_number];
         let res = match rp {
             RenderPacket::Geometry(_) => RPCommand::Geometry,
@@ -66,10 +73,7 @@ impl RenderList {
         Ok(res)
     }
 
-    pub fn get_render_packet_geometry(
-        &self,
-        packet_number: usize,
-    ) -> Result<&RenderPacketGeometry> {
+    pub fn get_rp_geometry(&self, packet_number: usize) -> Result<&RenderPacketGeometry> {
         let rp = &self.render_packets[packet_number];
         match rp {
             RenderPacket::Geometry(rpg) => Ok(rpg),
@@ -77,7 +81,7 @@ impl RenderList {
         }
     }
 
-    pub fn get_render_packet_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
+    pub fn get_rp_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
         let rp = &self.render_packets[packet_number];
         match rp {
             RenderPacket::Mask(rpm) => Ok(rpm),
@@ -85,7 +89,7 @@ impl RenderList {
         }
     }
 
-    pub fn get_render_packet_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
+    pub fn get_rp_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
         let rp = &self.render_packets[packet_number];
         match rp {
             RenderPacket::Image(rpi) => Ok(rpi),

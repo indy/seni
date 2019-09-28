@@ -19,8 +19,8 @@ use crate::ease::Easing;
 use crate::error::{Error, Result};
 use crate::geometry;
 use crate::matrix::MatrixStack;
-use crate::render_list::RenderList;
-use crate::render_packet::{RPCommand, RenderPacketGeometry, RenderPacketImage, RenderPacketMask};
+use crate::render_list::{RPCommand, RenderList};
+use crate::render_packet::{RenderPacketGeometry, RenderPacketImage, RenderPacketMask};
 use crate::rgb::Rgb;
 use crate::uvmapper::{BrushType, Mappings};
 use crate::vm::Var;
@@ -62,23 +62,20 @@ impl Context {
         self.render_list.push_rp_image(render_packet_image)
     }
 
-    pub fn get_render_packet_command(&self, packet_number: usize) -> Result<RPCommand> {
-        self.render_list.get_render_packet_command(packet_number)
+    pub fn get_rp_command(&self, packet_number: usize) -> Result<RPCommand> {
+        self.render_list.get_rp_command(packet_number)
     }
 
-    pub fn get_render_packet_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
-        self.render_list.get_render_packet_mask(packet_number)
+    pub fn get_rp_mask(&self, packet_number: usize) -> Result<&RenderPacketMask> {
+        self.render_list.get_rp_mask(packet_number)
     }
 
-    pub fn get_render_packet_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
-        self.render_list.get_render_packet_image(packet_number)
+    pub fn get_rp_image(&self, packet_number: usize) -> Result<&RenderPacketImage> {
+        self.render_list.get_rp_image(packet_number)
     }
 
-    pub fn get_render_packet_geometry(
-        &self,
-        packet_number: usize,
-    ) -> Result<&RenderPacketGeometry> {
-        self.render_list.get_render_packet_geometry(packet_number)
+    pub fn get_rp_geometry(&self, packet_number: usize) -> Result<&RenderPacketGeometry> {
+        self.render_list.get_rp_geometry(packet_number)
     }
 
     pub fn render_line(

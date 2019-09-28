@@ -17,10 +17,10 @@ use crate::colour::{Colour, ColourFormat};
 use crate::ease::Easing;
 use crate::error::Result;
 use crate::geometry::quadratic;
-use crate::render_list::RenderList;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::prng;
+use crate::render_list::RenderList;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 

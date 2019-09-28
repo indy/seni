@@ -28,7 +28,7 @@ use core::{
 };
 use core::{
     BitmapInfo, Context, Genotype, Packable, Program, RenderPacketGeometry, RenderPacketImage,
-    RenderPacketMask, TraitList, Vm,
+    RenderPacketMask, TraitList, Vm
 };
 
 use log::{error, info};
@@ -266,29 +266,26 @@ impl Bridge {
     // --------------------------------------------------------------------------------
 
     pub fn rp_command(&self, packet_number: usize) -> i32 {
-        let command = self
-            .context
-            .get_render_packet_command(packet_number)
-            .unwrap();
+        let command = self.context.get_rp_command(packet_number).unwrap();
 
         command as i32
     }
 
     pub fn rp_mask(&self, packet_number: usize) -> RenderPacketMaskWasm {
-        let rpm = self.context.get_render_packet_mask(packet_number).unwrap();
+        let rpm = self.context.get_rp_mask(packet_number).unwrap();
+
         RenderPacketMaskWasm::from(rpm)
     }
 
     pub fn rp_image(&self, packet_number: usize) -> RenderPacketImageWasm {
-        let rpi = self.context.get_render_packet_image(packet_number).unwrap();
+        let rpi = self.context.get_rp_image(packet_number).unwrap();
+
         RenderPacketImageWasm::from(rpi)
     }
 
     pub fn rp_geometry(&self, packet_number: usize) -> RenderPacketGeometryWasm {
-        let geometry = self
-            .context
-            .get_render_packet_geometry(packet_number)
-            .unwrap();
+        let geometry = self.context.get_rp_geometry(packet_number).unwrap();
+
         RenderPacketGeometryWasm::from(geometry)
     }
 

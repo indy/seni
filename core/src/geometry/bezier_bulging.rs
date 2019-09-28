@@ -16,8 +16,8 @@
 use crate::ease::Easing;
 use crate::error::Result;
 use crate::geometry::bezier;
-use crate::render_list::RenderList;
 use crate::matrix::Matrix;
+use crate::render_list::RenderList;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 

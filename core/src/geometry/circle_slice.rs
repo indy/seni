@@ -14,9 +14,9 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use crate::error::{Error, Result};
-use crate::render_list::RenderList;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
+use crate::render_list::RenderList;
 use crate::rgb::Rgb;
 use crate::uvmapper::UvMapping;
 
@@ -43,7 +43,10 @@ pub fn render(
 
     render_list.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, innervx, innervy)?;
 
-    let rp = render_list.render_packets.last_mut().ok_or(Error::Geometry)?;
+    let rp = render_list
+        .render_packets
+        .last_mut()
+        .ok_or(Error::Geometry)?;
     let rpg = rp.get_mut_render_packet_geometry()?;
 
     for i in 0..tessellation {

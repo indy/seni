@@ -45,15 +45,6 @@ pub enum RenderPacket {
     Image(RenderPacketImage),
 }
 
-// explicitly number the enum values to make sure they match up with values on the client-side
-//
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum RPCommand {
-    Geometry = 1,
-    Mask = 2,
-    Image = 3,
-}
-
 impl RenderPacket {
     pub fn get_mut_render_packet_geometry(&mut self) -> Result<&mut RenderPacketGeometry> {
         match self {
