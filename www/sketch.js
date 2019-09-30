@@ -80,9 +80,17 @@ const Matrix = {
 // --------------------------------------------------------------------------------
 // renderer
 
+const TEXTURE_UNIT_RENDER_TO_TEXTURE = 0;
+const TEXTURE_UNIT_BRUSH_TEXTURE = 1;
+const TEXTURE_UNIT_MASK_TEXTURE = 2;
+
+const RPCommand_Geometry = 1;
+const RPCommand_Mask = 2;
+const RPCommand_Image = 3;
+
 function initGL(canvas) {
   try {
-    const gl = canvas.getContext('experimental-webgl', {
+    const gl = canvas.getContext('webgl', {
       alpha: false,
       preserveDrawingBuffer: true
     });
@@ -110,74 +118,11 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-function setupSketchShaders(gl) {
+
+function setupSketchShaders(gl, vertexSrc, fragmentSrc) {
   const shader = {};
 
   shader.program = gl.createProgram();
-
-  // pre-multiply the alpha in the shader
-  // see http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
-  // this needs to happen in linear colour space
-  const fragmentSrc = `
-  precision highp float;
-  varying vec4 vColour;
-  varying highp vec2 vTextureCoord;
-
-  uniform sampler2D uSampler;
-  uniform bool uOutputLinearColourSpace;
-
-  // https://en.wikipedia.org/wiki/SRGB
-  vec3 srgb_to_linear(vec3 srgb) {
-      float a = 0.055;
-      float b = 0.04045;
-      vec3 linear_lo = srgb / 12.92;
-      vec3 linear_hi = pow((srgb + vec3(a)) / (1.0 + a), vec3(2.4));
-      return vec3(
-          srgb.r > b ? linear_hi.r : linear_lo.r,
-          srgb.g > b ? linear_hi.g : linear_lo.g,
-          srgb.b > b ? linear_hi.b : linear_lo.b);
-  }
-
-  void main(void) {
-    vec4 tex = texture2D(uSampler, vTextureCoord);
-
-    // note: you _never_ want uOutputLinearColourSpace to be set to true
-    // it's only here because some of the older sketchs didn't correctly
-    // convert from linear colour space to sRGB colour space during rendering
-    // and this shader needs to reproduce them as intended at time of creation
-    //
-    if (uOutputLinearColourSpace) {
-      gl_FragColor.r = tex.r * vColour.r * vColour.a;
-      gl_FragColor.g = tex.r * vColour.g * vColour.a;
-      gl_FragColor.b = tex.r * vColour.b * vColour.a;
-      gl_FragColor.a = tex.r * vColour.a;
-    } else {
-      vec4 linearColour = vec4(srgb_to_linear(vColour.rgb), vColour.a);
-      gl_FragColor.r = tex.r * linearColour.r * linearColour.a;
-      gl_FragColor.g = tex.r * linearColour.g * linearColour.a;
-      gl_FragColor.b = tex.r * linearColour.b * linearColour.a;
-      gl_FragColor.a = tex.r * linearColour.a;
-    }
-  }
-  `;
-
-  const vertexSrc = `
-  attribute vec2 aVertexPosition;
-  attribute vec4 aVertexColour;
-  attribute vec2 aVertexTexture;
-
-  uniform mat4 uMVMatrix;
-  uniform mat4 uPMatrix;
-
-  varying vec4 vColour;
-  varying highp vec2 vTextureCoord;
-
-  void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
-    vColour = aVertexColour;
-    vTextureCoord = aVertexTexture;
-  }
-  `;
 
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
@@ -195,86 +140,27 @@ function setupSketchShaders(gl) {
     return null;
   }
 
-  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
-  shader.colourAttribute = gl.getAttribLocation(shader.program, 'aVertexColour');
-  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
-
-  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
-  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
+  shader.colourAttribute = gl.getAttribLocation(shader.program, 'col');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
+  shader.brushUniform = gl.getUniformLocation(shader.program, 'brush');
+  shader.maskUniform = gl.getUniformLocation(shader.program, 'mask');
+  shader.canvasDimUniform = gl.getUniformLocation(shader.program, 'canvas_dim');
+  shader.maskInvert = gl.getUniformLocation(shader.program, 'mask_invert');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
-  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'output_linear_colour_space');
 
   return shader;
 }
 
-function setupBlitShaders(gl) {
+function setupBlitShaders(gl, vertexSrc, fragmentSrc) {
   const shader = {};
 
   shader.program = gl.createProgram();
-
-  const fragmentSrc = `
-  precision highp float;
-
-  varying vec2 vTextureCoord;
-
-  uniform sampler2D uSampler;
-  uniform bool uOutputLinearColourSpace;
-
-  // https:en.wikipedia.org/wiki/SRGB
-  vec3 linear_to_srgb(vec3 linear) {
-      float a = 0.055;
-      float b = 0.0031308;
-      vec3 srgb_lo = 12.92 * linear;
-      vec3 srgb_hi = (1.0 + a) * pow(linear, vec3(1.0/2.4)) - vec3(a);
-      return vec3(
-          linear.r > b ? srgb_hi.r : srgb_lo.r,
-          linear.g > b ? srgb_hi.g : srgb_lo.g,
-          linear.b > b ? srgb_hi.b : srgb_lo.b);
-  }
-
-  // https:twitter.com/jimhejl/status/633777619998130176
-  vec3 ToneMapFilmic_Hejl2015(vec3 hdr, float whitePt) {
-      vec4 vh = vec4(hdr, whitePt);
-      vec4 va = 1.425 * vh + 0.05;
-      vec4 vf = (vh * va + 0.004) / (vh * (va + 0.55) + 0.0491) - 0.0821;
-      return vf.rgb / vf.www;
-  }
-
-  void main()
-  {
-     vec4 col = texture2D( uSampler, vTextureCoord );
-
-     // note: you _never_ want uOutputLinearColourSpace to be set to true
-     // it's only here because some of the older sketchs didn't correctly
-     // convert from linear colour space to sRGB colour space during rendering
-     // and this shader needs to reproduce them as intended at time of creation
-     //
-     if (uOutputLinearColourSpace) {
-       gl_FragColor = col;
-     } else {
-       gl_FragColor = vec4(linear_to_srgb(col.rgb), 1.0);
-     }
-  }
-  `;
-
-  const vertexSrc = `
-  attribute vec2 aVertexPosition;
-  attribute vec2 aVertexTexture;
-
-  uniform mat4 uMVMatrix;
-  uniform mat4 uPMatrix;
-
-  varying highp vec2 vTextureCoord;
-
-  void main(void) {
-    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 0.0, 1.0);
-    vTextureCoord = aVertexTexture;
-  }
-  `;
 
   const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSrc);
   const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSrc);
@@ -292,17 +178,19 @@ function setupBlitShaders(gl) {
     return null;
   }
 
-  shader.positionAttribute = gl.getAttribLocation(shader.program, 'aVertexPosition');
-  shader.textureAttribute = gl.getAttribLocation(shader.program, 'aVertexTexture');
-
-  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'uPMatrix');
-  shader.mvMatrixUniform = gl.getUniformLocation(shader.program, 'uMVMatrix');
-  shader.textureUniform  = gl.getUniformLocation(shader.program, 'uSampler');
+  shader.positionAttribute = gl.getAttribLocation(shader.program, 'pos');
+  shader.textureAttribute = gl.getAttribLocation(shader.program, 'uv');
+  shader.pMatrixUniform = gl.getUniformLocation(shader.program, 'proj_matrix');
+  shader.textureUniform  = gl.getUniformLocation(shader.program, 'rendered_image');
 
   // older versions of seni (pre 4.2.0) did not convert from sRGB space to linear before blending
   // in order to retain the look of these older sketchs we can't carry out the linear -> sRGB conversion
   //
-  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'uOutputLinearColourSpace');
+  shader.outputLinearColourSpaceUniform = gl.getUniformLocation(shader.program, 'output_linear_colour_space');
+
+  shader.brightnessUniform = gl.getUniformLocation(shader.program, 'brightness');
+  shader.contrastUniform = gl.getUniformLocation(shader.program, 'contrast');
+  shader.saturationUniform = gl.getUniformLocation(shader.program, 'saturation');
 
   return shader;
 }
@@ -321,25 +209,33 @@ function setupGLState(gl) {
 //  gl.disable(gl.DEPTH_TEST);
 }
 
+function textureUnitToGl(gl, unit) {
+  let texUnit = gl.TEXTURE0 + unit;
+  switch(unit) {
+  case TEXTURE_UNIT_RENDER_TO_TEXTURE: texUnit = gl.TEXTURE0; break;
+  case TEXTURE_UNIT_BRUSH_TEXTURE: texUnit = gl.TEXTURE1; break;
+  case TEXTURE_UNIT_MASK_TEXTURE: texUnit = gl.TEXTURE2; break;
+  case 3: texUnit = gl.TEXTURE3; break;
+  case 4: texUnit = gl.TEXTURE4; break;
+  case 5: texUnit = gl.TEXTURE5; break;
+  case 6: texUnit = gl.TEXTURE6; break;
+  case 7: texUnit = gl.TEXTURE7; break;
+  default:
+    console.error(`invalid unit for texture: ${unit}`);
+  };
 
-function handleTextureLoaded(gl, image, texture) {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
-                   gl.LINEAR_MIPMAP_NEAREST);
-  gl.generateMipmap(gl.TEXTURE_2D);
-  gl.bindTexture(gl.TEXTURE_2D, null);
-
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  return texUnit;
 }
 
-function createRenderTexture(gl) {
+
+function createRenderTexture(gl, config) {
   // create to render to
-  const targetTextureWidth = gState.render_texture_width;
-  const targetTextureHeight = gState.render_texture_height;
+  const targetTextureWidth = config.render_texture_width;
+  const targetTextureHeight = config.render_texture_height;
+
+  let texUnit = textureUnitToGl(gl, TEXTURE_UNIT_RENDER_TO_TEXTURE);
+  console.log(`activeTexture ${TEXTURE_UNIT_RENDER_TO_TEXTURE}`);
+  gl.activeTexture(texUnit);
 
   const targetTexture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, targetTexture);
@@ -393,50 +289,84 @@ function checkFramebufferStatus(gl) {
   }
 }
 
+/*
+  sectionDim = number of sections along each axis
+  section = current section to render
+
+  e.g. sectionDim: 3 ==
+
+  |---+---+---|
+  | 0 | 1 | 2 |
+  |---+---+---|
+  | 3 | 4 | 5 |
+  |---+---+---|
+  | 6 | 7 | 8 |
+  |---+---+---|
+
+  Note: sections begin in the top left corner
+  (compared to the canvas co-ordinates which begin in the lower left corner)
+*/
+function getProjectionMatrixExtents(canvasDim, sectionDim, section) {
+  const pictureWidth = canvasDim;
+  const pictureHeight = canvasDim;
+
+  const sectionWidth = pictureWidth / sectionDim;
+  const sectionHeight = pictureHeight / sectionDim;
+
+  const sectionX = section % sectionDim;
+  const sectionY = (sectionDim - Math.floor(section / sectionDim)) - 1;
+
+  let left = sectionX * sectionWidth;
+  let right = left + sectionWidth;
+
+  let bottom = sectionY * sectionHeight;
+  let top = bottom + sectionHeight;
+
+  return [left, right, bottom, top];
+}
+
 class GLRenderer {
-  constructor(canvasElement) {
+  constructor(canvasElement, shaders) {
     this.glDomElement = canvasElement;
 
     // webgl setup
     const gl = initGL(this.glDomElement);
     this.gl = gl;
 
-    this.sketchShader = setupSketchShaders(gl);
-    this.blitShader = setupBlitShaders(gl);
+    // map of texture filename -> texture unit
+    this.loadedTextureCache = {};
+
+    // note: constructors can't be async so the shaders should already have been loaded by loadShaders
+    this.sketchShader = setupSketchShaders(gl, shaders['shader/main-vert.glsl'], shaders['shader/main-frag.glsl']);
+    this.blitShader = setupBlitShaders(gl, shaders['shader/blit-vert.glsl'], shaders['shader/blit-frag.glsl']);
 
     setupGLState(gl);
 
     this.glVertexBuffer = gl.createBuffer();
-    this.glColourBuffer = gl.createBuffer();
-    this.glTextureBuffer = gl.createBuffer();
 
-    this.mvMatrix = Matrix.create();
+    // this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
 
-    this.renderTexture = createRenderTexture(gl);
+    this.renderTexture = createRenderTexture(gl, gState);
     this.framebuffer = createFrameBuffer(gl, this.renderTexture);
 
     // render to the canvas
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
-  // isg
+  // isg: used in sketch.html?
   clear() {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
   }
 
-  loadTexture(src) {
+  loadImage(src) {
     let that = this;
 
-    return new Promise(function(resolve, reject) {
-
-      const gl = that.gl;
-      that.texture = gl.createTexture();
+    return new Promise((resolve, reject) => {
       const image = new Image();
 
       image.addEventListener('load', () => {
-        handleTextureLoaded(that.gl, image, that.texture);
-        resolve();
+        resolve(image);
       });
 
       image.addEventListener('error', () => {
@@ -447,7 +377,37 @@ class GLRenderer {
     });
   }
 
-  renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, section) {
+  async ensureTexture(unit, src) {
+    let normalized_src = normalize_bitmap_url(src);
+    let texUnit = textureUnitToGl(this.gl, unit);
+
+    if (this.loadedTextureCache[normalized_src] === undefined) {
+      // console.log(`ensureTexture loading: ${normalized_src}`);
+      let image = await this.loadImage(normalized_src);
+
+      let gl = this.gl;
+
+      const texture = gl.createTexture();
+
+      gl.activeTexture(texUnit);
+
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+                       gl.LINEAR_MIPMAP_NEAREST);
+      gl.generateMipmap(gl.TEXTURE_2D);
+
+      this.loadedTextureCache[normalized_src] = texture;
+    }
+
+    const texture = this.loadedTextureCache[normalized_src];
+    this.gl.activeTexture(texUnit);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+  }
+
+  async renderGeometryToTexture(meta, destTextureWidth, destTextureHeight, memoryF32, buffers, sectionDim, section) {
     const gl = this.gl;
 
     let shader = this.sketchShader;
@@ -456,7 +416,7 @@ class GLRenderer {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     //gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
     gl.viewport(0, 0, destTextureWidth, destTextureHeight);
 
     gl.useProgram(shader.program);
@@ -468,37 +428,33 @@ class GLRenderer {
     // gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    if (section === undefined) {
-      // render the entirety of the scene
-      Matrix.ortho(this.pMatrix, 0, 1000, 0, 1000, 10, -10);
-    } else {
-      switch (section) {
-        // bottom left
-      case 0: Matrix.ortho(this.pMatrix,   0,  500,   0,  500, 10, -10); break;
-        // bottom right
-      case 1: Matrix.ortho(this.pMatrix, 500, 1000,   0,  500, 10, -10); break;
-        // top left
-      case 2: Matrix.ortho(this.pMatrix,   0,  500, 500, 1000, 10, -10); break;
-        // top right
-      case 3: Matrix.ortho(this.pMatrix, 500, 1000, 500, 1000, 10, -10); break;
-      }
-    }
+    // todo: get the canvasDim from the Rust side
+    const canvasDim = 1024.0;
+
+    let [left, right, bottom, top] = getProjectionMatrixExtents(canvasDim, sectionDim, section);
+    console.log(`left: ${left}, right: ${right}, bottom: ${bottom}, top: ${top}`);
+
+    Matrix.ortho(this.pMatrix, left, right, bottom, top, 10, -10);
 
     gl.uniformMatrix4fv(shader.pMatrixUniform,
                         false,
                         this.pMatrix);
 
-    gl.uniformMatrix4fv(shader.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
+    gl.uniform1i(shader.brushUniform, TEXTURE_UNIT_BRUSH_TEXTURE);
+    gl.uniform1i(shader.maskUniform, TEXTURE_UNIT_MASK_TEXTURE);
 
-    gl.uniform1i(shader.textureUniform, 0);
-
+    // setting output_linear_colour_space in meta because the blit shader also requires it
+    meta.output_linear_colour_space = false;
+    // the contrast/brightness/saturation values are only used by the blit shader
+    meta.contrast = 1.0;
+    meta.brightness = 0.0;
+    meta.saturation = 1.0;
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+    gl.uniform1i(shader.maskInvert, false);
+
+    gl.uniform1f(shader.canvasDimUniform, canvasDim);
 
     const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
 
     const bytesin32bit = 4;
 
@@ -507,39 +463,54 @@ class GLRenderer {
     const textureItemSize = 2;
     const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
+    await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, 'mask/white.png');
 
-    buffers.forEach(buffer => {
-      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
-      // a new typed array view is created that views the specified ArrayBuffer
-      const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
+    for(let b = 0; b < buffers.length; b++) {
+      let buffer = buffers[b];
+      switch(buffer.command) {
+      case RPCommand_Geometry:
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#Syntax
+        // a new typed array view is created that views the specified ArrayBuffer
+        const gbuf = new Float32Array(memoryF32, buffer.geo_ptr, buffer.geo_len);
 
-      //const gbuf = memorySubArray(memoryF32, geo_ptr, geo_len);
+        gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shader.positionAttribute,
-                             vertexItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             0);
+        gl.vertexAttribPointer(shader.positionAttribute,
+                               vertexItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               0);
+        gl.vertexAttribPointer(shader.colourAttribute,
+                               colourItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               vertexItemSize * bytesin32bit);
+        gl.vertexAttribPointer(shader.textureAttribute,
+                               textureItemSize,
+                               gl.FLOAT, false, totalSize * bytesin32bit,
+                               (vertexItemSize + colourItemSize) * bytesin32bit);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, glColourBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shader.colourAttribute,
-                             colourItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             vertexItemSize * bytesin32bit);
+        console.log('before');
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
+        console.log('after');
+        break;
+      case RPCommand_Mask:
+        await this.ensureTexture(TEXTURE_UNIT_MASK_TEXTURE, buffer.mask_filename);
+        gl.uniform1i(shader.maskInvert, buffer.mask_invert);
+        break;
+      case RPCommand_Image:
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, gbuf, gl.STATIC_DRAW);
-      gl.vertexAttribPointer(shader.textureAttribute,
-                             textureItemSize,
-                             gl.FLOAT, false, totalSize * bytesin32bit,
-                             (vertexItemSize + colourItemSize) * bytesin32bit);
+        meta.output_linear_colour_space = buffer.linearColourSpace;
+        meta.contrast = buffer.contrast;
+        meta.brightness = buffer.brightness;
+        meta.saturation = buffer.saturation;
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
-
-    });
-
+        gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
+        // todo(isg): apply the image modifications in the blit shader
+        break;
+      default:
+        console.error(`unknown RenderPacket command ${command}`);
+      }
+    }
   }
 
   renderTextureToScreen(meta, canvasWidth, canvasHeight) {
@@ -556,7 +527,7 @@ class GLRenderer {
     let shader = this.blitShader;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.bindTexture(gl.TEXTURE_2D, this.renderTexture);
+
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     gl.useProgram(shader.program);
@@ -577,18 +548,15 @@ class GLRenderer {
                         false,
                         this.pMatrix);
 
-    gl.uniformMatrix4fv(shader.mvMatrixUniform,
-                        false,
-                        this.mvMatrix);
-
-    gl.uniform1i(shader.textureUniform, 0);
+    gl.uniform1i(shader.textureUniform, TEXTURE_UNIT_RENDER_TO_TEXTURE);
 
     gl.uniform1i(shader.outputLinearColourSpaceUniform, meta.output_linear_colour_space);
 
+    gl.uniform1f(shader.brightnessUniform, meta.brightness);
+    gl.uniform1f(shader.contrastUniform, meta.contrast);
+    gl.uniform1f(shader.saturationUniform, meta.saturation);
 
     const glVertexBuffer = this.glVertexBuffer;
-    const glColourBuffer = this.glColourBuffer;
-    const glTextureBuffer = this.glTextureBuffer;
 
     // x, y, u, v
     const jsData = [
@@ -608,25 +576,26 @@ class GLRenderer {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, glVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+
     gl.vertexAttribPointer(shader.positionAttribute,
                            vertexItemSize,
                            gl.FLOAT, false, totalSize * 4,
                            0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, glTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     gl.vertexAttribPointer(shader.textureAttribute,
                            textureItemSize,
                            gl.FLOAT, false, totalSize * 4,
                            (vertexItemSize) * 4);
-
+    console.log('texture to screen before');
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, jsData.length / totalSize);
+    console.log('texture to screen after');
   }
 
   copyImageDataTo(elem) {
     return new Promise((resolve, reject) => {
       try {
         this.glDomElement.toBlob(blob => {
+          // console.log(this.glDomElement);
+          // console.log(blob);
           elem.src = window.URL.createObjectURL(blob);
           return resolve();
         });
@@ -635,6 +604,28 @@ class GLRenderer {
       }
     });
   }
+
+  localDownload(filename) {
+    this.glDomElement.toBlob(function(blob) {
+
+      const url = window.URL.createObjectURL(blob);
+
+      let element = document.createElement('a');
+      element.setAttribute('href', url);
+      // element.setAttribute('target', '_blank');
+      element.setAttribute('download', filename);
+
+      element.style.display = 'none';
+      document.body.appendChild(element);
+
+      element.click();
+
+      document.body.removeChild(element);
+
+      downloadDialogHide();
+    });
+  }
+
 }
 
 // --------------------------------------------------------------------------------
@@ -880,7 +871,7 @@ async function displayOnImageElements(display) {
 }
 
 async function renderGeometryBuffers(meta, memory, buffers, destWidth, destHeight, display) {
-  gState.glRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers);
+  await gState.glRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers, 1, 0);
   gState.glRenderer.renderTextureToScreen(meta, destWidth, destHeight);
 
   await displayOnImageElements(display);
@@ -922,10 +913,21 @@ function loadBitmapImageData(url) {
 }
 
 function normalize_bitmap_url(url) {
-  // todo: this should:
-  // 1. do nothing if the url is a valid url
-  // 2. if it's just a filename, prefix the img/ path (specific to seni web app)
-  return `${PREFIX}/img/${url}`;
+  const re = /^[\w-/]+.png/;
+
+  if (url.match(re)) {
+    // requesting a bitmap just by filename, so get it from /img/immutable/
+    return "img/immutable/" + url;
+  } else {
+    // change nothing, try and fetch the url
+    return url;
+  }
+}
+
+async function renderScript(parameters, display) {
+  console.log(`renderScript  (demandCanvasSize = ${gState.demandCanvasSize})`);
+  let { meta, memory, buffers } = await renderJob(parameters);
+  await renderGeometryBuffers(meta, memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
 
 async function renderJob(parameters) {
@@ -959,12 +961,6 @@ async function renderJob(parameters) {
   const renderPacketsResult = await Job.request(jobRender_3_RenderPackets, {}, __worker_id);
 
   return renderPacketsResult;
-}
-
-async function renderScript(parameters, display) {
-  console.log(`renderScript  (demandCanvasSize = ${gState.demandCanvasSize})`);
-  let { meta, memory, buffers } = await renderJob(parameters);
-  await renderGeometryBuffers(meta, memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
 
 function getSeedValue(element) {
@@ -1240,6 +1236,21 @@ async function updateSketch(display) {
   await renderNormal(display);
 }
 
+async function loadShaders(scriptUrls) {
+  const fetchPromises = scriptUrls.map(s => fetch(s));
+  const responses = await Promise.all(fetchPromises);
+
+  const textPromises = responses.map(r => r.text());
+  const shaders = await Promise.all(textPromises);
+
+  const res = {};
+  for (const [i, url] of scriptUrls.entries()) {
+    res[url] = shaders[i];
+  }
+
+  return res;
+}
+
 async function main() {
   updateGlobalsFromURI();
 
@@ -1256,16 +1267,23 @@ async function main() {
   canvasImageElement1.addEventListener("animationend", animationEndListener1, false);
   setOpacity(IMG_1, 0);
 
-  gState.glRenderer = new GLRenderer(canvasElement);
+  const shaders = await loadShaders(['shader/main-vert.glsl',
+                                     'shader/main-frag.glsl',
+                                     'shader/blit-vert.glsl',
+                                     'shader/blit-frag.glsl']);
+  gState.glRenderer = new GLRenderer(canvasElement, shaders);
 
   const script = scriptElement.textContent;
   const originalScript = script.slice();
 
   logDebug("init");
 
-  gState.glRenderer.loadTexture(`${PREFIX}/img/texture.png`)
-    .then(async () => await updateSketch(DISPLAY_SNAP))
-    .catch(error => console.error(error));
+  await gState.glRenderer.ensureTexture(TEXTURE_UNIT_BRUSH_TEXTURE, `brush.png`);
+  await updateSketch(DISPLAY_SNAP);
+
+  // gState.glRenderer.loadTexture(`${PREFIX}/img/brush.png`)
+  //   .then(async () => await updateSketch(DISPLAY_SNAP))
+  //   .catch(error => console.error(error));
 
   originalButton.addEventListener('click', async () => {
     originalButton.disabled = true;
