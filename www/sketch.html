@@ -75,46 +75,49 @@
                     <pre><code id="sketch-simplified-script"></code></pre>
                     <!-- the original version of the script, will never be altered -->
                     <pre><code id="sketch-script">
-(define
-  texture "skull-b.png"
-  brush brush/b ~ (gen/select from: brush/*)
-  brush-subtype 5 ~ (gen/int min: 1 max: 7))
+(image linear-colour-space: 1)
 
-(define per-pixel-funcs [(address-of pass-0)
-                         (address-of pass-1)])
+(define
+  texture "skull-c.png"
+  rng (prng/build seed: 1324 ~ (gen/scalar min: 1 max: 5000) min: 0 max: 10)
+  pass-0-colour (col/hsluv h:  294 ~ (gen/scalar max: 360) s: 65 ~ (gen/scalar max: 100) l: 100 alpha: 0.07)
+  pass-1-colour (col/hsluv h: 355 ~ (gen/scalar max: 360) s: 41 ~ (gen/scalar max: 100) l: 100 alpha: 0.07)
+  per-pixel-funcs [(address-of pass-0)
+                   (address-of pass-1)])
+
 
 (each (per-pixel-func from: per-pixel-funcs)
-      (texture.bitmap/each position: [500 500]
-                           width: 1000
-                           height: 1000
-                           shuffle-seed: 321
-                           fn: per-pixel-func))
+      (bitmap/each from: texture
+                   shuffle-seed: 321
+                   fn: per-pixel-func))
 
 (fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
-    a (colour.col/e0)
-    angle (+ 6.37 ~ (gen/stray from: 6.37 by: 2.00) (* a math/PI)))
-  (line from: [(* 7.00 ~ (gen/stray from: 7.00 by: 2.00) (angle.math/cos))
-               (* 12.00 ~ (gen/stray from: 12.00 by: 2.00) (angle.math/sin))]
-        to: [(* 4.00 ~ (gen/stray from: 4.00 by: 2.00) (angle.math/cos))
-             (* -13.00 ~ (gen/stray from: -13.00 by: 2.00) (angle.math/sin))]
-        width: (- 12.50 ~ (gen/stray from: 12.50 by: 2.00) a)
-        brush
-        brush-subtype
-        colour: (col/rgb r: a g: 0 b: 0 alpha: 0.07)))
+    a (col/e0 from: colour)
+    angle (+ 0.93 ~ (gen/scalar min: 0 max: 8) (* a math/PI)))
+  (line from: [(* 4 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+               (* 6 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+        to: [(* -11 ~ (gen/scalar min: -15 max: 15) (math/cos from: angle))
+             (* 4 ~ (gen/scalar min: -15 max: 15) (math/sin from: angle))]
+        width: (- 0.7 ~ (gen/scalar min: 0.1 max: 15) a)
+        brush: brush/c ~ (gen/select from: brush/*)
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-e2 from: pass-0-colour value: (* a 100))))
 
 (fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
   (define
-    b (colour.col/e2)
-    angle (+ 6.82 ~ (gen/stray from: 6.82 by: 2) (* b math/PI)))
-  (line to: [(* 14.00 ~ (gen/stray from: 14.00 by: 2.00) (angle.math/cos))
-             (* 8.00 ~ (gen/stray from: 8.00 by: 2.00) (angle.math/sin))]
-        from: [(* 10.00 ~ (gen/stray from: 10.00 by: 2.00) (angle.math/cos))
-               (* 1.00 ~ (gen/stray from: 1.00 by: 2.00) (angle.math/sin))]
-        width: (- 2.40 ~ (gen/stray from: 2.40 by: 2.00) b)
-        brush
-        brush-subtype
-        colour: (col/rgb r: b g: b b: 0 alpha: 0.07)))
+    b (col/e2 from: colour)
+    angle (+ 0.92 ~ (gen/scalar min: 0 max: 8) (* b math/PI)))
+  (line from: [(* -6 ~ (gen/scalar min: -10 max: 10) (math/cos from: angle))
+               (* 6 ~ (gen/scalar min: -10 max: 10) (math/sin from: angle))]
+        to: [(* 0 ~ (gen/scalar min: -10 max: 10) (math/cos from: angle))
+             (* -2 ~ (gen/scalar min: -10 max: 10) (math/sin from: angle))]
+        width: (- 1.3 ~ (gen/scalar min: 1 max: 3) b)
+        brush: brush/b ~ (gen/select from: brush/*)
+        brush-subtype: (prng/value from: rng)
+        colour: (col/set-e2 from: pass-1-colour value: (* b 100))))
+
+
                     </code></pre>
                   </div> <!-- code-content-wrap -->
                 </div> <!-- sketch-holder -->

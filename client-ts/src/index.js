@@ -16,19 +16,14 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// --------------------------------------------------------------------------------
-// log
-
-let logToConsole = false;
-
-function log(msg) {
-  if (logToConsole) {
-    console.log(msg);
-  }
-}
 
 // --------------------------------------------------------------------------------
 // main
+
+const gState = {
+  render_texture_width: 2048,
+  render_texture_height: 2048,
+};
 
 let gUI = {};
 let gGLRenderer = undefined;
@@ -159,7 +154,7 @@ function updateSelectionUI(state) {
 async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
   const stopFn = startTiming();
 
-  await gGLRenderer.renderGeometryToTexture(meta, gConfig.render_texture_width, gConfig.render_texture_height, memory, buffers, sectionDim, section);
+  await gGLRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers, sectionDim, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);

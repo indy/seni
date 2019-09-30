@@ -6,6 +6,7 @@
     "sourceMap": true
   },
   "include": [
+    "./src/log.js",
     "./src/Matrix.ts",
     "./src/renderer.js",
     "./src/history.js",

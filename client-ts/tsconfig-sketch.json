@@ -6,9 +6,10 @@
     "sourceMap": true
   },
   "include": [
-    "./src/greeter.ts",
+    "./src/log.js",
     "./src/Matrix.ts",
-    "./src/Renderer.ts",
-    "./src/index.js"
+    "./src/renderer.js",
+    "./src/job.js",
+    "./src/sketch.js"
   ]
 }

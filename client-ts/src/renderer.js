@@ -209,11 +209,6 @@ function checkFramebufferStatus(gl) {
   }
 }
 
-const gConfig = {
-  render_texture_width: 2048,
-  render_texture_height: 2048,
-};
-
 /*
   sectionDim = number of sections along each axis
   section = current section to render
@@ -272,7 +267,7 @@ class GLRenderer {
     // this.mvMatrix = Matrix.create();
     this.pMatrix = Matrix.create();
 
-    this.renderTexture = createRenderTexture(gl, gConfig);
+    this.renderTexture = createRenderTexture(gl, gState);
     this.framebuffer = createFrameBuffer(gl, this.renderTexture);
 
     // render to the canvas
