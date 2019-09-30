@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "es6",
+    "outFile": "../www/index.js",
+    "sourceMap": true
+  },
+  "include": [
+    "./src/Matrix.ts",
+    "./src/renderer.js",
+    "./src/history.js",
+    "./src/codemirror-seni.js",
+    "./src/editor.js",
+    "./src/controller.js",
+    "./src/timer.js",
+    "./src/seni-mode.js",
+    "./src/job.js",
+    "./src/index.js"
+  ]
+}

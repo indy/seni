@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "es6",
+    "outFile": "../www/sketch.js",
+    "sourceMap": true
+  },
+  "include": [
+    "./src/greeter.ts",
+    "./src/Matrix.ts",
+    "./src/Renderer.ts",
+    "./src/index.js"
+  ]
+}
