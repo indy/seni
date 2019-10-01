@@ -28,11 +28,6 @@ const gState = {
 let gUI = {};
 let gGLRenderer = undefined;
 
-async function getJSON(url) {
-  const res = await fetch(url);
-  const json = await res.json();
-  return json;
-}
 
 function getScriptFromEditor() {
   return gUI.editor.getValue();
@@ -152,7 +147,7 @@ function updateSelectionUI(state) {
 }
 
 async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
-  const stopFn = startTiming();
+  const stopFn = Timer.startTiming();
 
   await gGLRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers, sectionDim, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
@@ -170,7 +165,7 @@ async function renderGeneration(state) {
   let hackTitle = "hackTitle";
   const promises = [];
 
-  const stopFn = startTiming();
+  const stopFn = Timer.startTiming();
 
   const dim = phenotypes[0].phenotypeElement.clientWidth;
 
@@ -196,7 +191,7 @@ async function renderGeneration(state) {
 // invoked when the evolve screen is displayed after the edit screen
 async function setupEvolveUI(controller) {
   showPhenotypeSpinners(controller.getState());
-  const state = await controller.dispatch(actionInitialGeneration);
+  const state = await controller.dispatch(Action.InitialGeneration);
   // render the phenotypes
   updateSelectionUI(state);
   await renderGeneration(state);
@@ -211,64 +206,9 @@ function showScriptInEditor(state) {
   editor.refresh();
 }
 
-// based on code from:
-// https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
-function sequentialPromises(funcs) {
-  return funcs.reduce((promise, func) =>
-    promise.then(result => func().then(Array.prototype.concat.bind(result))),
-    Promise.resolve([]));
-}
-
-// todo: is this the best way of getting image data for a web worker?
-// is there a way for the webworker to do this without having to interact with the DOM?
-// note: don't call this on a sequence of bitmaps
-function loadBitmapImageData(url) {
-  return new Promise((resolve, reject) => {
-    const element = document.getElementById('bitmap-canvas');
-    const context = element.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      element.width = img.width;
-      element.height = img.height;
-
-      context.drawImage(img, 0, 0);
-
-      const imageData = context.getImageData(0, 0, element.width, element.height);
-
-      resolve(imageData);
-    };
-    img.onerror = () => {
-      reject();
-    };
-
-    img.src = normalize_bitmap_url(url);
-  });
-}
-
-function sleepy(timeout) {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve();
-    }, timeout);
-  });
-}
-
-function normalize_bitmap_url(url) {
-  const re = /^[\w-/]+.png/;
-
-  if (url.match(re)) {
-    // requesting a bitmap just by filename, so get it from /img/immutable/
-    return "img/immutable/" + url;
-  } else {
-    // change nothing, try and fetch the url
-    return url;
-  }
-}
-
 // note: this is returning a Promise
 async function renderScript(parameters, imageElement) {
-  const stopFn = startTiming();
+  const stopFn = Timer.startTiming();
 
   let width = parameters.assumeWidth ? parameters.assumeWidth : imageElement.clientWidth;
   let height = parameters.assumeHeight ? parameters.assumeHeight : imageElement.clientHeight;
@@ -281,42 +221,6 @@ async function renderScript(parameters, imageElement) {
   } else {
     stopFn(`renderScript-${meta.title}`);
   }
-}
-
-async function renderJob(parameters) {
-  // 1. compile the program in a web worker
-  // 2. (retain the id for this worker)
-  // 3. after compilation, the worker will return:
-  //    a: A list of textures to load onto the GPU
-  //    b: A list of bitmaps that are required by the program
-  //       and are not in the web worker's bitmap-cache.
-  // 4. sequentially load in the bitmaps and send their data to the worker
-  // 5. can now request a render which will return the render packets
-
-  // request a compile job but make sure to retain the worker as it will be performing the rendering
-  //
-  parameters.__retain = true;
-  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
-
-  // convert each bitmap path to a function that returns a promise
-  //
-  const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
-    log(`worker ${__worker_id}: bitmap request: ${filename}`);
-
-    const imageData = await loadBitmapImageData(filename);
-    // make an explicit job request to the same worker
-    return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
-  });
-
-  // seqentially execute the promises that load in bitmaps and send the bitmap data to a particular worker
-  //
-  await sequentialPromises(bitmap_loading_funcs);
-
-  // now make an explicit job request to the same worker that has recieved the bitmap data
-  // note: no __retain as we want the worker to be returned to the available pool
-  const renderPacketsResult = await Job.request(jobRender_3_RenderPackets, {}, __worker_id);
-
-  return renderPacketsResult;
 }
 
 async function renderEditorScript(state) {
@@ -365,7 +269,7 @@ async function ensureMode(controller, mode) {
       removePhenotypeSpinners(currentState);
     }
 
-    const state = await controller.dispatch(actionSetMode, { mode });
+    const state = await controller.dispatch(Action.SetMode, { mode });
     SeniHistory.pushState(state);
 
     if (mode === SeniMode.evolve) {
@@ -377,16 +281,6 @@ async function ensureMode(controller, mode) {
     } else {
       await updateUI(state);
     }
-  }
-}
-
-function addClickEvent(id, fn) {
-  const element = document.getElementById(id);
-
-  if (element) {
-    element.addEventListener('click', fn);
-  } else {
-    console.error('cannot addClickEvent for', id);
   }
 }
 
@@ -429,7 +323,7 @@ function downloadDialogHide() {
 // in a ww and updates the controller again
 //
 function setScript(controller, script) {
-  return controller.dispatch(actionSetScript, { script });
+  return controller.dispatch(Action.SetScript, { script });
 }
 
 async function showEditFromEvolve(controller, element) {
@@ -438,12 +332,12 @@ async function showEditFromEvolve(controller, element) {
   if (index !== -1) {
     const state = controller.getState();
     const genotypes = state.genotypes;
-    const { script } = await Job.request(jobUnparse, {
+    const { script } = await Job.request(JobType.jobUnparse, {
       script: state.script,
       genotype: genotypes[index]
     });
 
-    await controller.dispatch(actionSetScript, { script });
+    await controller.dispatch(Action.SetScript, { script });
     await ensureMode(controller, SeniMode.edit);
   }
 }
@@ -462,7 +356,7 @@ async function onNextGen(controller) {
       }
     }
 
-    let state = await controller.dispatch(actionSetSelectedIndices, { selectedIndices });
+    let state = await controller.dispatch(Action.SetSelectedIndices, { selectedIndices });
     if (selectedIndices.length === 0) {
       // no phenotypes were selected
       return;
@@ -473,7 +367,7 @@ async function onNextGen(controller) {
 
     showPhenotypeSpinners(state);
 
-    state = await controller.dispatch(actionNextGeneration, { rng: 4242 });
+    state = await controller.dispatch(Action.NextGeneration, { rng: 4242 });
     if (state === undefined) {
       return;
     }
@@ -519,8 +413,8 @@ async function loadScriptWithId(controller, id) {
   const response = await fetch(`gallery/${id}`);
   const script = await response.text();
 
-  await controller.dispatch(actionSetScript, { script });
-  await controller.dispatch(actionSetScriptId, { id });
+  await controller.dispatch(Action.SetScript, { script });
+  await controller.dispatch(Action.SetScriptId, { id });
   await ensureMode(controller, SeniMode.edit);
 }
 
@@ -547,7 +441,7 @@ function resizeContainers() {
 async function evalMainScript(controller) {
   try {
     const script = getScriptFromEditor();
-    const state = await controller.dispatch(actionSetScript, { script });
+    const state = await controller.dispatch(Action.SetScript, { script });
     await renderEditorScript(state);
   } catch (error) {
     console.error(`evalMainScript error: ${error}`);
@@ -581,21 +475,6 @@ function createEditor(controller, editorTextArea) {
     theme: 'default',
     extraKeys
   });
-}
-
-function countDigits(num) {
-  if(num < 10) {
-    return 1;
-  } else if (num < 100) {
-    return 2;
-  } else if (num < 1000) {
-    return 3;
-  } else if (num < 10000) {
-    return 4;
-  } else {
-    console.error(`countDigits given an insanely large number: ${num}`);
-    return 5;
-  }
 }
 
 function filenameForPng(filename, image_dim, i) {
@@ -664,7 +543,7 @@ function setupUI(controller) {
       event.preventDefault();
       // get the latest script from the editor
       const script = getScriptFromEditor();
-      const state = await controller.dispatch(actionSetScript, { script });
+      const state = await controller.dispatch(Action.SetScript, { script });
       SeniHistory.replaceState(state);
       await ensureMode(controller, SeniMode.evolve);
     } catch (error) {
@@ -683,7 +562,7 @@ function setupUI(controller) {
       event.preventDefault();
       showPhenotypeSpinners(controller.getState());
       const rng = Math.random() * 9999;
-      const state = await controller.dispatch(actionShuffleGeneration, { rng });
+      const state = await controller.dispatch(Action.ShuffleGeneration, { rng });
       updateSelectionUI(state);
       await renderGeneration(state);
     } catch (error) {
@@ -715,7 +594,7 @@ function setupUI(controller) {
         const genotypes = controller.getState().genotypes;
         const genotype = genotypes[index];
 
-        await controller.dispatch(actionSetGenotype, { genotype });
+        await controller.dispatch(Action.SetGenotype, { genotype });
 
         downloadDialogShow();
       }
@@ -753,7 +632,7 @@ function setupUI(controller) {
 
     loader.classList.remove('hidden');
 
-    const stopFn = startTiming();
+    const stopFn = Timer.startTiming();
 
     const { meta, memory, buffers } = await renderJob({
       script: state.script,
@@ -774,7 +653,7 @@ function setupUI(controller) {
     loader.classList.add('hidden');
 
     // todo: is this the best place to reset the genotype?
-    await controller.dispatch(actionSetGenotype, { genotype: undefined });
+    await controller.dispatch(Action.SetGenotype, { genotype: undefined });
   });
 
   addClickEvent('download-dialog-button-close', event => {
@@ -824,7 +703,7 @@ function setupUI(controller) {
     try {
       if (event.state) {
         const savedState = SeniHistory.restoreState(event.state);
-        const state = await controller.dispatch('SET_STATE', { state: savedState });
+        const state = await controller.dispatch(Action.SetState, { state: savedState });
         await updateUI(state);
         if (state.currentMode === SeniMode.evolve) {
           await restoreEvolveUI(controller);
@@ -836,7 +715,7 @@ function setupUI(controller) {
       }
     } catch (error) {
         // handle error
-        console.error(`${actionSetState}: error of ${error}`);
+        console.error(`${Action.SetState}: error of ${error}`);
     }
   });
 
@@ -846,7 +725,7 @@ function setupUI(controller) {
 async function getGallery(controller) {
   const galleryItems = await getJSON('gallery');
 
-  await controller.dispatch(actionSetGalleryItems, { galleryItems });
+  await controller.dispatch(Action.SetGalleryItems, { galleryItems });
   await createGalleryDisplayChunk(controller);
 }
 
@@ -942,7 +821,7 @@ async function createGalleryDisplayChunk(controller) {
   }
 
   await Promise.all(promises);
-  await controller.dispatch(actionGalleryOldestToDisplay, { oldestId: least});
+  await controller.dispatch(Action.GalleryOldestToDisplay, { oldestId: least});
 }
 
 function allocateWorkers(state) {
@@ -956,21 +835,6 @@ function allocateWorkers(state) {
   Job.setup(numWorkers, 'worker.js');
 }
 
-// https://developer.mozilla.org/en-US/docs/Web/Events/resize
-function throttle(type, name, obj) {
-  const obj2 = obj || window;
-  let running = false;
-  const func = () => {
-    if (running) { return; }
-    running = true;
-    requestAnimationFrame(() => {
-      obj2.dispatchEvent(new CustomEvent(name));
-      running = false;
-    });
-  };
-  obj2.addEventListener(type, func);
-}
-
 function setupResizeability() {
   // define a version of the resize event which fires less frequently
   throttle('resize', 'throttledResize');
@@ -982,31 +846,8 @@ function setupResizeability() {
   resizeContainers();
 }
 
-function compatibilityHacks() {
-  // Safari doesn't have Number.parseInt (yet)
-  // Safari is the new IE
-  if (Number.parseInt === undefined) {
-    Number.parseInt = parseInt;
-  }
-}
-
-async function loadShaders(scriptUrls) {
-  const fetchPromises = scriptUrls.map(s => fetch(s));
-  const responses = await Promise.all(fetchPromises);
-
-  const textPromises = responses.map(r => r.text());
-  const shaders = await Promise.all(textPromises);
-
-  const res = {};
-  for (const [i, url] of scriptUrls.entries()) {
-    res[url] = shaders[i];
-  }
-
-  return res;
-}
-
 async function main() {
-  const state = createInitialState();
+  const state = State.createInitialState();
   const controller = new Controller(state);
 
   allocateWorkers(state);

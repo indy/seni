@@ -103,52 +103,6 @@ async function renderGeometryBuffers(meta, memory, buffers, destWidth, destHeigh
   await displayOnImageElements(display);
 }
 
-// based on code from:
-// https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
-function sequentialPromises(funcs) {
-  return funcs.reduce((promise, func) =>
-    promise.then(result => func().then(Array.prototype.concat.bind(result))),
-    Promise.resolve([]));
-}
-
-// todo: is this the best way of getting image data for a web worker?
-// is there a way for the webworker to do this without having to interact with the DOM?
-// note: don't call this on a sequence of bitmaps
-function loadBitmapImageData(url) {
-  return new Promise(function(resolve, reject) {
-    const element = document.getElementById('bitmap-canvas');
-    const context = element.getContext('2d');
-    const img = new Image();
-
-    img.onload = () => {
-      element.width = img.width;
-      element.height = img.height;
-
-      context.drawImage(img, 0, 0);
-
-      const imageData = context.getImageData(0, 0, element.width, element.height);
-
-      resolve(imageData);
-    };
-    img.onerror = () => {
-      reject();
-    };
-
-    img.src = normalize_bitmap_url(url);
-  });
-}
-
-function normalize_bitmap_url(url) {
-  const re = /^[\w-/]+.png/;
-
-  if (url.match(re)) {
-    // requesting a bitmap just by filename, so get it from /img/immutable/
-    return "img/immutable/" + url;
-  } else {
-    // change nothing, try and fetch the url
-    return url;
-  }
-}
 
 async function renderScript(parameters, display) {
   console.log(`renderScript  (demandCanvasSize = ${gState.demandCanvasSize})`);
@@ -156,74 +110,18 @@ async function renderScript(parameters, display) {
   await renderGeometryBuffers(meta, memory, buffers, gState.demandCanvasSize, gState.demandCanvasSize, display);
 }
 
-async function renderJob(parameters) {
-  // 1. compile the program in a web worker
-  // 2. (retain the id for this worker)
-  // 3. after compilation, the worker will return a list of bitmaps that are
-  //    required by the program and are not in the web worker's bitmap-cache
-  // 4. sequentially load in the bitmaps and send their data to the worker
-  // 5. can now request a render which will return the render packets
-
-  // request a compile job but make sure to retain the worker as it will be performing the rendering
-  //
-  parameters.__retain = true;
-  const { bitmapsToTransfer, __worker_id } = await Job.request(jobRender_1_Compile, parameters);
-
-  // convert each bitmap path to a function that returns a promise
-  //
-  const bitmap_loading_funcs = bitmapsToTransfer.map(filename => async () => {
-    const imageData = await loadBitmapImageData(filename);
-    console.log(`worker ${__worker_id}: bitmap request: ${filename}`);
-    // make an explicit job request to the same worker
-    return Job.request(jobRender_2_ReceiveBitmapData, { filename, imageData, __retain: true }, __worker_id);
-  });
-
-  // seqentially execute the promises that load in bitmaps and send the bitmap data to a particular worker
-  //
-  await sequentialPromises(bitmap_loading_funcs);
-
-  // now make an explicit job request to the same worker that has recieved the bitmap data
-  // note: no __retain as we want the worker to be returned to the available pool
-  const renderPacketsResult = await Job.request(jobRender_3_RenderPackets, {}, __worker_id);
-
-  return renderPacketsResult;
-}
-
 function getSeedValue(element) {
   const res = parseInt(element.value, 10);
   return res;
 }
 
-async function fetchScript(id) {
-  const response = await fetch(`/gallery/${id}`);
-  return response.text();
-}
-
-function getRequiredElement(id) {
-  const element = document.getElementById(id);
-  if (!element) {
-    console.error(`required element ${id} not found in dom`);
-  }
-  return element;
-}
-
 async function showSimplifiedScript(fullScript) {
-  const { script } = await Job.request(jobSimplifyScript, {
+  const { script } = await Job.request(JobType.jobSimplifyScript, {
     script: fullScript
   });
 
   const simplifiedScriptElement = getRequiredElement('sketch-simplified-script');
   simplifiedScriptElement.textContent = script;
-}
-
-function addClass(id, clss) {
-  const e = getRequiredElement(id);
-  e.classList.add(clss);
-}
-
-function removeClass(id, clss) {
-  const e = getRequiredElement(id);
-  e.classList.remove(clss);
 }
 
 function showId(id) {
@@ -232,11 +130,6 @@ function showId(id) {
 
 function hideId(id) {
   addClass(id, 'seni-hide');
-}
-
-function setOpacity(id, opacity) {
-  const e = getRequiredElement(id);
-  e.style.opacity = opacity;
 }
 
 async function performSlideshow() {
@@ -278,9 +171,6 @@ function resetImageElements() {
   removeClass(IMG_1, 'seni-fade-in');
   removeClass(IMG_1, 'seni-fade-in-slideshow');
 }
-
-
-
 
 function moveContainerInsideParent(parentId, forceLargest) {
   const canvasContainerId = 'sketch-canvas-container';
@@ -380,29 +270,6 @@ function animationEndListener1(event) {
   }
 }
 
-function compatibilityHacks() {
-  // Safari doesn't have Number.parseInt (yet)
-  // Safari is the new IE
-  if (Number.parseInt === undefined) {
-    Number.parseInt = parseInt;
-  }
-}
-
-function getURIParameters() {
-  const argPairs = window.location.search.substring(1).split("&");
-
-  return argPairs.reduce((acc, kv) => {
-    let [key, value] = kv.split("=");
-    if (key === URI_SEED) {
-      acc[key] = parseInt(value, 10);
-    } else {
-      acc[key] = value;
-    }
-
-    return acc;
-  }, {});
-}
-
 function updateGlobalsFromURI() {
   const uriParameters = getURIParameters();
 
@@ -449,10 +316,10 @@ async function renderNormal(display) {
     await showSimplifiedScript(script);
     await renderScript({ script }, display);
   } else {
-    const { traits } = await Job.request(jobBuildTraits, { script });
-    const { genotype } = await Job.request(jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
+    const { traits } = await Job.request(JobType.jobBuildTraits, { script });
+    const { genotype } = await Job.request(JobType.jobSingleGenotypeFromSeed, { traits, seed: gState.seed });
 
-    const unparsed = await Job.request(jobUnparse, { script, genotype });
+    const unparsed = await Job.request(JobType.jobUnparse, { script, genotype });
     await showSimplifiedScript(unparsed.script);
     await renderScript({ script, genotype }, display);
   }
@@ -460,21 +327,6 @@ async function renderNormal(display) {
 
 async function updateSketch(display) {
   await renderNormal(display);
-}
-
-async function loadShaders(scriptUrls) {
-  const fetchPromises = scriptUrls.map(s => fetch(s));
-  const responses = await Promise.all(fetchPromises);
-
-  const textPromises = responses.map(r => r.text());
-  const shaders = await Promise.all(textPromises);
-
-  const res = {};
-  for (const [i, url] of scriptUrls.entries()) {
-    res[url] = shaders[i];
-  }
-
-  return res;
 }
 
 async function main() {

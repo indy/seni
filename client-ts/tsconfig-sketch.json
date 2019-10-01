@@ -1,15 +1,24 @@
 {
   "compilerOptions": {
-    "allowJs": true,
     "target": "es6",
     "outFile": "../www/sketch.js",
-    "sourceMap": true
+    "allowJs": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": true,
+    "removeComments": true
   },
   "include": [
-    "./src/log.js",
+    "./src/Log.ts",
     "./src/Matrix.ts",
     "./src/renderer.js",
-    "./src/job.js",
+    "./src/JobType.ts",
+    "./src/Job.ts",
+    "./src/stuff.js",
+    "./src/misc.js",
     "./src/sketch.js"
   ]
 }

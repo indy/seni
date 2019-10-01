@@ -22,17 +22,20 @@ importScripts('client.js');
 let seniBridge = undefined;
 let seniMemory = undefined;
 
-const jobRender_1_Compile = 'RENDER_1_COMPILE';
-const jobRender_2_ReceiveBitmapData = 'RENDER_2_RECEIVEBITMAPDATA';
-const jobRender_3_RenderPackets = 'RENDER_3_RENDERPACKETS';
-const jobUnparse = 'UNPARSE';
-const jobBuildTraits = 'BUILD_TRAITS';
-const jobInitialGeneration = 'INITIAL_GENERATION';
-const jobNewGeneration = 'NEW_GENERATION';
-const jobGenerateHelp = 'GENERATE_HELP';
-const jobSingleGenotypeFromSeed = 'SINGLE_GENOTYPE_FROM_SEED';
-const jobSimplifyScript = 'SIMPLIFY_SCRIPT';
-const jobReceiveBitmapData = 'RECEIVE_BITMAP_DATA';
+// javascript output from typescript compilation of JobType.ts
+let JobType;
+(function (JobType) {
+    JobType[JobType["jobRender_1_Compile"] = 0] = "jobRender_1_Compile";
+    JobType[JobType["jobRender_2_ReceiveBitmapData"] = 1] = "jobRender_2_ReceiveBitmapData";
+    JobType[JobType["jobRender_3_RenderPackets"] = 2] = "jobRender_3_RenderPackets";
+    JobType[JobType["jobUnparse"] = 3] = "jobUnparse";
+    JobType[JobType["jobBuildTraits"] = 4] = "jobBuildTraits";
+    JobType[JobType["jobInitialGeneration"] = 5] = "jobInitialGeneration";
+    JobType[JobType["jobNewGeneration"] = 6] = "jobNewGeneration";
+    JobType[JobType["jobGenerateHelp"] = 7] = "jobGenerateHelp";
+    JobType[JobType["jobSingleGenotypeFromSeed"] = 8] = "jobSingleGenotypeFromSeed";
+    JobType[JobType["jobSimplifyScript"] = 9] = "jobSimplifyScript";
+})(JobType || (JobType = {}));
 
 function compile({ script, genotype }) {
   if (genotype) {
@@ -220,34 +223,24 @@ const options = {
 
 function messageHandler(type, data) {
   switch (type) {
-  case jobRender_1_Compile:
-    // console.log("jobRender_1_Compile");
+  case JobType["jobRender_1_Compile"]:
     return compile(data);
-  case jobRender_2_ReceiveBitmapData:
-    // console.log("jobRender_2_ReceiveBitmapData");
+  case JobType["jobRender_2_ReceiveBitmapData"]:
     return receiveBitmapData(data);
-  case jobRender_3_RenderPackets:
-    // console.log("jobRender_3_RenderPackets");
+  case JobType["jobRender_3_RenderPackets"]:
     return renderPackets(data);
-  case jobUnparse:
-    // console.log("jobUnparse");
+  case JobType["jobUnparse"]:
     return unparse(data);
-  case jobBuildTraits:
-    // console.log("jobBuildTraits");
+  case JobType["jobBuildTraits"]:
     return buildTraits(data);
-  case jobInitialGeneration:
-    // console.log("jobInitialGeneration");
+  case JobType["jobInitialGeneration"]:
     return createInitialGeneration(data);
-  case jobSingleGenotypeFromSeed:
-    // console.log("jobSingleGenotypeFromSeed");
+  case JobType["jobSingleGenotypeFromSeed"]:
     return singleGenotypeFromSeed(data);
-  case jobSimplifyScript:
-    // console.log("jobSimplifyScript");
+  case JobType["jobSimplifyScript"]:
     return simplifyScript(data);
-  case jobNewGeneration:
-    // console.log("jobNewGeneration");
+  case JobType["jobNewGeneration"]:
     return newGeneration(data);
-
   default:
     // throw unknown type
     throw new Error(`worker.js: Unknown type: ${type}`);
@@ -269,7 +262,7 @@ addEventListener('message', event => {
 
     const [status, result] = messageHandler(type, data);
 
-    if (type === jobRender_3_RenderPackets) {
+    if (type === JobType["jobRender_3_RenderPackets"]) {
       const transferrable = [];
 
       if (result.buffers && result.buffers.length > 0) {

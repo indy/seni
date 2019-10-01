@@ -1,21 +1,31 @@
 {
   "compilerOptions": {
-    "allowJs": true,
     "target": "es6",
+    "lib": ["ES2018", "DOM"],
     "outFile": "../www/index.js",
-    "sourceMap": true
+    "allowJs": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noFallthroughCasesInSwitch": true,
+    "strictNullChecks": true,
+    "removeComments": true
   },
   "include": [
-    "./src/log.js",
+    "./src/Log.ts",
     "./src/Matrix.ts",
     "./src/renderer.js",
-    "./src/history.js",
+    "./src/History.ts",
     "./src/codemirror-seni.js",
     "./src/editor.js",
-    "./src/controller.js",
-    "./src/timer.js",
-    "./src/seni-mode.js",
-    "./src/job.js",
+    "./src/Controller.ts",
+    "./src/Timer.ts",
+    "./src/SeniMode.ts",
+    "./src/JobType.ts",
+    "./src/Job.ts",
+    "./src/stuff.js",
+    "./src/misc.js",
     "./src/index.js"
   ]
 }
