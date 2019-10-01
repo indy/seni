@@ -1,0 +1,31 @@
+(define
+  r 400 ~ (gen/scalar min: 100 max: 450)
+  outer-aura 60 ~ (gen/scalar min: 0 max: 200) ; radius + outer-aura
+  inner-aura 60 ~ (gen/scalar min: 0 max: 100); radius - inner-aura
+  inner-alpha 0.6 ~ (gen/scalar)
+  col (col/rgb r: 1.00 g: 0.00 b: 0.00 alpha: 1.00) ~ (gen/col)
+  tess 80)
+
+; outer aura
+(ring tessellation: tess
+      position: canvas/centre
+      inner-radius: r
+      outer-radius: (+ r outer-aura)
+      inner-colour: (col.col/set-alpha value: 1)
+      outer-colour: (col.col/set-alpha value: 0))
+
+; inner aura
+(ring tessellation: tess
+      position: canvas/centre
+      inner-radius: (- r inner-aura)
+      outer-radius: r
+      inner-colour: (col.col/set-alpha value: inner-alpha)
+      outer-colour: (col.col/set-alpha value: 1))
+
+; inner fill
+(ring tessellation: tess
+      position: canvas/centre
+      inner-radius: 0
+      outer-radius: (- r inner-aura)
+      inner-colour: (col.col/set-alpha value: 0)
+      outer-colour: (col.col/set-alpha value: inner-alpha))
