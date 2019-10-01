@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PRECACHE = 'precache-v7';
+const PRECACHE = 'precache-v1';
 const RUNTIME = 'runtime';
 
 // NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
