@@ -5,3 +5,48 @@
 $sans-serif: 'Raleway', sans-serif;
 $serif:      'et-book', serif;
 $monospace:  'Inconsolata', monospace;
+
+$seni-background-colour: #fbfaf9;
+$seni-link-colour:       #9d6b20;
+$seni-text-colour:       #3e2723;
+
+$dm-seni-background-colour: #2b2b2b;
+$dm-seni-link-colour:       #c09f6d;
+$dm-seni-text-colour:       #a6a8aa;
+
+$colours: (
+  'body-text': $seni-text-colour,
+  'a': #1EAEDB,
+  'a-hover': #0FA0CE,
+  'button': #555,
+  'button-border': #bbb,
+  'focused-button': #333,
+  'focused-button-border': #888,
+  'primary-button': #fff,
+  'primary-button-background': #33C3F0,
+  'primary-button-border': #33C3F0,
+  'primary-focus-button': #fff,
+  'primary-focus-button-background': #1EAEDB,
+  'primary-focus-button-border': #1EAEDB,
+  'form-background': #fff,
+  'form-border': #D1D1D1,
+  'form-focus': #33C3F0,
+
+  // dark-mode
+  'dm-body-text': $seni-text-colour,
+  'dm-a': #1EAEDB,
+  'dm-a-hover': #0FA0CE,
+  'dm-button': #555,
+  'dm-button-border': #bbb,
+  'dm-focused-button': #333,
+  'dm-focused-button-border': #888,
+  'dm-primary-button': #fff,
+  'dm-primary-button-background': #33C3F0,
+  'dm-primary-button-border': #33C3F0,
+  'dm-primary-focus-button': #fff,
+  'dm-primary-focus-button-background': #1EAEDB,
+  'dm-primary-focus-button-border': #1EAEDB,
+  'dm-form-background': #fff,
+  'dm-form-border': #D1D1D1,
+  'dm-form-focus': #33C3F0
+);
