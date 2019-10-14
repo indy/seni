@@ -2,7 +2,7 @@
   "compilerOptions": {
     "allowJs": true,
     "target": "es6",
-    "outFile": "../www/index.js",
+    "outFile": "../../www/index.js",
     "sourceMap": true
   },
   "include": [

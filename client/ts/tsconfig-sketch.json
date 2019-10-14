@@ -2,7 +2,7 @@
   "compilerOptions": {
     "allowJs": true,
     "target": "es6",
-    "outFile": "../www/sketch.js",
+    "outFile": "../../www/sketch.js",
     "sourceMap": true
   },
   "include": [
