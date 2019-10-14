@@ -35,7 +35,6 @@ const NO_CACHE_URLS = [
 
 // A list of local resources we always want to be cached.
 const PRECACHE_URLS = [
-  '/css/bones.css',
   '/lib/codemirror/codemirror.js',
   '/lib/codemirror/closebrackets.js',
   '/lib/codemirror/matchbrackets.js',

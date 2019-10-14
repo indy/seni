@@ -1,0 +1,10 @@
+[package]
+name = "theme-builder"
+version = "0.1.0"
+authors = ["Inderjit Gill <email@indy.io>"]
+edition = "2018"
+license = "AGPL-3.0"
+
+[dependencies]
+sass-rs = "0.2.2"
+fs_extra = "1.1.0"
