@@ -266,7 +266,7 @@ impl Packable for Bytecode {
 impl Default for FnInfo {
     fn default() -> FnInfo {
         FnInfo {
-            fn_name: "".to_string(),
+            fn_name: "".into(),
             arg_address: 0,
             body_address: 0,
             num_args: 0,
@@ -340,7 +340,7 @@ impl Data {
 
     pub fn string_from_iname(&self, iname: Iname) -> Result<String> {
         match self.strings.get(&iname) {
-            Some(s) => Ok(s.to_string()),
+            Some(s) => Ok(s.into()),
             None => {
                 error!("Data::string_from_iname {}", iname);
                 Err(Error::Program)
@@ -417,19 +417,19 @@ mod tests {
     fn test_data_bitmap_strings() {
         let mut d: Data = Default::default();
 
-        d.strings.insert(Iname::new(3), "hello".to_string());
-        d.strings.insert(Iname::new(4), "image.png".to_string());
-        d.strings.insert(Iname::new(5), "bitmap.png".to_string());
+        d.strings.insert(Iname::new(3), "hello".into());
+        d.strings.insert(Iname::new(4), "image.png".into());
+        d.strings.insert(Iname::new(5), "bitmap.png".into());
         let res = d.bitmap_strings();
 
         assert_eq!(res.len(), 2);
-        assert_eq!(res[0], "image.png".to_string());
-        assert_eq!(res[1], "bitmap.png".to_string());
+        assert_eq!(res[0], "image.png");
+        assert_eq!(res[1], "bitmap.png");
     }
 
     #[test]
     fn test_mem_pack() {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
         Mem::Constant.pack(&mut res).unwrap();
         assert_eq!("3", res);
     }
@@ -442,7 +442,7 @@ mod tests {
 
     #[test]
     fn test_bytecode_arg_pack() {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
         BytecodeArg::Native(Native::Circle).pack(&mut res).unwrap();
         assert_eq!("NATIVE circle", res);
     }
@@ -459,7 +459,7 @@ mod tests {
 
     #[test]
     fn test_bytecode_pack() {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
 
         // a nonsense bytecode
         let bc = Bytecode {

@@ -31,7 +31,7 @@ impl Default for BitmapCache {
 
 impl BitmapCache {
     pub fn insert(&mut self, name: &str, info: BitmapInfo) -> Result<()> {
-        self.info.insert(name.to_string(), info);
+        self.info.insert(name.into(), info);
         Ok(())
     }
 

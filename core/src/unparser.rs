@@ -24,7 +24,7 @@ use log::error;
 
 pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
     let (ast, word_lut) = parse(source)?;
-    let mut s: String = "".to_string();
+    let mut s: String = "".into();
 
     genotype.reset_gene_index();
     for n in &ast {
@@ -36,7 +36,7 @@ pub fn unparse(source: &str, genotype: &mut Genotype) -> Result<String> {
 
 pub fn simplified_unparse(source: &str) -> Result<String> {
     let (ast, word_lut) = parse(source)?;
-    let mut s: String = "".to_string();
+    let mut s: String = "".into();
 
     for n in &ast {
         simplified_unparse_ast_node(&mut s, &word_lut, n)?;
@@ -201,14 +201,14 @@ fn format_node_value(node: &Node) -> Result<String> {
             error!("Node::Vector ???");
             Err(Error::Unparser)
         }
-        Node::Float(_, _, s) => Ok(s.to_string()),
+        Node::Float(_, _, s) => Ok(s.into()),
         Node::FromName(_, s, _) => Ok(s.to_string() + "."),
-        Node::Name(_, s, _) => Ok(s.to_string()),
+        Node::Name(_, s, _) => Ok(s.into()),
         Node::Label(_, s, _) => Ok(s.to_string() + ":"),
-        Node::String(_, s, _) => Ok("\"".to_owned() + &s.to_string() + "\""),
-        Node::Tilde(_) => Ok("~".to_string()),
+        Node::String(_, s, _) => Ok("\"".to_owned() + &s + "\""),
+        Node::Tilde(_) => Ok("~".into()),
         Node::Whitespace(_, s) => Ok(s.to_string()),
-        Node::Comment(_, s) => Ok(";".to_owned() + &s.to_string()),
+        Node::Comment(_, s) => Ok(";".to_owned() + &s),
     }
 }
 
@@ -235,7 +235,7 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
         }
         Gene::Name(iname) => {
             if let Some(s) = word_lut.get_string_from_name(*iname) {
-                Ok(s.to_string())
+                Ok(s.into())
             } else {
                 error!("format_var_value Gene::Name iname has no string");
                 Err(Error::Unparser)
@@ -243,7 +243,7 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
         }
         Gene::String(iname) => {
             if let Some(s) = word_lut.get_string_from_name(*iname) {
-                Ok(format!("\"{}\"", s.to_string()))
+                Ok(format!("\"{}\"", s))
             } else {
                 error!("format_var_value Gene::Name iname has no string");
                 Err(Error::Unparser)
@@ -272,7 +272,7 @@ fn format_var_value(node: &Node, genotype: &mut Genotype, word_lut: &WordLut) ->
             )),
         },
         Gene::V2D(x, y) => {
-            let mut res = "[".to_string();
+            let mut res: String = "[".into();
 
             // node is a vector
             if let Node::Vector(_, ns) = node {
@@ -314,7 +314,7 @@ fn unparse_alterable_vector(
     word_lut: &WordLut,
 ) -> Result<String> {
     if let Node::Vector(_, ns) = node {
-        let mut res = "[".to_string();
+        let mut res: String = "[".into();
 
         for n in ns {
             let s = match n {
