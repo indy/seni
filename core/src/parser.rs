@@ -550,24 +550,24 @@ mod tests {
             ast("hello"),
             [Node::Name(
                 meta_loc(1, 1),
-                "hello".to_string(),
+                "hello".into(),
                 Iname::new(0)
             )]
         );
         assert_eq!(
             ast("hello world"),
             [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
-                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
-                Node::Name(meta_loc(1, 7), "world".to_string(), Iname::new(1))
+                Node::Name(meta_loc(1, 1), "hello".into(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".into()),
+                Node::Name(meta_loc(1, 7), "world".into(), Iname::new(1))
             ]
         );
         assert_eq!(
             ast("hello\nworld"),
             [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
-                Node::Whitespace(meta_loc(1, 6), "\n".to_string()),
-                Node::Name(meta_loc(2, 1), "world".to_string(), Iname::new(1))
+                Node::Name(meta_loc(1, 1), "hello".into(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), "\n".into()),
+                Node::Name(meta_loc(2, 1), "world".into(), Iname::new(1))
             ]
         );
     }
@@ -577,9 +577,9 @@ mod tests {
         assert_eq!(
             ast("hello: world"),
             [
-                Node::Label(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
-                Node::Whitespace(meta_loc(1, 7), " ".to_string()),
-                Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1))
+                Node::Label(meta_loc(1, 1), "hello".into(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 7), " ".into()),
+                Node::Name(meta_loc(1, 8), "world".into(), Iname::new(1))
             ]
         );
     }
@@ -589,9 +589,9 @@ mod tests {
         assert_eq!(
             ast("42 102"),
             [
-                Node::Float(meta_loc(1, 1), 42.0, "42".to_string()),
-                Node::Whitespace(meta_loc(1, 3), " ".to_string()),
-                Node::Float(meta_loc(1, 4), 102.0, "102".to_string())
+                Node::Float(meta_loc(1, 1), 42.0, "42".into()),
+                Node::Whitespace(meta_loc(1, 3), " ".into()),
+                Node::Float(meta_loc(1, 4), 102.0, "102".into())
             ]
         );
     }
@@ -601,11 +601,11 @@ mod tests {
         assert_eq!(
             ast("hello world ; some comment"),
             [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
-                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
-                Node::Name(meta_loc(1, 7), "world".to_string(), Iname::new(1)),
-                Node::Whitespace(meta_loc(1, 12), " ".to_string()),
-                Node::Comment(meta_loc(1, 13), " some comment".to_string())
+                Node::Name(meta_loc(1, 1), "hello".into(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".into()),
+                Node::Name(meta_loc(1, 7), "world".into(), Iname::new(1)),
+                Node::Whitespace(meta_loc(1, 12), " ".into()),
+                Node::Comment(meta_loc(1, 13), " some comment".into())
             ]
         );
     }
@@ -617,9 +617,9 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
-                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
-                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1))
+                    Node::Name(meta_loc(1, 2), "hello".into(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".into()),
+                    Node::Name(meta_loc(1, 8), "world".into(), Iname::new(1))
                 ],
             )]
         );
@@ -630,13 +630,13 @@ mod tests {
                 Node::List(
                     meta_loc(1, 1),
                     vec![
-                        Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
-                        Node::Whitespace(meta_loc(1, 7), " ".to_string()),
-                        Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
+                        Node::Name(meta_loc(1, 2), "hello".into(), Iname::new(0)),
+                        Node::Whitespace(meta_loc(1, 7), " ".into()),
+                        Node::Name(meta_loc(1, 8), "world".into(), Iname::new(1)),
                     ],
                 ),
-                Node::Whitespace(meta_loc(1, 14), " ".to_string()),
-                Node::Comment(meta_loc(1, 15), " another comment".to_string())
+                Node::Whitespace(meta_loc(1, 14), " ".into()),
+                Node::Comment(meta_loc(1, 15), " another comment".into())
             ]
         );
 
@@ -645,9 +645,9 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::Name(meta_loc(1, 2), "bitmap".to_string(), Iname::new(0)),
-                    Node::Whitespace(meta_loc(1, 8), " ".to_string()),
-                    Node::String(meta_loc(1, 9), "foo.png".to_string(), Iname::new(1))
+                    Node::Name(meta_loc(1, 2), "bitmap".into(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 8), " ".into()),
+                    Node::String(meta_loc(1, 9), "foo.png".into(), Iname::new(1))
                 ],
             )]
         );
@@ -657,18 +657,18 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
-                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
-                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
-                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
+                    Node::Name(meta_loc(1, 2), "hello".into(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".into()),
+                    Node::Name(meta_loc(1, 8), "world".into(), Iname::new(1)),
+                    Node::Whitespace(meta_loc(1, 13), " ".into()),
                     Node::List(
                         meta_loc(1, 14),
                         vec![
-                            Node::Float(meta_loc(1, 15), 1.0, "1".to_string()),
-                            Node::Whitespace(meta_loc(1, 16), " ".to_string()),
-                            Node::Float(meta_loc(1, 17), 2.0, "2".to_string()),
-                            Node::Whitespace(meta_loc(1, 18), " ".to_string()),
-                            Node::Float(meta_loc(1, 19), 3.0, "3".to_string())
+                            Node::Float(meta_loc(1, 15), 1.0, "1".into()),
+                            Node::Whitespace(meta_loc(1, 16), " ".into()),
+                            Node::Float(meta_loc(1, 17), 2.0, "2".into()),
+                            Node::Whitespace(meta_loc(1, 18), " ".into()),
+                            Node::Float(meta_loc(1, 19), 3.0, "3".into())
                         ],
                     )
                 ],
@@ -680,18 +680,18 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::Name(meta_loc(1, 2), "hello".to_string(), Iname::new(0)),
-                    Node::Whitespace(meta_loc(1, 7), " ".to_string()),
-                    Node::Name(meta_loc(1, 8), "world".to_string(), Iname::new(1)),
-                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
+                    Node::Name(meta_loc(1, 2), "hello".into(), Iname::new(0)),
+                    Node::Whitespace(meta_loc(1, 7), " ".into()),
+                    Node::Name(meta_loc(1, 8), "world".into(), Iname::new(1)),
+                    Node::Whitespace(meta_loc(1, 13), " ".into()),
                     Node::Vector(
                         meta_loc(1, 14),
                         vec![
-                            Node::Float(meta_loc(1, 15), 1.0, "1".to_string()),
-                            Node::Whitespace(meta_loc(1, 16), " ".to_string()),
-                            Node::Float(meta_loc(1, 17), 2.0, "2".to_string()),
-                            Node::Whitespace(meta_loc(1, 18), " ".to_string()),
-                            Node::Float(meta_loc(1, 19), 3.0, "3".to_string())
+                            Node::Float(meta_loc(1, 15), 1.0, "1".into()),
+                            Node::Whitespace(meta_loc(1, 16), " ".into()),
+                            Node::Float(meta_loc(1, 17), 2.0, "2".into()),
+                            Node::Whitespace(meta_loc(1, 18), " ".into()),
+                            Node::Float(meta_loc(1, 19), 3.0, "3".into())
                         ],
                     )
                 ],
@@ -706,9 +706,9 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::Name(meta_loc(1, 1), "quote".to_string(), Iname::new(153)),
-                    Node::Whitespace(meta_loc(1, 1), " ".to_string()),
-                    Node::Float(meta_loc(1, 2), 3.0, "3".to_string())
+                    Node::Name(meta_loc(1, 1), "quote".into(), Iname::new(153)),
+                    Node::Whitespace(meta_loc(1, 1), " ".into()),
+                    Node::Float(meta_loc(1, 2), 3.0, "3".into())
                 ],
             )]
         );
@@ -719,8 +719,8 @@ mod tests {
         assert_eq!(
             ast("hello 5 ~ (gen/scalar) foo"),
             [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(1)),
-                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Name(meta_loc(1, 1), "hello".into(), Iname::new(1)),
+                Node::Whitespace(meta_loc(1, 6), " ".into()),
                 Node::Float(
                     NodeMeta {
                         loc: NodeLocation {
@@ -733,22 +733,22 @@ mod tests {
                                 meta_loc(1, 11),
                                 vec![Node::Name(
                                     meta_loc(1, 12),
-                                    "gen/scalar".to_string(),
+                                    "gen/scalar".into(),
                                     Iname::from(Native::GenScalar),
                                 )],
                             )],
                             parameter_prefix: vec![
-                                Node::Whitespace(meta_loc(1, 8), " ".to_string()),
+                                Node::Whitespace(meta_loc(1, 8), " ".into()),
                                 Node::Tilde(meta_loc(1, 9)),
-                                Node::Whitespace(meta_loc(1, 10), " ".to_string())
+                                Node::Whitespace(meta_loc(1, 10), " ".into())
                             ]
                         })
                     },
                     5.0,
-                    "5".to_string(),
+                    "5".into(),
                 ),
-                Node::Whitespace(meta_loc(1, 23), " ".to_string()),
-                Node::Name(meta_loc(1, 24), "foo".to_string(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 23), " ".into()),
+                Node::Name(meta_loc(1, 24), "foo".into(), Iname::new(0)),
             ]
         );
     }
@@ -759,8 +759,8 @@ mod tests {
         assert_eq!(
             ast("hello [7 8] ~ (gen/scalar)"),
             [
-                Node::Name(meta_loc(1, 1), "hello".to_string(), Iname::new(0)),
-                Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                Node::Name(meta_loc(1, 1), "hello".into(), Iname::new(0)),
+                Node::Whitespace(meta_loc(1, 6), " ".into()),
                 Node::Vector(
                     NodeMeta {
                         loc: NodeLocation {
@@ -773,21 +773,21 @@ mod tests {
                                 meta_loc(1, 15),
                                 vec![Node::Name(
                                     meta_loc(1, 16),
-                                    "gen/scalar".to_string(),
+                                    "gen/scalar".into(),
                                     Iname::from(Native::GenScalar),
                                 )],
                             )],
                             parameter_prefix: vec![
-                                Node::Whitespace(meta_loc(1, 12), " ".to_string()),
+                                Node::Whitespace(meta_loc(1, 12), " ".into()),
                                 Node::Tilde(meta_loc(1, 13)),
-                                Node::Whitespace(meta_loc(1, 14), " ".to_string())
+                                Node::Whitespace(meta_loc(1, 14), " ".into())
                             ]
                         })
                     },
                     vec![
-                        Node::Float(meta_loc(1, 8), 7.0, "7".to_string()),
-                        Node::Whitespace(meta_loc(1, 9), " ".to_string()),
-                        Node::Float(meta_loc(1, 10), 8.0, "8".to_string())
+                        Node::Float(meta_loc(1, 8), 7.0, "7".into()),
+                        Node::Whitespace(meta_loc(1, 9), " ".into()),
+                        Node::Float(meta_loc(1, 10), 8.0, "8".into())
                     ],
                 ),
             ]
@@ -803,17 +803,17 @@ mod tests {
                 vec![
                     Node::Name(
                         meta_loc(1, 2),
-                        "rect".to_string(),
+                        "rect".into(),
                         Iname::from(Native::Rect)
                     ),
-                    Node::Whitespace(meta_loc(1, 6), " ".to_string()),
+                    Node::Whitespace(meta_loc(1, 6), " ".into()),
                     Node::Label(
                         meta_loc(1, 7),
-                        "width".to_string(),
+                        "width".into(),
                         Iname::from(Keyword::Width)
                     ),
-                    Node::Whitespace(meta_loc(1, 13), " ".to_string()),
-                    Node::Float(meta_loc(1, 14), 300.0, "300".to_string()),
+                    Node::Whitespace(meta_loc(1, 13), " ".into()),
+                    Node::Float(meta_loc(1, 14), 300.0, "300".into()),
                 ],
             )]
         );
@@ -826,10 +826,10 @@ mod tests {
             [Node::List(
                 meta_loc(1, 1),
                 vec![
-                    Node::FromName(meta_loc(1, 2), "some-vector".to_string(), Iname::new(0)),
+                    Node::FromName(meta_loc(1, 2), "some-vector".into(), Iname::new(0)),
                     Node::Name(
                         meta_loc(1, 14),
-                        "vector/length".to_string(),
+                        "vector/length".into(),
                         Iname::from(Native::VectorLength),
                     ),
                 ],
