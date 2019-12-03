@@ -1,0 +1,44 @@
+
+;; false if statement, effects on stack?
+
+
+(define
+  col-fn-1 (col/build-procedural a: [0.977 0.416 0.171] ~ (gen/scalar)
+                                 b: [0.846 0.460 0.596] ~ (gen/scalar)
+                                 c: [0.667 0.176 0.706] ~ (gen/scalar)
+                                 d: [0.148 0.675 0.572] ~ (gen/scalar)
+                                 alpha: 0.08)
+  )
+
+(fn (dummy-bg position: [500 500]
+              colour: red
+              seed: 343
+              radius: 300)
+  (rect position: position
+        width: radius
+        height: radius
+        colour: colour))
+
+(fn (bg3)
+  (define
+    focalpoint (focal/build-point position: [430 ~ (gen/int max: canvas/width)
+                                             533 ~ (gen/int max: canvas/height)]
+                                  distance: 651 ~ (gen/int min: (/ canvas/width 2) max: canvas/width)))
+  (loop (i from: 1 to: 400)
+    (define ; has to be here
+      theta (/ (* i math/TAU) 0.1)
+      ; replacing focalpoint stuff with a constant also fucks up, but differently
+      c1 (col-fn-1.col/value t: (focalpoint.focal/value position: [10 10]))
+      )
+
+    (if (> -22 -10)  ;; has to be false
+        (dummy-bg position: [0 0]
+                  radius: 1
+                  colour: red
+                  seed: i)
+        )
+    (probe overlap: 1.0)
+    )
+  )
+
+(bg3)

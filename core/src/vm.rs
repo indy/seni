@@ -203,6 +203,50 @@ impl Var {
     }
 }
 
+pub struct ProbeSample {
+    /// frame pointer
+    pub fp: usize,
+    /// stack pointer (points to the next free stack index)
+    pub sp: usize,
+    /// instruction pointer
+    pub ip: usize,
+
+    pub scalar: Option<f32>,
+    pub scalar_v2: Option<(f32, f32)>,
+}
+
+impl ProbeSample {
+    pub fn new(vm: &Vm) -> ProbeSample {
+        ProbeSample {
+            fp: vm.fp,
+            sp: vm.sp,
+            ip: vm.ip,
+            scalar: None,
+            scalar_v2: None,
+        }
+    }
+
+    pub fn new_scalar(vm: &Vm, scalar: f32) -> ProbeSample {
+        ProbeSample {
+            fp: vm.fp,
+            sp: vm.sp,
+            ip: vm.ip,
+            scalar: Some(scalar),
+            scalar_v2: None,
+        }
+    }
+
+    pub fn new_scalar_v2(vm: &Vm, scalar_v2: (f32, f32)) -> ProbeSample {
+        ProbeSample {
+            fp: vm.fp,
+            sp: vm.sp,
+            ip: vm.ip,
+            scalar: None,
+            scalar_v2: Some(scalar_v2),
+        }
+    }
+}
+
 pub struct Vm {
     /// only used when evaluating bracket bindings
     pub prng_state: PrngStateStruct,
@@ -228,7 +272,8 @@ pub struct Vm {
     pub building_with_trait_within_vector: bool,
     pub trait_within_vector_index: usize,
 
-    pub debug_str: String,
+    /// used during testing
+    pub probe_samples: Vec<ProbeSample>,
 }
 
 impl Default for Vm {
@@ -276,7 +321,7 @@ impl Default for Vm {
             building_with_trait_within_vector: false,
             trait_within_vector_index: 0,
 
-            debug_str: "".to_string(),
+            probe_samples: vec![],
         }
     }
 }
@@ -301,15 +346,18 @@ fn bytecode_arg_to_var(bytecode_arg: &BytecodeArg) -> Result<Var> {
 }
 
 impl Vm {
-    pub fn debug_str_clear(&mut self) {
-        self.debug_str = "".to_string();
+    pub fn probe_clear(&mut self) {
+        self.probe_samples = vec![];
     }
 
-    pub fn debug_str_append(&mut self, text: &str) {
-        if !self.debug_str.is_empty() {
-            self.debug_str += &" ".to_string();
-        }
-        self.debug_str += &text.to_string();
+    pub fn probe_scalar(&mut self, scalar: f32) {
+        let sample = ProbeSample::new_scalar(self, scalar);
+        self.probe_samples.push(sample);
+    }
+
+    pub fn probe_scalar_v2(&mut self, x: f32, y: f32) {
+        let sample = ProbeSample::new_scalar_v2(self, (x, y));
+        self.probe_samples.push(sample);
     }
 
     pub fn set_prng_state(&mut self, prng: PrngStateStruct) {
@@ -606,7 +654,6 @@ impl Vm {
         //     dbg!(i);
         //     dbg!(&self.stack[i]);
         // }
-
     }
 
     fn opcode_native(
@@ -1533,12 +1580,43 @@ pub mod tests {
         }
     }
 
-    pub fn is_debug_str(s: &str, val: &str) {
+    pub fn probe_has_scalars(s: &str, expected_scalars: Vec<f32>) {
         let mut vm: Vm = Default::default();
         let mut context: Context = Default::default();
 
         vm_exec(&mut vm, &mut context, s);
-        assert_eq!(vm.debug_str, val);
+
+        for (i, sample) in vm.probe_samples.iter().enumerate() {
+            if let Some(scalar) = sample.scalar {
+                assert_eq!(scalar, expected_scalars[i], "mismatch at index {}", i);
+            } else {
+                assert!(false, "expected a scalar in the sample");
+            }
+        }
+    }
+
+    pub fn probe_has_scalars_v2(s: &str, expected_scalars_v2: Vec<(f32, f32)>) {
+        let mut vm: Vm = Default::default();
+        let mut context: Context = Default::default();
+
+        vm_exec(&mut vm, &mut context, s);
+
+        for (i, sample) in vm.probe_samples.iter().enumerate() {
+            if let Some(scalar_v2) = sample.scalar_v2 {
+                assert_eq!(
+                    scalar_v2.0, expected_scalars_v2[i].0,
+                    "mismatch for 0 element at index {}",
+                    i
+                );
+                assert_eq!(
+                    scalar_v2.1, expected_scalars_v2[i].1,
+                    "mismatch for 1 element at index {}",
+                    i
+                );
+            } else {
+                assert!(false, "expected a scalar in the sample");
+            }
+        }
     }
 
     #[test]
@@ -1984,7 +2062,7 @@ pub mod tests {
     }
 
     fn pack_compare(var: Var, expected: &str) {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
         var.pack(&mut res).unwrap();
         assert_eq!(expected, res);
     }

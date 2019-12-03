@@ -1,0 +1,11 @@
+
+(fn (dummy-bg radius: 300)
+  (+ 1 1))
+
+(fn (bg3)
+  (loop (i from: 1 to: 400)
+    (if (> -22 -10)  ;; has to be false
+        (dummy-bg radius: 1))
+    (probe overlap: 1.0)))
+
+(bg3)

@@ -19,7 +19,7 @@ pub mod circle;
 pub mod circle_slice;
 pub mod line;
 pub mod poly;
-pub mod ring;
 pub mod quadratic;
 pub mod rect;
+pub mod ring;
 pub mod stroked_bezier;

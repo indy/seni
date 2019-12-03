@@ -1339,7 +1339,6 @@ impl Compiler {
 
                             // todo: some version of compile_user_defined_name that
                             // also looks at the string_to_keyword hash
-
                         }
                     }
                 } else if let Some(native) = self.name_to_native.get(&iname) {
@@ -3327,5 +3326,4 @@ mod tests {
             expected_bytecode
         );
     }
-
 }

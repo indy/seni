@@ -773,19 +773,19 @@ fn probe_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
 
     if is_arg_given(default_mask, 1) {
         let scalar: f32 = vm.stack_peek(1)?;
-        vm.debug_str_append(&format!("{}", scalar));
+        vm.probe_scalar(scalar);
     }
 
     if is_arg_given(default_mask, 2) {
         let (x, y): (f32, f32) = vm.stack_peek(2)?;
-        vm.debug_str_append(&format!("({},{})", x, y));
+        vm.probe_scalar_v2(x, y)
     }
 
     if is_arg_given(default_mask, 3) {
         let (x, y): (f32, f32) = vm.stack_peek(3)?;
         if let Some(matrix) = context.matrix_stack.peek() {
             let (nx, ny) = matrix.transform_vec2(x, y);
-            vm.debug_str_append(&format!("({},{})", nx, ny));
+            vm.probe_scalar_v2(nx, ny)
         }
     }
 
@@ -3678,10 +3678,10 @@ mod tests {
 
     #[test]
     fn test_probe() {
-        is_debug_str("(probe scalar: 0.4)", "0.4");
-        is_debug_str(
+        probe_has_scalars("(probe scalar: 0.4)", [0.4].to_vec());
+        probe_has_scalars(
             "(probe scalar: 0.4) (probe scalar: 0.7) (probe scalar: 0.9)",
-            "0.4 0.7 0.9",
+            [0.4, 0.7, 0.9].to_vec(),
         );
     }
 
@@ -3709,10 +3709,10 @@ mod tests {
 
     #[test]
     pub fn bug_nth() {
-        is_debug_str(
+        probe_has_scalars(
             "(define vs [5 6 7])
              (probe scalar: (nth from: vs n: 0))",
-            "5",
+            [5.0].to_vec(),
         );
     }
 
@@ -3750,5 +3750,4 @@ mod tests {
         is_float("(math/clamp from: 1 min: 2 max: 5)", 2.0);
         is_float("(math/clamp from: 8 min: 2 max: 5)", 5.0);
     }
-
 }

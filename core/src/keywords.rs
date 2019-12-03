@@ -469,7 +469,7 @@ mod tests {
 
     #[test]
     fn test_keyword_pack() {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
         Keyword::Volatility.pack(&mut res).unwrap();
         assert_eq!("volatility", res);
     }

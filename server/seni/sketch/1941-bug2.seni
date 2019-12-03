@@ -1,0 +1,12 @@
+;; client.js:460 Mem::Local (hopback): fp is not Var::Int?
+;; client.js:460 seni core: VM
+
+(fn (dummy-bg radius: 300)
+  (+ 1 1))
+
+(loop (i from: 1 to: 10)
+  (if (> -22 -10)  ;; has to be false
+      (dummy-bg radius: 1)
+      )
+  (probe overlap: 1.0)
+  )

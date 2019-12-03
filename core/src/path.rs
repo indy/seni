@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn test_invocations() {
-        is_debug_str(
+        probe_has_scalars(
             "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
@@ -171,13 +171,13 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-            "0 1 2 3 4",
+            [0.0, 1.0, 2.0, 3.0, 4.0].to_vec(),
         );
     }
 
     #[test]
     fn test_linear() {
-        is_debug_str(
+        probe_has_scalars(
             "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
@@ -186,10 +186,10 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-            "0 0.25 0.5 0.75 1",
+            [0.0, 0.25, 0.5, 0.75, 1.0].to_vec(),
         );
 
-        is_debug_str(
+        probe_has_scalars(
             "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
@@ -199,10 +199,10 @@ mod tests {
                                        fn: (address-of point)
                                        mapping: ease/quick
                                        steps: 5)",
-            "0 0.15625 0.5 0.84375 1",
+            [0.0, 0.15625, 0.5, 0.84375, 1.0].to_vec(),
         );
 
-        is_debug_str(
+        probe_has_scalars_v2(
             "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
@@ -211,13 +211,21 @@ mod tests {
                                        to: [50 50]
                                        fn: (address-of point)
                                        steps: 5)",
-            "(10,10) (20,20) (30,30) (40,40) (50,50)",
+            [
+                (10.0, 10.0),
+                (20.0, 20.0),
+                (30.0, 30.0),
+                (40.0, 40.0),
+                (50.0, 50.0),
+            ]
+            .to_vec(),
         );
     }
 
     #[test]
     fn test_circular() {
-        is_debug_str("(fn (point position: [500 500]
+        probe_has_scalars_v2(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe vector: position))
@@ -225,30 +233,65 @@ mod tests {
                                        radius: 100
                                        fn: (address-of point)
                                        steps: 8)",
-                     "(0,100) (70.71068,70.71068) (100,-0.000004371139) (70.71068,-70.71068) (-0.000008742278,-100) (-70.710686,-70.71066) (-100,0.0000011924881) (-70.710655,70.7107)");
+            [
+                (0.0, 100.0),
+                (70.71068, 70.71068),
+                (100.0, -0.000004371139),
+                (70.71068, -70.71068),
+                (-0.000008742278, -100.0),
+                (-70.710686, -70.71066),
+                (-100.0, 0.0000011924881),
+                (-70.710655, 70.7107),
+            ]
+            .to_vec(),
+        );
     }
 
     #[test]
     fn test_spline() {
-        is_debug_str("(fn (point position: [500 500]
+        probe_has_scalars_v2(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe vector: position))
                           (path/spline coords: [[100 500] [300 500] [500 500]]
                                        fn: (address-of point)
                                        steps: 8)",
-                     "(100,500) (157.14285,500) (214.28572,500) (271.4286,500) (328.57144,500) (385.7143,500) (442.85718,500) (500,500)");
+            [
+                (100.0, 500.0),
+                (157.14285, 500.0),
+                (214.28572, 500.0),
+                (271.4286, 500.0),
+                (328.57144, 500.0),
+                (385.7143, 500.0),
+                (442.85718, 500.0),
+                (500.0, 500.0),
+            ]
+            .to_vec(),
+        );
     }
 
     #[test]
     fn test_bezier() {
-        is_debug_str("(fn (point position: [500 500]
+        probe_has_scalars_v2(
+            "(fn (point position: [500 500]
                                     n: 1
                                     t: 0.2)
                               (probe vector: position))
                           (path/bezier coords: [[100 500] [300 300] [500 800] [700 500]]
                                        fn: (address-of point)
                                        steps: 8)",
-                     "(100,500) (185.71431,452.76974) (271.42862,465.01465) (357.14288,510.49567) (442.85718,562.97375) (528.5714,596.2099) (614.28577,583.965) (700,500)");
+            [
+                (100.0, 500.0),
+                (185.71431, 452.76974),
+                (271.42862, 465.01465),
+                (357.14288, 510.49567),
+                (442.85718, 562.97375),
+                (528.5714, 596.2099),
+                (614.28577, 583.965),
+                (700.0, 500.0),
+            ]
+            .to_vec(),
+        );
     }
 }

@@ -73,7 +73,7 @@ pub use crate::gene::{next_generation, Genotype};
 pub use crate::packable::Packable;
 pub use crate::parser::{parse, WordLut};
 pub use crate::program::Program;
-pub use crate::render_list::{RenderList, RPCommand};
+pub use crate::render_list::{RPCommand, RenderList};
 pub use crate::render_packet::{
     RenderPacket, RenderPacketGeometry, RenderPacketImage, RenderPacketMask,
 };
@@ -174,7 +174,7 @@ pub mod tests {
 
         assert_eq!(1, context.render_list.get_num_render_packets() as i32);
 
-        let geo = context.get_render_packet_geometry(0).unwrap();
+        let geo = context.get_rp_geometry(0).unwrap();
         let num_floats = geo.get_geo_len();
         let floats_per_vert = 8;
         assert_eq!(expected_num_verts, num_floats / floats_per_vert);

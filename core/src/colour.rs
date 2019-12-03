@@ -1306,7 +1306,7 @@ mod tests {
 
     #[test]
     fn test_colour_pack() {
-        let mut res: String = "".to_string();
+        let mut res: String = "".into();
         let col = Colour::new(ColourFormat::Rgb, 1.1, 2.2, 3.3, 4.4);
         col.pack(&mut res).unwrap();
         assert_eq!("RGB 1.1 2.2 3.3 4.4", res);
@@ -1348,5 +1348,4 @@ mod tests {
         assert_equal_f64(-0.1, fmod(-6.1, 6.0));
         assert_equal_f64(-1.0, fmod(-7.0, 6.0));
     }
-
 }

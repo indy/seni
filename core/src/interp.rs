@@ -152,86 +152,105 @@ mod tests {
 
     #[test]
     fn test_interp_cos() {
-        is_debug_str(
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/cos t: (/ x 5))))",
-            "1 0.9800666 0.921061 0.8253356 0.6967067 0.5403023",
+            [1.0, 0.9800666, 0.921061, 0.8253356, 0.6967067, 0.5403023].to_vec(),
         );
-        is_debug_str(
+
+        probe_has_scalars(
+            "(loop (x upto: 5)
+                   (probe scalar: (interp/cos t: (/ x 5))))",
+            [1.0, 0.9800666, 0.921061, 0.8253356, 0.6967067, 0.5403023].to_vec(),
+        );
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/cos amplitude: 3 t: (/ x 5))))",
-            "3 2.9401999 2.7631829 2.476007 2.09012 1.6209068",
+            [3.0, 2.9401999, 2.7631829, 2.476007, 2.09012, 1.6209068].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/cos frequency: 7 t: (/ x 5))))",
-            "1 0.16996716 -0.9422223 -0.49026057 0.7755658 0.75390226",
+            [
+                1.0,
+                0.16996716,
+                -0.9422223,
+                -0.49026057,
+                0.7755658,
+                0.75390226,
+            ]
+            .to_vec(),
         );
     }
 
     #[test]
     fn test_interp_sin() {
-        is_debug_str(
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/sin t: (/ x 5))))",
-            "0 0.19866933 0.38941833 0.5646425 0.7173561 0.84147096",
+            [
+                0.0, 0.19866933, 0.38941833, 0.5646425, 0.7173561, 0.84147096,
+            ]
+            .to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/sin amplitude: 3 t: (/ x 5))))",
-            "0 0.596008 1.168255 1.6939275 2.1520681 2.5244129",
+            [0.0, 0.596008, 1.168255, 1.6939275, 2.1520681, 2.5244129].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(loop (x upto: 5)
                    (probe scalar: (interp/sin frequency: 7 t: (/ x 5))))",
-            "0 0.98544973 0.3349882 -0.8715759 -0.6312667 0.6569866",
+            [
+                0.0, 0.98544973, 0.3349882, -0.8715759, -0.6312667, 0.6569866,
+            ]
+            .to_vec(),
         );
     }
 
     #[test]
     fn test_interp_build() {
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [0 1] to: [0 100]))
              (probe scalar: (interp/value from: i t: 0.5))",
-            "50",
+            [50.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [10 20] to: [50 200]))
              (probe scalar: (interp/value from: i t: 10.0))",
-            "50",
+            [50.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [10 20] to: [50 200]))
              (probe scalar: (interp/value from: i t: 20.0))",
-            "200",
+            [200.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [50 10] to: [100 1000]))
              (probe scalar: (interp/value from: i t: 50.0))",
-            "100",
+            [100.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [50 10] to: [100 1000]))
              (probe scalar: (interp/value from: i t: 10.0))",
-            "1000",
+            [1000.0].to_vec(),
         );
 
         // clamping
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [0 1] to: [0 100] clamping: false))
              (probe scalar: (interp/value from: i t: 2.0))",
-            "200",
+            [200.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [0 1] to: [0 100] clamping: true))
              (probe scalar: (interp/value from: i t: 2.0))",
-            "100",
+            [100.0].to_vec(),
         );
-        is_debug_str(
+        probe_has_scalars(
             "(define i (interp/build from: [0 1] to: [0 100] clamping: true))
              (probe scalar: (interp/value from: i t: -2.0))",
-            "0",
+            [0.0].to_vec(),
         );
     }
-
 }

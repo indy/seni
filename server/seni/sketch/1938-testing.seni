@@ -1,0 +1,8 @@
+
+(mask/set from: "mask/skull-c.png")
+;(mask/set from: "mask/horizontal-linear.png")
+
+(rect position: [(/ canvas/width 2) (/ canvas/height 2)]
+      width: (* canvas/width 0.9)
+      height: (* canvas/height 0.9)
+      colour: red)

@@ -234,7 +234,7 @@ pub mod tests {
 
     #[test]
     pub fn test_prng_value() {
-        is_debug_str(
+        probe_has_scalars(
             "(define p (prng/build seed: 5 min: 0 max: 1))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
@@ -245,13 +245,24 @@ pub mod tests {
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))",
-            "0.16439326 0.58795106 0.12325332 0.039127756 0.9678266 0.8247009 0.787962 0.13722154 0.94319534",
+            [
+                0.16439326,
+                0.58795106,
+                0.12325332,
+                0.039127756,
+                0.9678266,
+                0.8247009,
+                0.787962,
+                0.13722154,
+                0.94319534,
+            ]
+            .to_vec(),
         );
     }
 
     #[test]
     pub fn test_prng_value2() {
-        is_debug_str(
+        probe_has_scalars(
             "(define p (prng/build seed: 5938 min: 3 max: 9))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
@@ -262,19 +273,23 @@ pub mod tests {
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))
              (probe scalar: (prng/value from: p))",
-            "7.696081 6.462363 6.579473 4.650559 5.4763083 4.6319327 8.11852 6.7570615 5.3803825",
+            [
+                7.696081, 6.462363, 6.579473, 4.650559, 5.4763083, 4.6319327, 8.11852, 6.7570615,
+                5.3803825,
+            ]
+            .to_vec(),
         );
     }
 
     #[test]
     pub fn test_prng_values() {
-        is_debug_str(
+        probe_has_scalars(
             "(define p (prng/build seed: 5 min: 0 max: 1))
              (define vs (prng/values from: p num: 3))
              (probe scalar: (nth from: vs n: 0))
              (probe scalar: (nth from: vs n: 1))
              (probe scalar: (nth from: vs n: 2))",
-            "0.16439326 0.58795106 0.12325332",
+            [0.16439326, 0.58795106, 0.12325332].to_vec(),
         );
     }
 

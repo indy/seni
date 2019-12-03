@@ -31,9 +31,18 @@ pub fn render(
     tessellation: usize,
     uvm: &UvMapping,
 ) -> Result<()> {
-    ring_segment(render_list, matrix, position, inner_radius, outer_radius, inner_colour, outer_colour, tessellation, uvm)
+    ring_segment(
+        render_list,
+        matrix,
+        position,
+        inner_radius,
+        outer_radius,
+        inner_colour,
+        outer_colour,
+        tessellation,
+        uvm,
+    )
 }
-
 
 fn ring_segment(
     render_list: &mut RenderList,
@@ -48,7 +57,12 @@ fn ring_segment(
 ) -> Result<()> {
     let unit_angle = TAU / tessellation as f32;
 
-    render_list.prepare_to_add_triangle_strip(matrix, (tessellation * 2) + 2, position.0, position.1 + inner_radius)?;
+    render_list.prepare_to_add_triangle_strip(
+        matrix,
+        (tessellation * 2) + 2,
+        position.0,
+        position.1 + inner_radius,
+    )?;
 
     let rp = render_list
         .render_packets
@@ -64,8 +78,22 @@ fn ring_segment(
         let outervx = (angle.sin() * outer_radius) + position.0;
         let outervy = (angle.cos() * outer_radius) + position.1;
 
-        rpg.add_vertex(matrix, innervx, innervy, inner_colour, uvm.map[4], uvm.map[5]);
-        rpg.add_vertex(matrix, outervx, outervy, outer_colour, uvm.map[4], uvm.map[5]);
+        rpg.add_vertex(
+            matrix,
+            innervx,
+            innervy,
+            inner_colour,
+            uvm.map[4],
+            uvm.map[5],
+        );
+        rpg.add_vertex(
+            matrix,
+            outervx,
+            outervy,
+            outer_colour,
+            uvm.map[4],
+            uvm.map[5],
+        );
     }
 
     let angle: f32 = TAU;
@@ -75,8 +103,22 @@ fn ring_segment(
     let outervx = (angle.sin() * outer_radius) + position.0;
     let outervy = (angle.cos() * outer_radius) + position.1;
 
-    rpg.add_vertex(matrix, innervx, innervy, inner_colour, uvm.map[4], uvm.map[5]);
-    rpg.add_vertex(matrix, outervx, outervy, outer_colour, uvm.map[4], uvm.map[5]);
+    rpg.add_vertex(
+        matrix,
+        innervx,
+        innervy,
+        inner_colour,
+        uvm.map[4],
+        uvm.map[5],
+    );
+    rpg.add_vertex(
+        matrix,
+        outervx,
+        outervy,
+        outer_colour,
+        uvm.map[4],
+        uvm.map[5],
+    );
 
     Ok(())
 }

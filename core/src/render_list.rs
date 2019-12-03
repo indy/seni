@@ -160,7 +160,7 @@ impl RenderList {
             _ => {
                 self.render_packets
                     .push(RenderPacket::Geometry(RenderPacketGeometry::new()));
-                return Ok(());
+                Ok(())
             }
         }
     }

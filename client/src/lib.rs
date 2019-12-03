@@ -249,7 +249,7 @@ impl Bridge {
         if let Some(program) = &self.program {
             match run_program_with_preamble(&mut self.vm, &mut self.context, &program) {
                 Ok(_) => {
-                    self.vm.debug_str_clear();
+                    self.vm.probe_clear();
                     self.context.render_list.remove_useless_render_packets();
                     self.context.render_list.get_num_render_packets()
                 }

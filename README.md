@@ -1,7 +1,7 @@
 Seni
 ====
 
-### Note: Development happens at [git.indy.io/indy/seni](https://git.indy.io/indy/seni)
+### Note: The canonical home page for this project is [git.indy.io/indy/seni](https://git.indy.io/indy/seni)
 
 ## Overview
 
