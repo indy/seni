@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es6",
     "lib": ["ES2018", "DOM"],
-    "outFile": "../www/index.js",
+    "outFile": "../../www/index.js",
     "allowJs": true,
     "sourceMap": true,
     "noImplicitAny": true,
