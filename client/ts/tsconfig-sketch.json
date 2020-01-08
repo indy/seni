@@ -17,8 +17,7 @@
     "./src/renderer.js",
     "./src/JobType.ts",
     "./src/Job.ts",
-    "./src/stuff.js",
-    "./src/misc.js",
+    "./src/utils.js",
     "./src/sketch.js"
   ]
 }

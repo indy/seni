@@ -15,7 +15,7 @@
   "include": [
     "./src/Log.ts",
     "./src/Matrix.ts",
-    "./src/renderer.js",
+    "./src/Renderer.ts",
     "./src/History.ts",
     "./src/codemirror-seni.js",
     "./src/editor.js",
@@ -24,8 +24,7 @@
     "./src/SeniMode.ts",
     "./src/JobType.ts",
     "./src/Job.ts",
-    "./src/stuff.js",
-    "./src/misc.js",
+    "./src/utils.js",
     "./src/index.js"
   ]
 }

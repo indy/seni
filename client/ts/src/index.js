@@ -20,11 +20,9 @@
 // --------------------------------------------------------------------------------
 // main
 
-const gState = {
-  render_texture_width: 2048,
-  render_texture_height: 2048,
-};
-
+// todo: render_texture_width/height were in gState, fix this for sketch.js as well
+let g_render_texture_width = 2048;
+let g_render_texture_height = 2048;
 let gUI = {};
 let gGLRenderer = undefined;
 
@@ -149,7 +147,7 @@ function updateSelectionUI(state) {
 async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
   const stopFn = Timer.startTiming();
 
-  await gGLRenderer.renderGeometryToTexture(meta, gState.render_texture_width, gState.render_texture_height, memory, buffers, sectionDim, section);
+  await gGLRenderer.renderGeometryToTexture(meta, g_render_texture_width, g_render_texture_height, memory, buffers, sectionDim, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
 
   await gGLRenderer.copyImageDataTo(imageElement);
@@ -860,10 +858,10 @@ async function main() {
                                      'shader/main-frag.glsl',
                                      'shader/blit-vert.glsl',
                                      'shader/blit-frag.glsl']);
-  gGLRenderer = new GLRenderer(canvasElement, shaders);
+  gGLRenderer = new GLRenderer2(canvasElement, shaders, g_render_texture_width, g_render_texture_height);
 
   try {
-    await gGLRenderer.ensureTexture(TEXTURE_UNIT_BRUSH_TEXTURE, 'brush.png');
+    await gGLRenderer.ensureTexture(TextureUnit.brushTexture, 'brush.png');
 
     setupUI(controller);
 

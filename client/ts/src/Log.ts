@@ -24,4 +24,8 @@ namespace Log {
             console.log(msg);
         }
     }
+
+    export function error(msg: string) {
+        console.error(msg);
+    }
 }
