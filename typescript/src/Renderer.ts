@@ -25,6 +25,7 @@ enum TextureUnit {
     maskTexture,
 }
 
+
 enum RPCommand {
     geometry = 1,
     mask,
