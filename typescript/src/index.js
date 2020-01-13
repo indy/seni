@@ -26,6 +26,10 @@ let g_render_texture_height = 2048;
 let gUI = {};
 let gGLRenderer = undefined;
 
+let gPainterQueue = [];
+let gPainterTimoutId = 0;
+let gPainterLoopActive = false;
+
 
 function getScriptFromEditor() {
   return gUI.editor.getValue();
@@ -149,14 +153,13 @@ async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, 
 
   await gGLRenderer.renderGeometryToTexture(meta, g_render_texture_width, g_render_texture_height, memory, buffers, sectionDim, section);
   gGLRenderer.renderTextureToScreen(meta, w, h);
-
   await gGLRenderer.copyImageDataTo(imageElement);
 
   stopFn(`rendering all buffers for section ${section}`);
 }
 
 async function renderGeneration(state) {
-  // TODO: stop generating  if the user has switched to edit mode
+  // todo: stop generating  if the user has switched to edit mode
   const script = state.script;
   const genotypes = state.genotypes;
   const phenotypes = gUI.phenotypes;
@@ -212,7 +215,16 @@ async function renderScript(parameters, imageElement) {
   let height = parameters.assumeHeight ? parameters.assumeHeight : imageElement.clientHeight;
 
   let { meta, memory, buffers } = await renderJob(parameters);
-  await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height, 1, 0);
+
+
+  // note: this used to just be:
+  // await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height, 1, 0);
+  //
+  // but that _very_ occasionally caused rendering issues with duplications appearing.
+  // SequentialPainter ensures that only one piece is being rendered to WebGL at a time
+  //
+  addSequentialPainterJob({meta, memory, buffers, imageElement, width, height, sectionDim: 1, section: 0});
+
 
   if (meta.title === '') {
     stopFn(`renderScript`);
@@ -220,6 +232,34 @@ async function renderScript(parameters, imageElement) {
     stopFn(`renderScript-${meta.title}`);
   }
 }
+
+function addSequentialPainterJob(params) {
+  gPainterQueue.push(params);
+  ensurePainterLoopLooping();
+}
+
+function ensurePainterLoopLooping() {
+  if (!gPainterLoopActive) {
+    // console.log("PAINTERLOOP STARTING");
+    gPainterLoopActive = true;
+    gPainterTimoutId = window.setTimeout(painterLoop, 0);
+  }
+}
+
+async function painterLoop() {
+  if (gPainterQueue.length > 0) {
+    let head = gPainterQueue[0];
+    gPainterQueue = gPainterQueue.slice(1);
+
+    await renderGeometryBuffers(head.meta, head.memory, head.buffers, head.imageElement, head.width, head.height, head.sectionDim, head.section);
+
+    gPainterTimoutId = window.setTimeout(painterLoop, 0);
+  } else {
+    gPainterLoopActive = false;
+    // console.log("PAINTERLOOP STOPPED");
+  }
+}
+
 
 async function renderEditorScript(state) {
   const imageElement = gUI.renderImage;
