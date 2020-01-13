@@ -1,0 +1,53 @@
+(image contrast: 1 ~ (gen/scalar min: 0.8 max: 1.1)
+       brightness: -0.05 ~ (gen/scalar min: -0.3 max: 0.3)
+       saturation: 1 ~ (gen/scalar min: 0.7 max: 1.3))
+
+(define texture "einstein.png")
+(define per-pixel-funcs [(address-of pass-0)
+                         (address-of pass-1)
+                         (address-of pass-2)
+                         (address-of pass-3)])
+
+(each (per-pixel-func from: per-pixel-funcs)
+      (bitmap/each from: texture
+                   fn: per-pixel-func))
+
+(fn (pass-0 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/e0 from: colour)
+             width: 1.0
+             from: [0 0]
+             to: [1 1]))
+
+(fn (pass-1 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/e0 from: colour)
+             width: 5.1 ~ (gen/scalar min: 0.1 max: 15)
+             from: [-4 ~ (gen/scalar min: -15 max: 15)
+                     14 ~ (gen/scalar min: -15 max: 15)]
+             to: [7 ~ (gen/scalar min: -15 max: 15)
+                  13 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (pass-2 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/e0 from: colour)
+             width: 3.3 ~ (gen/scalar min: 0.1 max: 15)
+             from: [13 ~ (gen/scalar min: -15 max: 15)
+                    14 ~ (gen/scalar min: -15 max: 15)]
+             to: [10 ~ (gen/scalar min: -15 max: 15)
+                  -9 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (pass-3 colour: (col/rgb r: 0 g: 0 b: 0 alpha: 0) position: [100 100])
+  (per-pixel a: (col/e0 from: colour)
+             width: 12.2 ~ (gen/scalar min: 0.1 max: 15)
+             from: [-8 ~ (gen/scalar min: -15 max: 15)
+                    7 ~ (gen/scalar min: -15 max: 15)]
+             to: [-4 ~ (gen/scalar min: -15 max: 15)
+                  -3 ~ (gen/scalar min: -15 max: 15)]))
+
+(fn (per-pixel a: 0 width: 0 from: [0 0] to: [0 0])
+  (define
+    angle (* a math/PI)
+    angle-cos (angle.math/cos)
+    angle-sin (angle.math/sin))
+  (line from: [(* (from.get-x) angle-cos) (* (from.get-y) angle-sin)]
+        to: [(* (to.get-x) angle-cos) (* (to.get-y) angle-sin)]
+        width: (- width a)
+        colour: (col/rgb r: a g: a b: a alpha: 0.2)))
