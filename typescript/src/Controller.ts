@@ -16,6 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+///<reference path='Log.ts'/>
 ///<reference path='Job.ts'/>
 ///<reference path='SeniMode.ts'/>
 
@@ -64,7 +65,7 @@ class State {
         s.galleryLoaded = false;
         s.galleryOldestToDisplay = 9999;
         s.galleryItems = {};
-        s.galleryDisplaySize = 20;
+        s.galleryDisplaySize = 20; // was 20
         s.previouslySelectedGenotypes = [];
         s.selectedIndices = [];
         s.scriptId = undefined;
@@ -189,10 +190,11 @@ class Controller {
 
         newState.galleryItems = {};
         galleryItems.forEach((item: any) => {
+            // Log.log(`setGalleryItems: ${item.id}`);
             newState.galleryItems[item.id] = item;
         });
         if (galleryItems.length === 0)  {
-            console.error("galleryItems is empty?");
+            Log.error("galleryItems is empty?");
         }
 
         newState.galleryLoaded = true;

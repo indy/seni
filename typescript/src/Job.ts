@@ -62,7 +62,7 @@ namespace Job {
             return result;
         } catch (error) {
             // handle error
-            console.error(`worker (job:${type}): error of ${error}`);
+            Log.error(`worker (job:${type}): error of ${error}`);
             return undefined;         // ???
         }
     }

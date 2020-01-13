@@ -16,7 +16,7 @@
  *  along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-const PRECACHE = 'precache-v1';
+const PRECACHE = 'precache-v2';
 const RUNTIME = 'runtime';
 
 // NOTE: when releasing set DONT_CACHE_SOME_URLS to false and increment the PRECACHE
@@ -38,8 +38,7 @@ const PRECACHE_URLS = [
   '/lib/codemirror/codemirror.js',
   '/lib/codemirror/closebrackets.js',
   '/lib/codemirror/matchbrackets.js',
-  '/favicon.ico',
-  '/img/spinner.gif'
+  '/favicon.ico'
 ];
 
 // The install handler takes care of precaching the resources we always need.

@@ -399,7 +399,7 @@ fn var_to_f32_pair(v: &Var) -> Result<(f32, f32)> {
     }
 }
 
-fn var_to_rgb(v: &Var) -> Result<(Rgb)> {
+fn var_to_rgb(v: &Var) -> Result<Rgb> {
     if let Var::Colour(col) = v {
         let rgb = Rgb::from_colour(&col)?;
         Ok(rgb)
