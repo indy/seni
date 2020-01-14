@@ -168,15 +168,15 @@ async function renderGeneration(state) {
   const dim = phenotypes[0].phenotypeElement.clientWidth;
 
   for (let i = 0; i < phenotypes.length; i++) {
+
+    const spinner = phenotypes[i].phenotypeSpinner;
+
     const workerJob = renderScript({
       script,
       genotype: genotypes[i],
       assumeWidth: dim,
       assumeHeight: dim
-    }, phenotypes[i].imageElement).then(() => {
-      const spinner = phenotypes[i].phenotypeSpinner;
-      removeAllChildren(spinner);
-    });
+    }, phenotypes[i].imageElement, spinner);
 
     promises.push(workerJob);
   }
@@ -205,7 +205,7 @@ function showScriptInEditor(state) {
 }
 
 // note: this is returning a Promise
-async function renderScript(parameters, imageElement) {
+async function renderScript(parameters, imageElement, optionalBusyUI) {
   const stopFn = Timer.startTiming();
 
   let width = parameters.assumeWidth ? parameters.assumeWidth : imageElement.clientWidth;
@@ -220,7 +220,7 @@ async function renderScript(parameters, imageElement) {
   // but that _very_ occasionally caused rendering issues with duplications appearing.
   // SequentialPainter ensures that only one piece is being rendered to WebGL at a time
   //
-  addSequentialPainterJob({meta, memory, buffers, imageElement, width, height, sectionDim: 1, section: 0});
+  addSequentialPainterJob({meta, memory, buffers, imageElement, width, height, sectionDim: 1, section: 0, optionalBusyUI});
 
   if (meta.title === '') {
     stopFn(`renderScript`);
@@ -248,6 +248,11 @@ async function painterLoop() {
     gPainterQueue = gPainterQueue.slice(1);
 
     await paintGeometry(head.meta, head.memory, head.buffers, head.imageElement, head.width, head.height, head.sectionDim, head.section);
+
+    if(head.optionalBusyUI) {
+      // remove any spinners from the ui
+      removeAllChildren(head.optionalBusyUI);
+    }
 
     window.setTimeout(painterLoop, 0);
   } else {
@@ -840,9 +845,7 @@ async function createGalleryDisplayChunk(controller) {
       script: item.script,
       assumeWidth,
       assumeHeight
-    }, imageElement).then(() => {
-      removeAllChildren(svgContainerElement);
-    });
+    }, imageElement, svgContainerElement);
 
     promises.push(workerJob);
   }
