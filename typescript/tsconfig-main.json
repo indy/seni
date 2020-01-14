@@ -22,6 +22,7 @@
     "./src/Controller.ts",
     "./src/Timer.ts",
     "./src/SeniMode.ts",
+    "./src/State.ts",
     "./src/JobType.ts",
     "./src/Job.ts",
     "./src/utils.js",

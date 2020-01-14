@@ -18,6 +18,7 @@
 
 ///<reference path='Log.ts'/>
 ///<reference path='Controller.ts'/>
+///<reference path='State.ts'/>
 
 namespace SeniHistory {
     function senModeAsString(state: State): string {
@@ -58,8 +59,13 @@ namespace SeniHistory {
         history.replaceState(state, "", uri);
     }
 
-    export function restoreState(state: State) {
+    export function restoreState(stateObj: any) {
         Log.log('historyRestore');
+        // note: the popstate event on window returns a plain js object.
+        // this needs to be converted back into a State instance
+        //
+        const state = State.createStateFromObject(stateObj);
+
         return state;
     }
 }

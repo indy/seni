@@ -19,6 +19,7 @@
 ///<reference path='Log.ts'/>
 ///<reference path='Job.ts'/>
 ///<reference path='SeniMode.ts'/>
+///<reference path='State.ts'/>
 
 enum Action {
     SetMode,
@@ -32,75 +33,6 @@ enum Action {
     SetState,
     SetGalleryItems,
     GalleryOldestToDisplay,
-}
-
-class State {
-    public highResolution: [number, number];
-    public populationSize: number;
-    public mutationRate: number;
-
-    public currentMode: SeniMode;
-
-    public galleryLoaded: boolean;
-    public galleryOldestToDisplay: number;
-    public galleryItems: any;
-    public galleryDisplaySize: number; // the number of gallery sketches to display everytime 'load more' is clicked
-
-    public previouslySelectedGenotypes: any;
-    public selectedIndices: Array<number>;
-    public scriptId: number | undefined;
-    public script: string | undefined;
-    public genotypes: Array<any>;
-    public traits: Array<any>;
-
-    public genotype: any;
-
-    static createInitialState(): State {
-        let s = new this();
-
-        s.highResolution = [2048, 2048];
-        s.populationSize = 24;
-        s.mutationRate = 0.1;
-        s.currentMode = SeniMode.gallery;
-        s.galleryLoaded = false;
-        s.galleryOldestToDisplay = 9999;
-        s.galleryItems = {};
-        s.galleryDisplaySize = 20; // was 20
-        s.previouslySelectedGenotypes = [];
-        s.selectedIndices = [];
-        s.scriptId = undefined;
-        s.script = undefined;
-        s.genotypes = [];
-        s.traits = [];
-        s.genotype = undefined;
-
-        return s;
-    }
-
-    clone(): State {
-        let s = new State();
-
-        s.highResolution = this.highResolution;
-        s.populationSize = this.populationSize;
-        s.mutationRate = this.mutationRate;
-        s.currentMode = this.currentMode;
-        s.galleryLoaded = this.galleryLoaded;
-        s.galleryOldestToDisplay = this.galleryOldestToDisplay;
-        s.galleryItems = this.galleryItems;
-        s.galleryDisplaySize = this.galleryDisplaySize;
-        s.previouslySelectedGenotypes = this.previouslySelectedGenotypes;
-        s.selectedIndices = this.selectedIndices;
-        s.scriptId = this.scriptId;
-        s.script = this.script;
-        s.genotypes = this.genotypes;
-        s.traits = this.traits;
-        s.genotype = this.genotype;
-
-        return s;
-    }
-
-    constructor() {
-    }
 }
 
 class Controller {
@@ -127,7 +59,6 @@ class Controller {
     }
 
     async applySetScript(state: State, { script }: { script: string | undefined }) {
-
         const newState = state.clone();
         newState.script = script;
 

@@ -25,11 +25,8 @@ let g_render_texture_width = 2048;
 let g_render_texture_height = 2048;
 let gUI = {};
 let gGLRenderer = undefined;
-
 let gPainterQueue = [];
-let gPainterTimoutId = 0;
 let gPainterLoopActive = false;
-
 
 function getScriptFromEditor() {
   return gUI.editor.getValue();
@@ -148,7 +145,7 @@ function updateSelectionUI(state) {
   });
 }
 
-async function renderGeometryBuffers(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
+async function paintGeometry(meta, memory, buffers, imageElement, w, h, sectionDim, section) {
   const stopFn = Timer.startTiming();
 
   await gGLRenderer.renderGeometryToTexture(meta, g_render_texture_width, g_render_texture_height, memory, buffers, sectionDim, section);
@@ -218,13 +215,12 @@ async function renderScript(parameters, imageElement) {
 
 
   // note: this used to just be:
-  // await renderGeometryBuffers(meta, memory, buffers, imageElement, width, height, 1, 0);
+  // await paintGeometry(meta, memory, buffers, imageElement, width, height, 1, 0);
   //
   // but that _very_ occasionally caused rendering issues with duplications appearing.
   // SequentialPainter ensures that only one piece is being rendered to WebGL at a time
   //
   addSequentialPainterJob({meta, memory, buffers, imageElement, width, height, sectionDim: 1, section: 0});
-
 
   if (meta.title === '') {
     stopFn(`renderScript`);
@@ -235,14 +231,14 @@ async function renderScript(parameters, imageElement) {
 
 function addSequentialPainterJob(params) {
   gPainterQueue.push(params);
-  ensurePainterLoopLooping();
+  ensurePainterLoopIsLooping();
 }
 
-function ensurePainterLoopLooping() {
+function ensurePainterLoopIsLooping() {
   if (!gPainterLoopActive) {
     // console.log("PAINTERLOOP STARTING");
     gPainterLoopActive = true;
-    gPainterTimoutId = window.setTimeout(painterLoop, 0);
+    window.setTimeout(painterLoop, 0);
   }
 }
 
@@ -251,15 +247,14 @@ async function painterLoop() {
     let head = gPainterQueue[0];
     gPainterQueue = gPainterQueue.slice(1);
 
-    await renderGeometryBuffers(head.meta, head.memory, head.buffers, head.imageElement, head.width, head.height, head.sectionDim, head.section);
+    await paintGeometry(head.meta, head.memory, head.buffers, head.imageElement, head.width, head.height, head.sectionDim, head.section);
 
-    gPainterTimoutId = window.setTimeout(painterLoop, 0);
+    window.setTimeout(painterLoop, 0);
   } else {
     gPainterLoopActive = false;
     // console.log("PAINTERLOOP STOPPED");
   }
 }
-
 
 async function renderEditorScript(state) {
   const imageElement = gUI.renderImage;
@@ -680,7 +675,7 @@ function setupUI(controller) {
     const [width, height] = [image_resolution, image_resolution];
 
     for(let i = 0; i < image_dim * image_dim; i++) {
-      await renderGeometryBuffers(meta, memory, buffers, image, width, height, image_dim, i);
+      await paintGeometry(meta, memory, buffers, image, width, height, image_dim, i);
 
       const image_name_elem = document.getElementById('download-dialog-field-filename');
       const filename = filenameForPng(image_name_elem.value, image_dim, i);
