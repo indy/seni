@@ -135,6 +135,12 @@ function removeClass(id, clss) {
   e.classList.remove(clss);
 }
 
+function removeAllChildren(e) {
+  while (e.firstChild) {
+    e.removeChild(e.firstChild);
+  }
+}
+
 function setOpacity(id, opacity) {
   const e = getRequiredElement(id);
   e.style.opacity = opacity;

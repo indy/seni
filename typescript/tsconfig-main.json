@@ -26,6 +26,6 @@
     "./src/JobType.ts",
     "./src/Job.ts",
     "./src/utils.js",
-    "./src/index.js"
+    "./src/App.ts"
   ]
 }
