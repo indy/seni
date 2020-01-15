@@ -18,6 +18,17 @@
 
 ///<reference path='SeniMode.ts'/>
 
+
+interface IHashGalleryItems {
+    [key: number] : GalleryItem;
+}
+
+interface GalleryItem {
+    id: number;
+    name: string;
+    script: string;
+};
+
 class State {
     public highResolution: [number, number];
     public populationSize: number;
@@ -27,17 +38,17 @@ class State {
 
     public galleryLoaded: boolean;
     public galleryOldestToDisplay: number;
-    public galleryItems: any;
+    public galleryItems: IHashGalleryItems;
     public galleryDisplaySize: number; // the number of gallery sketches to display everytime 'load more' is clicked
 
-    public previouslySelectedGenotypes: any;
+    public previouslySelectedGenotypes: string[];
     public selectedIndices: Array<number>;
     public scriptId: number | undefined;
     public script: string | undefined;
-    public genotypes: Array<any>;
-    public traits: Array<any>;
+    public genotypes: Array<string>;
+    public traits: Array<string>;
 
-    public genotype: any;
+    public genotype: string;
 
     static createInitialState(): State {
         let s = new this();
@@ -56,12 +67,14 @@ class State {
         s.script = undefined;
         s.genotypes = [];
         s.traits = [];
-        s.genotype = undefined;
+        s.genotype = "";
 
         return s;
     }
 
-    static createStateFromObject(obj: any): State {
+    // note: the State parameter is going to be a plain JS object
+    // so a 'real' State object needs to be constructed
+    static createStateFromObject(obj: State): State {
         let s = new this();
 
         s.highResolution = obj.highResolution;

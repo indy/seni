@@ -18,9 +18,15 @@
 
 ///<reference path='Log.ts'/>
 
+
+
 namespace Timer {
 
-    const db:any = {};
+    interface IHashDBEntry {
+        [key: string] : DbEntry;
+    }
+
+    const db:IHashDBEntry = {};
     const printPrecision = 2;
 
     export class DbEntry {

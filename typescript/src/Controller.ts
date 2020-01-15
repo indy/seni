@@ -50,7 +50,7 @@ class Controller {
         return this.currentState;
     }
 
-    async applySetGenotype(state: State, { genotype }: { genotype: Array<any> }) {
+    async applySetGenotype(state: State, { genotype }: { genotype: string }) {
         const newState = state.clone();
         newState.genotype = genotype;
 
@@ -116,11 +116,14 @@ class Controller {
         return this.currentState;
     }
 
-    async applySetGalleryItems(state: State, { galleryItems }: { galleryItems: any }) {
+    // note: passing in an array of gallery items, which are then stored
+    // in state as a hash with key of id and value of galleryItem
+    //
+    async applySetGalleryItems(state: State, { galleryItems }: { galleryItems: GalleryItem[] }) {
         const newState = state.clone();
 
         newState.galleryItems = {};
-        galleryItems.forEach((item: any) => {
+        galleryItems.forEach((item: GalleryItem) => {
             // Log.log(`setGalleryItems: ${item.id}`);
             newState.galleryItems[item.id] = item;
         });

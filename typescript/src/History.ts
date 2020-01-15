@@ -59,12 +59,12 @@ namespace SeniHistory {
         history.replaceState(state, "", uri);
     }
 
-    export function restoreState(stateObj: any) {
+    export function restoreState(stateObj: object) {
         Log.log('historyRestore');
         // note: the popstate event on window returns a plain js object.
         // this needs to be converted back into a State instance
         //
-        const state = State.createStateFromObject(stateObj);
+        const state = State.createStateFromObject(<State>stateObj);
 
         return state;
     }

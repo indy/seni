@@ -28,4 +28,8 @@ namespace Log {
     export function error(msg: string) {
         console.error(msg);
     }
+
+    export function debug(obj: any) {
+        console.debug(obj);
+    }
 }

@@ -44,14 +44,14 @@ namespace Job {
             let worker = undefined;
             if (worker_id === undefined) {
                 worker = await findAvailableWorker();
-                Log.log(`assigning ${type} to worker ${worker.getId()}`);
+                // Log.log(`assigning ${type} to worker ${worker.getId()}`);
             } else {
                 worker = promiseWorkers[worker_id];
-                Log.log(`explicitly assigning ${type} to worker ${worker.getId()}`);
+                // Log.log(`explicitly assigning ${type} to worker ${worker.getId()}`);
             }
 
             const result = await worker.postMessage(type, data);
-            Log.log(`result ${type} id:${worker.getId()}`);
+            // Log.log(`result ${type} id:${worker.getId()}`);
 
             if(!data.__retain) {
                 worker.release();
