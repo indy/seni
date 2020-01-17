@@ -288,6 +288,12 @@ async function renderEditorScript(state: State) {
 // function that takes a read-only state and updates the UI
 //
 async function updateUI(state: State) {
+    if (state.currentMode === SeniMode.edit) {
+        // clear the buffer so that the previous piece isn't shown whilst the new piece is being rendered
+        gGLRenderer.clearBuffer();
+        await gGLRenderer.copyImageDataTo(gUI.renderImage);
+    }
+
     showCurrentMode(state);
 
     switch (state.currentMode) {

@@ -591,14 +591,20 @@ class GLRenderer2 {
         }
     }
 
+    public clearBuffer() {
+        if (!this.gl) {
+            return;
+        }
+
+        const gl = this.gl;
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        // gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+
     public renderTextureToScreen(meta: any, canvasWidth: number, canvasHeight: number) {
-        if (this.gl === null) {
-            return;
-        }
-        if (this.framebuffer === null) {
-            return;
-        }
-        if (this.blitShader === null) {
+        if (!this.gl || !this.framebuffer || !this.blitShader) {
             return;
         }
 
