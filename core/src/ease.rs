@@ -15,6 +15,8 @@
 
 use crate::keywords::Keyword;
 use crate::mathutil;
+use std::convert::TryFrom;
+use crate::error::Error;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Easing {
@@ -54,43 +56,47 @@ pub enum Easing {
     BounceInOut,
 }
 
-pub fn easing_from_keyword(kw: Keyword) -> Option<Easing> {
-    match kw {
-        Keyword::Linear => Some(Easing::Linear),
-        Keyword::EaseQuick => Some(Easing::Quick),
-        Keyword::EaseSlowIn => Some(Easing::SlowIn),
-        Keyword::EaseSlowInOut => Some(Easing::SlowInOut),
-        Keyword::EaseQuadraticIn => Some(Easing::QuadraticIn),
-        Keyword::EaseQuadraticOut => Some(Easing::QuadraticOut),
-        Keyword::EaseQuadraticInOut => Some(Easing::QuadraticInOut),
-        Keyword::EaseCubicIn => Some(Easing::CubicIn),
-        Keyword::EaseCubicOut => Some(Easing::CubicOut),
-        Keyword::EaseCubicInOut => Some(Easing::CubicInOut),
-        Keyword::EaseQuarticIn => Some(Easing::QuarticIn),
-        Keyword::EaseQuarticOut => Some(Easing::QuarticOut),
-        Keyword::EaseQuarticInOut => Some(Easing::QuarticInOut),
-        Keyword::EaseQuinticIn => Some(Easing::QuinticIn),
-        Keyword::EaseQuinticOut => Some(Easing::QuinticOut),
-        Keyword::EaseQuinticInOut => Some(Easing::QuinticInOut),
-        Keyword::EaseSinIn => Some(Easing::SinIn),
-        Keyword::EaseSinOut => Some(Easing::SinOut),
-        Keyword::EaseSinInOut => Some(Easing::SinInOut),
-        Keyword::EaseCircularIn => Some(Easing::CircularIn),
-        Keyword::EaseCircularOut => Some(Easing::CircularOut),
-        Keyword::EaseCircularInOut => Some(Easing::CircularInOut),
-        Keyword::EaseExponentialIn => Some(Easing::ExponentialIn),
-        Keyword::EaseExponentialOut => Some(Easing::ExponentialOut),
-        Keyword::EaseExponentialInOut => Some(Easing::ExponentialInOut),
-        Keyword::EaseElasticIn => Some(Easing::ElasticIn),
-        Keyword::EaseElasticOut => Some(Easing::ElasticOut),
-        Keyword::EaseElasticInOut => Some(Easing::ElasticInOut),
-        Keyword::EaseBackIn => Some(Easing::BackIn),
-        Keyword::EaseBackOut => Some(Easing::BackOut),
-        Keyword::EaseBackInOut => Some(Easing::BackInOut),
-        Keyword::EaseBounceIn => Some(Easing::BounceIn),
-        Keyword::EaseBounceOut => Some(Easing::BounceOut),
-        Keyword::EaseBounceInOut => Some(Easing::BounceInOut),
-        _ => None,
+impl TryFrom<Keyword> for Easing {
+    type Error = Error;
+
+    fn try_from(kw: Keyword) -> Result<Self, Self::Error> {
+        match kw {
+            Keyword::Linear => Ok(Easing::Linear),
+            Keyword::EaseQuick => Ok(Easing::Quick),
+            Keyword::EaseSlowIn => Ok(Easing::SlowIn),
+            Keyword::EaseSlowInOut => Ok(Easing::SlowInOut),
+            Keyword::EaseQuadraticIn => Ok(Easing::QuadraticIn),
+            Keyword::EaseQuadraticOut => Ok(Easing::QuadraticOut),
+            Keyword::EaseQuadraticInOut => Ok(Easing::QuadraticInOut),
+            Keyword::EaseCubicIn => Ok(Easing::CubicIn),
+            Keyword::EaseCubicOut => Ok(Easing::CubicOut),
+            Keyword::EaseCubicInOut => Ok(Easing::CubicInOut),
+            Keyword::EaseQuarticIn => Ok(Easing::QuarticIn),
+            Keyword::EaseQuarticOut => Ok(Easing::QuarticOut),
+            Keyword::EaseQuarticInOut => Ok(Easing::QuarticInOut),
+            Keyword::EaseQuinticIn => Ok(Easing::QuinticIn),
+            Keyword::EaseQuinticOut => Ok(Easing::QuinticOut),
+            Keyword::EaseQuinticInOut => Ok(Easing::QuinticInOut),
+            Keyword::EaseSinIn => Ok(Easing::SinIn),
+            Keyword::EaseSinOut => Ok(Easing::SinOut),
+            Keyword::EaseSinInOut => Ok(Easing::SinInOut),
+            Keyword::EaseCircularIn => Ok(Easing::CircularIn),
+            Keyword::EaseCircularOut => Ok(Easing::CircularOut),
+            Keyword::EaseCircularInOut => Ok(Easing::CircularInOut),
+            Keyword::EaseExponentialIn => Ok(Easing::ExponentialIn),
+            Keyword::EaseExponentialOut => Ok(Easing::ExponentialOut),
+            Keyword::EaseExponentialInOut => Ok(Easing::ExponentialInOut),
+            Keyword::EaseElasticIn => Ok(Easing::ElasticIn),
+            Keyword::EaseElasticOut => Ok(Easing::ElasticOut),
+            Keyword::EaseElasticInOut => Ok(Easing::ElasticInOut),
+            Keyword::EaseBackIn => Ok(Easing::BackIn),
+            Keyword::EaseBackOut => Ok(Easing::BackOut),
+            Keyword::EaseBackInOut => Ok(Easing::BackInOut),
+            Keyword::EaseBounceIn => Ok(Easing::BounceIn),
+            Keyword::EaseBounceOut => Ok(Easing::BounceOut),
+            Keyword::EaseBounceInOut => Ok(Easing::BounceInOut),
+            _ => Err(Error::Ease),
+        }
     }
 }
 

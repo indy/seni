@@ -256,9 +256,9 @@ impl Colour {
         if self.format == format {
             Ok(*self)
         } else {
-            let col: ConvertibleColour = self.into();
-            let new_col = col.clone_as(format)?;
-            new_col.try_into()
+            let convertible_col: ConvertibleColour = self.into();
+            let right_format = convertible_col.clone_as(format)?;
+            right_format.try_into()
         }
     }
 
