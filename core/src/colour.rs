@@ -30,7 +30,7 @@ use crate::packable::{Mule, Packable};
 use log::error;
 use std;
 use std::fmt;
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 
 const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
 const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);
@@ -256,49 +256,49 @@ impl Colour {
         if self.format == format {
             Ok(*self)
         } else {
-            let col: ConvertibleColour = self.into();
-            let new_col = col.clone_as(format)?;
-            new_col.try_into()
+            let convertible_col: ConvertibleColour = self.into();
+            colour(convertible_col.clone_as(format))
         }
     }
 
     pub fn complementary(&self) -> Result<Colour> {
-        ConvertibleColour::from(self).complementary()?.try_into()
+        colour(ConvertibleColour::from(self).complementary())
     }
 
     pub fn split_complementary(&self) -> Result<(Colour, Colour)> {
-        let (c1, c2) = ConvertibleColour::from(self).split_complementary()?;
-
-        Ok((c1.try_into()?, c2.try_into()?))
+        colour_pair(ConvertibleColour::from(self).split_complementary())
     }
 
     pub fn analagous(&self) -> Result<(Colour, Colour)> {
-        let (c1, c2) = ConvertibleColour::from(self).analagous()?;
-
-        Ok((c1.try_into()?, c2.try_into()?))
+        colour_pair(ConvertibleColour::from(self).analagous())
     }
 
     pub fn triad(&self) -> Result<(Colour, Colour)> {
-        let (c1, c2) = ConvertibleColour::from(self).triad()?;
-
-        Ok((c1.try_into()?, c2.try_into()?))
+        colour_pair(ConvertibleColour::from(self).triad())
     }
 
     pub fn darken(&self, value: f32) -> Result<Colour> {
-        let lab = ConvertibleColour::from(self).clone_as(ColourFormat::Lab)?;
+        let mut c = colour(ConvertibleColour::from(self).clone_as(ColourFormat::Lab))?;
 
-        let mut c: Colour = lab.try_into()?;
         c.e0 = mathutil::clamp(c.e0 - value, 0.0, 100.0);
         Ok(c)
     }
 
     pub fn lighten(&self, value: f32) -> Result<Colour> {
-        let lab = ConvertibleColour::from(self).clone_as(ColourFormat::Lab)?;
+        let mut c = colour(ConvertibleColour::from(self).clone_as(ColourFormat::Lab))?;
 
-        let mut c: Colour = lab.try_into()?;
         c.e0 = mathutil::clamp(c.e0 + value, 0.0, 100.0);
         Ok(c)
     }
+}
+
+fn colour(colour: Result<ConvertibleColour>) -> Result<Colour> {
+    Colour::try_from(colour?)
+}
+
+fn colour_pair(colours: Result<(ConvertibleColour, ConvertibleColour)>) -> Result<(Colour, Colour)> {
+    let (c1, c2) = colours?;
+    Ok((Colour::try_from(c1)?, Colour::try_from(c2)?))
 }
 
 impl Default for Colour {

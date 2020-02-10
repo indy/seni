@@ -17,7 +17,7 @@ use crate::bitmap;
 use crate::colour::{Colour, ColourFormat, ColourPreset, ProcColourStateStruct, ProcColourType};
 use crate::constants;
 use crate::context::Context;
-use crate::ease::easing_from_keyword;
+use crate::ease::Easing;
 use crate::error::{Error, Result};
 use crate::focal;
 use crate::iname::Iname;
@@ -36,6 +36,7 @@ use log::error;
 use std::cell::{RefCell, RefMut};
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::convert::TryFrom;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
@@ -1176,31 +1177,27 @@ fn quadratic_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> 
         return Err(Error::Native);
     };
 
-    let brush_type = read_brush(brush);
+    let mapping = Easing::try_from(line_width_mapping)?;
 
-    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-        if is_arg_given(default_mask, 1) {
-            // given a line width value
-            line_width_start = line_width;
-            line_width_end = line_width;
-        }
-
-        context.render_quadratic(
-            &[x0, y0, x1, y1, x2, y2],
-            line_width_start,
-            line_width_end,
-            mapping,
-            t_start,
-            t_end,
-            &col,
-            tessellation,
-            brush_type,
-            brush_subtype,
-        )?;
-    } else {
-        error!("quadratic: invalid mapping");
-        return Err(Error::Native);
+    if is_arg_given(default_mask, 1) {
+        // given a line width value
+        line_width_start = line_width;
+        line_width_end = line_width;
     }
+
+    let brush_type = read_brush(brush);
+    context.render_quadratic(
+        &[x0, y0, x1, y1, x2, y2],
+        line_width_start,
+        line_width_end,
+        mapping,
+        t_start,
+        t_end,
+        &col,
+        tessellation,
+        brush_type,
+        brush_subtype,
+    )?;
 
     Ok(None)
 }
@@ -1246,56 +1243,52 @@ fn bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<Var>> {
         return Err(Error::Native);
     }
 
+    let mapping = Easing::try_from(line_width_mapping)?;
     let brush_type = read_brush(brush);
 
-    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-            (x, y)
-        } else {
-            error!("coords 0 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-            (x, y)
-        } else {
-            error!("coords 1 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-            (x, y)
-        } else {
-            error!("coords 2 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-            (x, y)
-        } else {
-            error!("coords 3 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-
-        if is_arg_given(default_mask, 1) {
-            // given a line width value
-            line_width_start = line_width;
-            line_width_end = line_width;
-        }
-
-        context.render_bezier(
-            &[x0, y0, x1, y1, x2, y2, x3, y3],
-            line_width_start,
-            line_width_end,
-            mapping,
-            t_start,
-            t_end,
-            &col,
-            tessellation,
-            brush_type,
-            brush_subtype,
-        )?;
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
     } else {
-        error!("bezier: invalid mapping");
+        error!("coords 0 should be a Vec::V2D");
         return Err(Error::Native);
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+
+    if is_arg_given(default_mask, 1) {
+        // given a line width value
+        line_width_start = line_width;
+        line_width_end = line_width;
     }
+
+    context.render_bezier(
+        &[x0, y0, x1, y1, x2, y2, x3, y3],
+        line_width_start,
+        line_width_end,
+        mapping,
+        t_start,
+        t_end,
+        &col,
+        tessellation,
+        brush_type,
+        brush_subtype,
+    )?;
 
     Ok(None)
 }
@@ -1419,52 +1412,48 @@ fn stroked_bezier_execute(vm: &mut Vm, context: &mut Context) -> Result<Option<V
         return Err(Error::Native);
     }
 
+    let mapping = Easing::try_from(line_width_mapping)?;
     let brush_type = read_brush(brush);
 
-    if let Some(mapping) = easing_from_keyword(line_width_mapping) {
-        let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
-            (x, y)
-        } else {
-            error!("coords 0 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
-            (x, y)
-        } else {
-            error!("coords 1 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
-            (x, y)
-        } else {
-            error!("coords 2 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-        let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
-            (x, y)
-        } else {
-            error!("coords 3 should be a Vec::V2D");
-            return Err(Error::Native);
-        };
-
-        context.render_stroked_bezier(
-            tessellation,
-            &[x0, y0, x1, y1, x2, y2, x3, y3],
-            stroke_tessellation,
-            stroke_noise,
-            stroke_line_width_start,
-            stroke_line_width_end,
-            &col,
-            col_volatility,
-            seed,
-            mapping,
-            brush_type,
-            brush_subtype,
-        )?
+    let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
+        (x, y)
     } else {
-        error!("stroked bezier: invalid mapping");
+        error!("coords 0 should be a Vec::V2D");
         return Err(Error::Native);
-    }
+    };
+    let (x1, y1) = if let Var::V2D(x, y) = coords[1] {
+        (x, y)
+    } else {
+        error!("coords 1 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x2, y2) = if let Var::V2D(x, y) = coords[2] {
+        (x, y)
+    } else {
+        error!("coords 2 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+    let (x3, y3) = if let Var::V2D(x, y) = coords[3] {
+        (x, y)
+    } else {
+        error!("coords 3 should be a Vec::V2D");
+        return Err(Error::Native);
+    };
+
+    context.render_stroked_bezier(
+        tessellation,
+        &[x0, y0, x1, y1, x2, y2, x3, y3],
+        stroke_tessellation,
+        stroke_noise,
+        stroke_line_width_start,
+        stroke_line_width_end,
+        &col,
+        col_volatility,
+        seed,
+        mapping,
+        brush_type,
+        brush_subtype,
+    )?;
 
     Ok(None)
 }
@@ -2309,25 +2298,22 @@ fn interp_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
 
     let clamping = clamping == Keyword::True;
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
-        let from_c = mathutil::mc_c(from.0, 0.0, from_m);
-        let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
-        let to_c = mathutil::mc_c(0.0, to.0, to_m);
+    let mapping = Easing::try_from(mapping)?;
 
-        Ok(Some(Var::InterpState(interp::InterpStateStruct {
-            from_m,
-            to_m,
-            from_c,
-            to_c,
-            to,
-            clamping,
-            mapping,
-        })))
-    } else {
-        error!("interp_build_execute");
-        Err(Error::Native)
-    }
+    let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
+    let from_c = mathutil::mc_c(from.0, 0.0, from_m);
+    let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
+    let to_c = mathutil::mc_c(0.0, to.0, to_m);
+
+    Ok(Some(Var::InterpState(interp::InterpStateStruct {
+        from_m,
+        to_m,
+        from_c,
+        to_c,
+        to,
+        clamping,
+        mapping,
+    })))
 }
 
 fn interp_value_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -2558,16 +2544,11 @@ fn interp_line_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let t: f32 = vm.stack_peek(5)?;
 
     let clamping = clamping == Keyword::True;
+    let mapping = Easing::try_from(mapping)?;
+    let x = interp::scalar(from.0, to.0, mapping, clamping, t);
+    let y = interp::scalar(from.1, to.1, mapping, clamping, t);
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        let x = interp::scalar(from.0, to.0, mapping, clamping, t);
-        let y = interp::scalar(from.1, to.1, mapping, clamping, t);
-
-        Ok(Some(Var::V2D(x, y)))
-    } else {
-        error!("interp_line_execute");
-        Err(Error::Native)
-    }
+    Ok(Some(Var::V2D(x, y)))
 }
 
 fn interp_circle_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
@@ -2628,24 +2609,24 @@ fn path_linear_execute(
     let t_start: f32 = vm.stack_peek(4)?;
     let t_end: f32 = vm.stack_peek(5)?;
     let fun: i32 = vm.stack_peek(6)?;
-    let mapping: Keyword = vm.stack_peek(7)?;
+    let mapping_kw: Keyword = vm.stack_peek(7)?;
+    let mapping = Easing::try_from(mapping_kw)?;
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        path::linear(
-            vm,
-            context,
-            program,
-            fun as usize,
-            steps as i32,
-            t_start,
-            t_end,
-            from.0,
-            from.1,
-            to.0,
-            to.1,
-            mapping,
-        )?;
-    }
+    path::linear(
+        vm,
+        context,
+        program,
+        fun as usize,
+        steps as i32,
+        t_start,
+        t_end,
+        from.0,
+        from.1,
+        to.0,
+        to.1,
+        mapping,
+    )?;
+
 
     Ok(None)
 }
@@ -2685,23 +2666,23 @@ fn path_circle_execute(
     let t_start: f32 = vm.stack_peek(4)?;
     let t_end: f32 = vm.stack_peek(5)?;
     let fun: i32 = vm.stack_peek(6)?;
-    let mapping: Keyword = vm.stack_peek(7)?;
+    let mapping_kw: Keyword = vm.stack_peek(7)?;
+    let mapping = Easing::try_from(mapping_kw)?;
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        path::circular(
-            vm,
-            context,
-            program,
-            fun as usize,
-            steps as i32,
-            t_start,
-            t_end,
-            position.0,
-            position.1,
-            radius,
-            mapping,
-        )?;
-    }
+    path::circular(
+        vm,
+        context,
+        program,
+        fun as usize,
+        steps as i32,
+        t_start,
+        t_end,
+        position.0,
+        position.1,
+        radius,
+        mapping,
+    )?;
+
 
     Ok(None)
 }
@@ -2743,7 +2724,8 @@ fn path_spline_execute(
     let t_start: f32 = vm.stack_peek(3)?;
     let t_end: f32 = vm.stack_peek(4)?;
     let fun: i32 = vm.stack_peek(5)?;
-    let mapping: Keyword = vm.stack_peek(6)?;
+    let mapping_kw: Keyword = vm.stack_peek(6)?;
+    let mapping = Easing::try_from(mapping_kw)?;
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2764,19 +2746,17 @@ fn path_spline_execute(
         return Err(Error::Native);
     };
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        path::spline(
-            vm,
-            context,
-            program,
-            fun as usize,
-            steps as i32,
-            t_start,
-            t_end,
-            [x0, y0, x1, y1, x2, y2],
-            mapping,
-        )?;
-    }
+    path::spline(
+        vm,
+        context,
+        program,
+        fun as usize,
+        steps as i32,
+        t_start,
+        t_end,
+        [x0, y0, x1, y1, x2, y2],
+        mapping,
+    )?;
 
     Ok(None)
 }
@@ -2818,7 +2798,9 @@ fn path_bezier_execute(
     let t_start: f32 = vm.stack_peek(3)?;
     let t_end: f32 = vm.stack_peek(4)?;
     let fun: i32 = vm.stack_peek(5)?;
-    let mapping: Keyword = vm.stack_peek(6)?;
+    let mapping_kw: Keyword = vm.stack_peek(6)?;
+    let mapping = Easing::try_from(mapping_kw)?;
+
 
     let (x0, y0) = if let Var::V2D(x, y) = coords[0] {
         (x, y)
@@ -2845,19 +2827,17 @@ fn path_bezier_execute(
         return Err(Error::Native);
     };
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        path::bezier(
-            vm,
-            context,
-            program,
-            fun as usize,
-            steps as i32,
-            t_start,
-            t_end,
-            [x0, y0, x1, y1, x2, y2, x3, y3],
-            mapping,
-        )?;
-    }
+    path::bezier(
+        vm,
+        context,
+        program,
+        fun as usize,
+        steps as i32,
+        t_start,
+        t_end,
+        [x0, y0, x1, y1, x2, y2, x3, y3],
+        mapping,
+    )?;
 
     Ok(None)
 }
@@ -3053,25 +3033,21 @@ fn focal_build_generic_parameter_info() -> Result<(Vec<(Keyword, Var)>, i32)> {
 }
 
 fn focal_build_generic_execute(vm: &mut Vm, focal_type: focal::FocalType) -> Result<Option<Var>> {
-    let mapping: Keyword = vm.stack_peek(1)?;
+    let mapping_kw: Keyword = vm.stack_peek(1)?;
     let position: (f32, f32) = vm.stack_peek(2)?;
     let distance: f32 = vm.stack_peek(3)?;
     let transform_pos: Keyword = vm.stack_peek(4)?;
 
     let transform_pos = transform_pos == Keyword::True;
+    let mapping = Easing::try_from(mapping_kw)?;
 
-    if let Some(mapping) = easing_from_keyword(mapping) {
-        Ok(Some(Var::FocalState(focal::FocalStateStruct {
-            focal_type,
-            mapping,
-            position,
-            distance,
-            transform_pos,
-        })))
-    } else {
-        error!("focal_build_generic _execute");
-        Err(Error::Native)
-    }
+    Ok(Some(Var::FocalState(focal::FocalStateStruct {
+        focal_type,
+        mapping,
+        position,
+        distance,
+        transform_pos,
+    })))
 }
 
 fn focal_build_point_execute(vm: &mut Vm) -> Result<Option<Var>> {

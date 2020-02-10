@@ -6,6 +6,6 @@ license = "AGPL-3.0"
 edition = "2018"
 
 [dependencies]
-strum = "0.13.0"
-strum_macros = "0.13.0"
-log = "0.4"
+strum = "0.17.1"
+strum_macros = "0.17.1"
+log = "0.4.8"
