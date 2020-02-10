@@ -13,11 +13,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use std::collections::HashSet;
-use crate::parser::{Node, WordLut};
 use crate::error::Result;
 use crate::iname::Iname;
 use crate::keywords::Keyword;
+use crate::parser::{Node, WordLut};
+use std::collections::HashSet;
 
 pub fn check(ast: &[Node], _word_lut: &WordLut) -> Result<()> {
     let global_defines = find_global_defines(ast)?;
@@ -36,7 +36,7 @@ fn find_global_defines(ast: &[Node]) -> Result<HashSet<Iname>> {
                 if children.len() > 0 && children[0].is_name_with_iname(iname_define) {
                     add_global_decls(&mut global_defines, &children[1..]);
                 }
-            },
+            }
             _ => {}
         }
     }
@@ -52,12 +52,9 @@ fn add_global_decls(global_defines: &mut HashSet<Iname>, nodes: &[&Node]) {
         match &ns[0] {
             Node::Name(_, iname, _) => {
                 global_defines.insert(*iname);
-            },
-            Node::Vector(all_children, _) => {
-                add_global_vector_decls(global_defines, all_children)
-            },
-            _ => {
             }
+            Node::Vector(all_children, _) => add_global_vector_decls(global_defines, all_children),
+            _ => {}
         };
 
         ns = &ns[2..];
@@ -69,10 +66,8 @@ fn add_global_vector_decls(global_defines: &mut HashSet<Iname>, nodes: &[Node]) 
         match child {
             Node::Name(_, iname, _) => {
                 global_defines.insert(*iname);
-            },
-            Node::Vector(all_children, _) => {
-                add_global_vector_decls(global_defines, all_children)
             }
+            Node::Vector(all_children, _) => add_global_vector_decls(global_defines, all_children),
             _ => {}
         }
     }
@@ -88,26 +83,26 @@ pub mod tests {
     use crate::parser::parse;
 
     /*
-(define e 45)
-(define [a b c d] [...])
+    (define e 45)
+    (define [a b c d] [...])
 
---------------------------------------------------------------------------------
-(+ 4 xxx)            <---- error: xxx not defined
---------------------------------------------------------------------------------
-(+ 4 z)              <---- error: z not defined
---------------------------------------------------------------------------------
-(fn (foo bar: 3)
-    (+ q bar))       <---- error: q
---------------------------------------------------------------------------------
-(fn (foo bar: 3)
-    (define z 334)
-    (+ z bar))
+    --------------------------------------------------------------------------------
+    (+ 4 xxx)            <---- error: xxx not defined
+    --------------------------------------------------------------------------------
+    (+ 4 z)              <---- error: z not defined
+    --------------------------------------------------------------------------------
+    (fn (foo bar: 3)
+        (+ q bar))       <---- error: q
+    --------------------------------------------------------------------------------
+    (fn (foo bar: 3)
+        (define z 334)
+        (+ z bar))
 
-(+ z z)              <--- error: z not in scope
---------------------------------------------------------------------------------
-(fn (foo bar: 3)
-    (+ foo bar))     <---- error: foo is not a variable
-*/
+    (+ z z)              <--- error: z not in scope
+    --------------------------------------------------------------------------------
+    (fn (foo bar: 3)
+        (+ foo bar))     <---- error: foo is not a variable
+    */
 
     fn checks_ok(s: &str) {
         let (ast, word_lut) = parse(s).unwrap();
@@ -153,5 +148,4 @@ pub mod tests {
             assert_eq!(global_defines.len(), 5);
         }
     }
-
 }

@@ -33,8 +33,8 @@ use std::fmt;
 const NONSENSE: i32 = 666;
 
 pub fn compile_preamble() -> Result<Program> {
-    let mut c = Compilation::new();
-    let compiler = Compiler::new();
+    let mut c: Compilation = Default::default();
+    let compiler: Compiler = Default::default();
 
     compiler.register_top_level_preamble(&mut c)?;
     compiler.compile_preamble(&mut c)?;
@@ -47,8 +47,8 @@ pub fn compile_preamble() -> Result<Program> {
 }
 
 pub fn compile_program(ast: &[Node], word_lut: &WordLut) -> Result<Program> {
-    let mut c = Compilation::new();
-    let compiler = Compiler::new();
+    let mut c: Compilation = Default::default();
+    let compiler: Compiler = Default::default();
 
     compiler.compile_common(&mut c, &ast)?;
 
@@ -63,8 +63,8 @@ pub fn compile_program(ast: &[Node], word_lut: &WordLut) -> Result<Program> {
 }
 
 pub fn compile_program_1(ast_node: &Node, word_lut: &WordLut) -> Result<Program> {
-    let mut c = Compilation::new();
-    let compiler = Compiler::new();
+    let mut c: Compilation = Default::default();
+    let compiler: Compiler = Default::default();
 
     compiler.compile_common_1(&mut c, &ast_node)?;
 
@@ -83,8 +83,8 @@ pub fn compile_program_for_trait(
     word_lut: &WordLut,
     global_mapping: &BTreeMap<Iname, usize>,
 ) -> Result<Program> {
-    let mut c = Compilation::new();
-    let compiler = Compiler::new();
+    let mut c: Compilation = Default::default();
+    let compiler: Compiler = Default::default();
 
     let ast = only_semantic_nodes(ast);
 
@@ -113,8 +113,8 @@ pub fn compile_program_with_genotype(
     word_lut: &WordLut,
     genotype: &mut Genotype,
 ) -> Result<Program> {
-    let mut c = Compilation::new();
-    let mut compiler = Compiler::new();
+    let mut c: Compilation = Default::default();
+    let mut compiler: Compiler = Default::default();
 
     compiler.use_genes = true;
     assign_genotype_to_ast(ast, genotype)?;
@@ -250,8 +250,8 @@ impl fmt::Display for Compilation {
     }
 }
 
-impl Compilation {
-    pub fn new() -> Self {
+impl Default for Compilation {
+    fn default() -> Self {
         Compilation {
             code: Vec::new(),
 
@@ -269,7 +269,9 @@ impl Compilation {
             user_defined_globals: BTreeMap::new(),
         }
     }
+}
 
+impl Compilation {
     fn clear_global_mappings(&mut self) -> Result<()> {
         self.global_mappings.clear();
         self.global_mapping_marker = 0;
@@ -633,15 +635,17 @@ pub struct Compiler {
     use_genes: bool,
 }
 
-impl Compiler {
-    pub fn new() -> Self {
+impl Default for Compiler {
+    fn default() -> Self {
         Compiler {
             name_to_keyword: name_to_keyword_hash(),
             name_to_native: name_to_native_hash(),
             use_genes: false,
         }
     }
+}
 
+impl Compiler {
     fn correct_function_addresses(&self, c: &mut Compilation) -> Result<()> {
         let mut all_fixes: Vec<(usize, Opcode, Mem, i32)> = Vec::new(); // tuple of index, op, arg0, ???
         let mut arg1_fixes: Vec<(usize, i32)> = Vec::new(); // tuple of index,value pairs

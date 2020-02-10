@@ -136,8 +136,8 @@ pub struct TraitList {
     pub global_mapping: BTreeMap<Iname, usize>,
 }
 
-impl TraitList {
-    fn new() -> Self {
+impl Default for TraitList {
+    fn default() -> Self {
         TraitList {
             traits: Vec::new(),
             // todo: when is the seed_value set properly?
@@ -145,16 +145,18 @@ impl TraitList {
             global_mapping: BTreeMap::new(),
         }
     }
+}
 
+impl TraitList {
     pub fn get_trait(&self, idx: usize) -> &Trait {
         &self.traits[idx]
     }
 
     pub fn compile(ast: &[Node], word_lut: &WordLut) -> Result<Self> {
         // this top-level compilation is only to get the user defined global mappings
-        let mut trait_list = TraitList::new();
-        let mut compilation = Compilation::new();
-        let compiler = Compiler::new();
+        let mut trait_list: TraitList = Default::default();
+        let mut compilation: Compilation = Default::default();
+        let compiler: Compiler = Default::default();
 
         compiler.compile_common(&mut compilation, &ast)?;
         trait_list.global_mapping = compilation.get_user_defined_globals();
@@ -290,7 +292,7 @@ impl Packable for TraitList {
     }
 
     fn unpack(cursor: &str) -> Result<(Self, &str)> {
-        let mut trait_list = TraitList::new();
+        let mut trait_list: TraitList = Default::default();
 
         let (seed_value, rem) = Mule::unpack_i32_sp(cursor)?;
         trait_list.set_seed_during_unpack(seed_value);
