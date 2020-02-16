@@ -1,68 +1,124 @@
-// Copyright (C) 2020 Inderjit Gill <email@indy.io>
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
+use crate::server::{self, Response, StatusCode};
 use std::error;
 use std::fmt;
-use std::io::Error as IoError;
 
 pub type Result<T> = ::std::result::Result<T, Error>;
+
 #[derive(Debug)]
 pub enum Error {
-    Io(IoError),
-    Serde(serde_json::error::Error),
-    Request,
-    ParseIntError(std::num::ParseIntError),
+    IO(std::io::Error),
+    Var(std::env::VarError),
+    Sqlx(sqlx::Error),
+    Argon2(argon2::Error),
+    Serde(serde_json::Error),
+    Tide(tide::Error),
+    Base64Decode(base64::DecodeError),
+    BlockMode(block_modes::BlockModeError),
+    KeyLength(block_modes::InvalidKeyIvLength),
+    Utf8(std::str::Utf8Error),
+    ParseInt(std::num::ParseIntError),
+    Http(server::StatusCode),
+    Authenticating,
+    Other,
 }
-impl error::Error for Error {}
 
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::Io(_) => write!(f, "IO error"),
-            Error::Serde(_) => write!(f, "serde error"),
-            Error::Request => write!(f, "request error"),
-            Error::ParseIntError(_) => write!(f, "ParseIntError"),
-        }
+impl From<Error> for Response {
+    fn from(e: Error) -> Response {
+        let status_code = match e {
+            Error::Authenticating => StatusCode::UNAUTHORIZED,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+
+        server::Response::new(status_code.as_u16())
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Error {
+        Error::IO(e)
+    }
+}
+
+impl From<std::env::VarError> for Error {
+    fn from(e: std::env::VarError) -> Error {
+        Error::Var(e)
+    }
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(e: sqlx::Error) -> Error {
+        Error::Sqlx(e)
+    }
+}
+
+impl From<argon2::Error> for Error {
+    fn from(e: argon2::Error) -> Error {
+        Error::Argon2(e)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(e: serde_json::Error) -> Error {
+        Error::Serde(e)
+    }
+}
+
+impl From<tide::Error> for Error {
+    fn from(e: tide::Error) -> Error {
+        Error::Tide(e)
+    }
+}
+
+impl From<base64::DecodeError> for Error {
+    fn from(e: base64::DecodeError) -> Error {
+        Error::Base64Decode(e)
+    }
+}
+
+impl From<block_modes::BlockModeError> for Error {
+    fn from(e: block_modes::BlockModeError) -> Error {
+        Error::BlockMode(e)
+    }
+}
+
+impl From<block_modes::InvalidKeyIvLength> for Error {
+    fn from(e: block_modes::InvalidKeyIvLength) -> Error {
+        Error::KeyLength(e)
+    }
+}
+
+impl From<std::str::Utf8Error> for Error {
+    fn from(e: std::str::Utf8Error) -> Error {
+        Error::Utf8(e)
     }
 }
 
 impl From<std::num::ParseIntError> for Error {
     fn from(e: std::num::ParseIntError) -> Error {
-        Error::ParseIntError(e)
+        Error::ParseInt(e)
     }
 }
 
-impl From<IoError> for Error {
-    fn from(e: IoError) -> Error {
-        Error::Io(e)
-    }
-}
+// don't need to implement any of the trait's methods
+impl error::Error for Error {}
 
-impl From<serde_json::error::Error> for Error {
-    fn from(e: serde_json::error::Error) -> Error {
-        Error::Serde(e)
-    }
-}
-
-impl ResponseError for Error {
-    // builds the actual response to send back when an error occurs
-    fn render_response(&self) -> HttpResponse {
-        HttpResponse::build(StatusCode::NOT_FOUND)
-            .content_type("text/html; charset=utf-8")
-            .body("error")
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::IO(_) => write!(f, "tidal: IO Error"),
+            Error::Var(_) => write!(f, "tidal: Var Error"),
+            Error::Sqlx(_) => write!(f, "tidal: Sqlx Error"),
+            Error::Argon2(_) => write!(f, "tidal: Argon2 Error"),
+            Error::Serde(_) => write!(f, "tidal: Serde Error"),
+            Error::Tide(_) => write!(f, "tidal: Tide Error"),
+            Error::Base64Decode(_) => write!(f, "tidal: Base64Decode Error"),
+            Error::BlockMode(_) => write!(f, "tidal: BlockMode Error"),
+            Error::KeyLength(_) => write!(f, "tidal: KeyLength Error"),
+            Error::Utf8(_) => write!(f, "tidal: Utf8Error Error"),
+            Error::ParseInt(_) => write!(f, "tidal: ParseInt Error"),
+            Error::Http(code) => write!(f, "tidal: status code {}", code),
+            Error::Authenticating => write!(f, "tidal: authenticating"),
+            Error::Other => write!(f, "tidal: some other error"),
+        }
     }
 }

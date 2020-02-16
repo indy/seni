@@ -3,21 +3,33 @@ name = "server"
 version = "0.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 edition = "2018"
-license = "AGPL-3.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-log = "0.4"
-env_logger = "0.6"
-dotenv = "0.14.1"
+async-std = { version = "1.4.0", features = [ "attributes" ] }
+cookie = { version="0.12.0", features = ["percent-encode"]}
+crossbeam-channel = "0.4"
+dotenv = "0.15.0"
+futures = "0.3"
+http = "0.1"
+httpdate = "0.3"
+mime = "0.3"
+mime_guess = "2.0.1"
+percent-encoding = "2.1"
+tide = { git = "https://github.com/indy/tide", branch = "unencoded-cookies" }
+# uuid = { version = "0.8", features = ["v4", "serde"] }
 
-# webserver
-actix-rt = "0.2.2"
-actix-web = "1.0.0"
-actix-files = "0.1.1"
+# for aes encryption of cookie values
+aes-soft = "0.3.3"
+block-modes = "0.3.3"
 
-# json
-serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
+# for encoding encrypted bytes in textual format
+base64 = "0.11.0"
+
+# for sqlx integration
+rand = "0.7.2"
+rust-argon2 = "0.6.1"
+sqlx = { version = "0.2.5", features = [ "postgres" ] }
+
+# needed to handle errors from tide body_json
+serde = { version = "1.0.104", features = [ "derive" ] }
+serde_json = "1.0.47"
