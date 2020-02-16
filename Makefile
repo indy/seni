@@ -13,9 +13,18 @@ all: css wasm index
 #
 # todo: also add sketch to all
 
+# Make doesn't come with a recursive wildcard function so we have to use this
+# complicated thing which was copy/pasted from StackOverflow.
+# Fucking hell, why isn't there a built-in function to recursively traverse
+# a directory and select files that match a wildcard?
+#
+# https://stackoverflow.com/questions/2483182/recursive-wildcards-in-gnu-make/18258352#18258352
+#
+rwildcard=$(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+
 CSS_SRC=$(wildcard stylesheets/scss/*.scss)
 CLIENT_RUST_SRC=$(wildcard client/src/*.rs)
-CORE_RUST_SRC=$(wildcard core/src/*.rs) $(wildcard core/src/geometry/*.rs)
+CORE_RUST_SRC=$(call rwildcard, core/src, *.rs)
 TYPESCRIPT_SRC=$(wildcard typescript/src/*)
 
 release: css wasm-release index
