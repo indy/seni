@@ -105,21 +105,34 @@ fn create_poor_mans_db(seni_path: &str, db_filename: &str) -> Result<PoorMansDb>
 }
 
 pub async fn start() -> Result<()> {
-    let default_address = env::var("ADDRESS").unwrap_or(String::from("localhost:8000"));
-    let www_path_root = env::var("WWW_PATH").unwrap_or(String::from("./www"));
+    let app_name = env::var("APP_NAME")?;
+    let address = env::var("ADDRESS").unwrap_or(String::from("localhost:8000"));
+    let www_path = env::var("WWW_PATH").unwrap_or(String::from("./www"));
+    // let database_url = env::var("DATABASE_URL")?;
+    let cookie_key = env::var("COOKIE_KEY")?;
+    let cookie_iv = env::var("COOKIE_IV")?;
+    let cookie_secure_str = env::var("COOKIE_SECURE")?;
+    let session_path = env::var("SESSION_PATH")?;
+
+
+
     let seni_path = env::var("SENI_PATH").expect("SENI_PATH");
+
+    dbg!(&app_name);
+    dbg!(&seni_path);
+
     let poor_db = create_poor_mans_db(&seni_path, "db.txt")?;
 
-    // let database_url = env::var("DATABASE_URL")?;
-    // let cookie_key = env::var("COOKIE_KEY")?;
-    // let cookie_iv = env::var("COOKIE_IV")?;
-
     let server_state = ServerState {
-        static_file: StaticFile::new(www_path_root),
+        app_name,
+        address: String::from(&address),
+        cookie_key,
+        cookie_iv,
+        cookie_secure: cookie_secure_str.to_lowercase() == "true",
+        session_path,
+
+        static_file: StaticFile::new(www_path),
         poor_db,
-        // pool: PgPool::new(&database_url).await?,
-        // cookie_key,
-        // cookie_iv,
     };
 
     let mut app = Server::with_state(server_state);
@@ -142,9 +155,9 @@ pub async fn start() -> Result<()> {
     app.at("/").get(fetch_file);
     app.at("/*").get(fetch_file);
 
-    println!("starting server at {}", &default_address);
+    println!("starting server at {}", &address);
 
-    app.listen(default_address).await.expect("serving");
+    app.listen(address).await.expect("serving");
 
     Ok(())
 }

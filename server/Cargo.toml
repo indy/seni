@@ -16,7 +16,7 @@ mime = "0.3"
 mime_guess = "2.0.1"
 percent-encoding = "2.1"
 tide = { git = "https://github.com/indy/tide", branch = "unencoded-cookies" }
-# uuid = { version = "0.8", features = ["v4", "serde"] }
+uuid = { version = "0.8", features = ["v4", "serde"] }
 
 # for aes encryption of cookie values
 aes-soft = "0.3.3"

@@ -1,4 +1,5 @@
 use crate::auth_cookie;
+use crate::auth_session;
 use crate::error::{Error, Result};
 use crate::models::{User, UserResponseBody};
 use crate::server::{ok_json, Request, Response, ServerState, StatusCode};
@@ -38,8 +39,14 @@ WHERE email = $1
         return Err(Error::Authenticating);
     }
 
+    // save the id to the session storage
+    let uuid = auth_session::get_uuid();
+    let session_filepath =
+        auth_session::get_session_filepath(&state.session_path, &state.app_name, &uuid);
+    auth_session::write_session_id(&session_filepath, &id)?;
+
     Ok(
-        auth_cookie::create_cookie(&id, &state.cookie_key, &state.cookie_iv)?
+        auth_cookie::create_cookie(&uuid, &state)?
             .in_response(StatusCode::OK)
             .body_json(&UserResponseBody {
                 user: User {

@@ -18,11 +18,14 @@ pub struct DbRecord {
 }
 
 pub struct ServerState {
+    pub app_name: String,
+    pub address: String,
+    pub cookie_key: String,
+    pub cookie_iv: String,
+    pub cookie_secure: bool,
+    pub session_path: String,
     pub static_file: StaticFile,
     pub poor_db: PoorMansDb,
-    // pub pool: PgPool,
-    // pub cookie_key: String,
-    // pub cookie_iv: String,
 }
 
 pub fn ok_json(serializable: &impl Serialize) -> Result<Response> {

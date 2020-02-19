@@ -1,4 +1,5 @@
 use crate::auth_cookie;
+use crate::auth_session;
 use crate::error::Result;
 use crate::models::{User, UserResponseBody};
 use crate::server::{Request, Response, ServerState, StatusCode};
@@ -42,10 +43,16 @@ RETURNING id, username, email
     // Explicitly commit (otherwise this would rollback on drop)
     tx.commit().await?;
 
+    // save the id to the session storage
+    let uuid = auth_session::get_uuid();
+    let session_filepath =
+        auth_session::get_session_filepath(&state.session_path, &state.app_name, &uuid);
+    auth_session::write_session_id(&session_filepath, &id)?;
+
     // send response
     //
     Ok(
-        auth_cookie::create_cookie(&id, &state.cookie_key, &state.cookie_iv)?
+        auth_cookie::create_cookie(&uuid, &state)?
             .in_response(StatusCode::OK)
             .body_json(&UserResponseBody {
                 user: User {
