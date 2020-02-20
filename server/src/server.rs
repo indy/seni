@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::staticfile::StaticFile;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 // use sqlx::PgPool;
 

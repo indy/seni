@@ -2,7 +2,7 @@
 
 if [ "$1" = "release" ]
 then
-    cargo run --release
+    cargo run --bin seni_server --release
 else
-    cargo run
+    cargo run --bin seni_server
 fi

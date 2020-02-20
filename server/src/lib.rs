@@ -11,7 +11,7 @@ mod staticfile;
 
 pub use crate::error::{Error, Result};
 use crate::handlers::unathorized_handler;
-use crate::server::{Request, Response, Server, ServerState, PoorMansDb, DbRecord};
+use crate::server::{DbRecord, PoorMansDb, Request, Response, Server, ServerState};
 use crate::staticfile::{Responder, StaticFile};
 use http::header;
 // use sqlx::PgPool;
@@ -113,13 +113,7 @@ pub async fn start() -> Result<()> {
     let cookie_iv = env::var("COOKIE_IV")?;
     let cookie_secure_str = env::var("COOKIE_SECURE")?;
     let session_path = env::var("SESSION_PATH")?;
-
-
-
     let seni_path = env::var("SENI_PATH").expect("SENI_PATH");
-
-    dbg!(&app_name);
-    dbg!(&seni_path);
 
     let poor_db = create_poor_mans_db(&seni_path, "db.txt")?;
 

@@ -15,7 +15,7 @@ where
 {
     match f(req).await {
         Ok(res) => res,
-        _ => Response::new(StatusCode::UNAUTHORIZED.as_u16())
+        _ => Response::new(StatusCode::UNAUTHORIZED.as_u16()),
     }
 }
 

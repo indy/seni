@@ -7,6 +7,7 @@ fn main() -> Result<()> {
 
     task::block_on(async {
         start().await?;
+
         Ok(())
     })
 }

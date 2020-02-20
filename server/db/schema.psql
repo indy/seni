@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS scripts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+    title TEXT NOT NULL,
     source TEXT NOT NULL
 );
 
@@ -31,5 +32,6 @@ CREATE TABLE IF NOT EXISTS gallery_scripts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+    title TEXT NOT NULL,
     source TEXT NOT NULL
 );
