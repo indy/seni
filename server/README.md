@@ -19,3 +19,8 @@ Load the database schema.
 ```
 psql -d "$DATABASE_URL" -f ./db/schema.psql
 ```
+
+Populate the database with the gallery scripts
+```
+cargo run --bin gallery_scripts_loader
+```
