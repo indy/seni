@@ -66,7 +66,6 @@ pub async fn get_script(
     Ok(HttpResponse::Ok().body(db_script.source))
 }
 
-
 mod db {
     use crate::error::Result;
     use crate::pg;
@@ -89,12 +88,9 @@ mod db {
     }
 
     pub async fn get_script(db_pool: &Pool, script_id: i64) -> Result<GalleryScript> {
-        let res = pg::one::<GalleryScript>(
-            db_pool,
-            include_str!("sql/gallery_get.sql"),
-            &[&script_id],
-        )
-        .await?;
+        let res =
+            pg::one::<GalleryScript>(db_pool, include_str!("sql/gallery_get.sql"), &[&script_id])
+                .await?;
         Ok(res)
     }
 }

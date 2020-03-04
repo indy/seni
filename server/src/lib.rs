@@ -74,13 +74,12 @@ pub async fn start_server() -> Result<()> {
             .handler(http::StatusCode::BAD_REQUEST, api::bad_request)
             .handler(http::StatusCode::NOT_FOUND, api::not_found);
 
-
         App::new()
             .data(pool.clone())
             .wrap(session_store)
             .wrap(error_handlers)
             .service(api::public_api("/api"))
-            .service(fs::Files::new("/", String::from(&www_path)))
+            .service(fs::Files::new("/", String::from(&www_path)).index_file("index.html"))
     })
     .bind(format!("127.0.0.1:{}", port))?
     .run();

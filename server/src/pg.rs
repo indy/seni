@@ -17,25 +17,6 @@ use crate::error::{Error, Result};
 use deadpool_postgres::{Client, Pool};
 use tokio_pg_mapper::FromTokioPostgresRow;
 
-pub async fn zero<T>(
-    db_pool: &Pool,
-    sql_query: &str,
-    sql_params: &[&(dyn tokio_postgres::types::ToSql + std::marker::Sync)],
-) -> Result<()>
-where
-    T: FromTokioPostgresRow,
-{
-    let client: Client = db_pool.get().await.map_err(|err| Error::DeadPool(err))?;
-
-    let _stmt = sql_query;
-    let _stmt = _stmt.replace("$table_fields", &T::sql_table_fields());
-    let stmt = client.prepare(&_stmt).await?;
-
-    client.query(&stmt, sql_params).await?;
-
-    Ok(())
-}
-
 pub async fn one<T>(
     db_pool: &Pool,
     sql_query: &str,

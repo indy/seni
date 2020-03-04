@@ -38,7 +38,7 @@ pub fn public_api(mount_point: &str) -> actix_web::Scope {
         .service(
             scope("/gallery")
                 .route("", get().to(handle_gallery::get_gallery))
-                .route("/{id}", get().to(handle_gallery::get_script))
+                .route("/{id}", get().to(handle_gallery::get_script)),
         )
 }
 
