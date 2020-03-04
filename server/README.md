@@ -1,26 +1,28 @@
+# Curio
+
 ## Usage
 
-Copy .env-example and rename it to .env
-Update the username and password details in the .env file's DATABASE_URL
+Rename the .env-example file to .env and update the Postgres details.
 
 export the values of the .env file into a shell.
 ```
 export $(egrep -v '^#' .env | xargs)
 ```
 
-Create the postgres database with the same details as given for DATABASE_URL.
+Create the postgres database.
 
 ```
-createdb -U postgres seni-dev
+createdb -U postgres $POSTGRES_DB
 ```
 
 Load the database schema.
 
 ```
-psql -d "$DATABASE_URL" -f ./db/schema.psql
+psql -d "postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB" -f ./db/schema.psql
 ```
 
-Populate the database with the gallery scripts
+Run.
+
 ```
-cargo run --bin gallery_scripts_loader
+cargo run
 ```

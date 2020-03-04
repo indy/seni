@@ -1,145 +1,174 @@
+// Copyright (C) 2020 Inderjit Gill <email@indy.io>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 use crate::error::Result;
-use crate::models::IdResponseBody;
-use crate::server::{ok_json, Request, Response, ServerState};
+use crate::session;
+use actix_web::{web, HttpResponse};
+use deadpool_postgres::Pool;
 
-// models specific for handling entries
-//
-#[derive(serde::Serialize)]
-struct EntryResponseBody {
+#[derive(serde::Deserialize)]
+pub struct IdParam {
     id: i64,
-    content: String,
 }
 
-#[derive(serde::Serialize)]
-struct EntriesResponseBody {
-    entries: Vec<EntryResponseBody>,
+#[derive(Debug, serde::Deserialize, serde::Serialize)]
+pub struct Entry {
+    pub id: i64,
+    pub content: String,
 }
 
-pub async fn get_entries(req: Request<ServerState>, user_id: i64) -> Result<Response> {
+impl From<db::Entry> for Entry {
+    fn from(e: db::Entry) -> Entry {
+        Entry {
+            id: e.id,
+            content: e.content,
+        }
+    }
+}
+
+pub async fn create_entry(
+    entry: web::Json<Entry>,
+    db_pool: web::Data<Pool>,
+    session: actix_session::Session,
+) -> Result<HttpResponse> {
+    let entry = entry.into_inner();
+    let user_id = session::user_id(&session)?;
+
     // db statement
-    //
-    let mut pool = &req.state().pool;
-    let recs = sqlx::query!(
-        r#"SELECT id, content FROM entries WHERE user_id = $1"#,
-        user_id
-    )
-    .fetch_all(&mut pool)
-    .await?;
+    let db_entry: db::Entry = db::create_entry(&db_pool, &entry, user_id).await?;
 
-    // send response
-    //
-    let mut entries: Vec<EntryResponseBody> = vec![];
-    for rec in recs {
-        entries.push(EntryResponseBody {
-            id: rec.id,
-            content: rec.content,
-        })
+    Ok(HttpResponse::Ok().json(Entry::from(db_entry)))
+}
+
+pub async fn get_entries(
+    db_pool: web::Data<Pool>,
+    session: actix_session::Session,
+) -> Result<HttpResponse> {
+    let user_id = session::user_id(&session)?;
+    // db statement
+    let db_entries: Vec<db::Entry> = db::get_entries(&db_pool, user_id).await?;
+
+    let entries: Vec<Entry> = db_entries
+        .into_iter()
+        .map(|db_entry| Entry::from(db_entry))
+        .collect();
+
+    Ok(HttpResponse::Ok().json(entries))
+}
+
+pub async fn get_entry(
+    db_pool: web::Data<Pool>,
+    params: web::Path<IdParam>,
+    session: actix_session::Session,
+) -> Result<HttpResponse> {
+    let user_id = session::user_id(&session)?;
+
+    // db statement
+    let db_entry: db::Entry = db::get_entry(&db_pool, params.id, user_id).await?;
+
+    Ok(HttpResponse::Ok().json(Entry::from(db_entry)))
+}
+
+pub async fn edit_entry(
+    entry: web::Json<Entry>,
+    db_pool: web::Data<Pool>,
+    params: web::Path<IdParam>,
+    session: actix_session::Session,
+) -> Result<HttpResponse> {
+    let entry = entry.into_inner();
+    let user_id = session::user_id(&session)?;
+
+    let db_entry = db::edit_entry(&db_pool, &entry, params.id, user_id).await?;
+
+    Ok(HttpResponse::Ok().json(Entry::from(db_entry)))
+}
+
+pub async fn delete_entry(
+    db_pool: web::Data<Pool>,
+    params: web::Path<IdParam>,
+    session: actix_session::Session,
+) -> Result<HttpResponse> {
+    let user_id = session::user_id(&session)?;
+
+    db::delete_entry(&db_pool, params.id, user_id).await?;
+
+    Ok(HttpResponse::Ok().json(true))
+}
+
+mod db {
+    use crate::error::Result;
+    use crate::pg;
+    use deadpool_postgres::Pool;
+    use serde::{Deserialize, Serialize};
+    use tokio_pg_mapper_derive::PostgresMapper;
+
+    #[derive(Deserialize, PostgresMapper, Serialize)]
+    #[pg_mapper(table = "entries")]
+    pub struct Entry {
+        pub id: i64,
+        pub content: String,
     }
 
-    ok_json(&EntriesResponseBody { entries })
-}
-
-pub async fn get_entry(req: Request<ServerState>, user_id: i64) -> Result<Response> {
-    // get parameters
-    //
-    let entry_id: i64 = req.param("id")?;
-
-    // db statement
-    //
-    let mut pool = &req.state().pool;
-    let rec = sqlx::query!(
-        r#"SELECT id, content FROM entries WHERE id = $1 and user_id = $2"#,
-        entry_id,
-        user_id
-    )
-    .fetch_one(&mut pool)
-    .await?;
-
-    // send response
-    //
-    ok_json(&EntryResponseBody {
-        id: rec.id,
-        content: rec.content,
-    })
-}
-
-pub async fn add_entry(mut req: Request<ServerState>, user_id: i64) -> Result<Response> {
-    // get parameters
-    //
-    #[derive(serde::Deserialize)]
-    struct AddEntryRequestBody {
-        content: String,
+    pub async fn create_entry(db_pool: &Pool, entry: &super::Entry, user_id: i64) -> Result<Entry> {
+        let res = pg::one::<Entry>(
+            db_pool,
+            include_str!("sql/entries_create.sql"),
+            &[&user_id, &entry.content],
+        )
+        .await?;
+        Ok(res)
     }
 
-    let body: AddEntryRequestBody = req.body_json().await?;
-
-    // db statement
-    //
-    let mut pool = &req.state().pool;
-    let rec = sqlx::query!(
-        r#"INSERT INTO entries ( user_id, content ) VALUES ( $1, $2 ) returning id"#,
-        user_id,
-        body.content
-    )
-    .fetch_one(&mut pool)
-    .await?;
-
-    // send response
-    //
-    ok_json(&EntryResponseBody {
-        id: rec.id,
-        content: body.content,
-    })
-}
-
-pub async fn edit_entry(mut req: Request<ServerState>, user_id: i64) -> Result<Response> {
-    // get parameters
-    //
-    #[derive(serde::Deserialize)]
-    struct EditEntryRequestBody {
-        content: String,
+    pub async fn get_entries(db_pool: &Pool, user_id: i64) -> Result<Vec<Entry>> {
+        let res =
+            pg::many::<Entry>(db_pool, include_str!("sql/entries_all.sql"), &[&user_id]).await?;
+        Ok(res)
     }
 
-    let body: EditEntryRequestBody = req.body_json().await?;
-    let entry_id: i64 = req.param("id")?;
+    pub async fn get_entry(db_pool: &Pool, entry_id: i64, user_id: i64) -> Result<Entry> {
+        let res = pg::one::<Entry>(
+            db_pool,
+            include_str!("sql/entries_get.sql"),
+            &[&entry_id, &user_id],
+        )
+        .await?;
+        Ok(res)
+    }
 
-    // db statement
-    //
-    let mut pool = &req.state().pool;
-    let _rec = sqlx::query!(
-        r#"UPDATE entries set content = $1, updated_at = now()  WHERE id = $2 and user_id = $3"#,
-        body.content,
-        entry_id,
-        user_id
-    )
-    .execute(&mut pool)
-    .await?;
+    pub async fn edit_entry(
+        db_pool: &Pool,
+        entry: &super::Entry,
+        entry_id: i64,
+        user_id: i64,
+    ) -> Result<Entry> {
+        let res = pg::one::<Entry>(
+            db_pool,
+            include_str!("sql/entries_edit.sql"),
+            &[&entry.content, &entry_id, &user_id],
+        )
+        .await?;
+        Ok(res)
+    }
 
-    // send response
-    //
-    ok_json(&EntryResponseBody {
-        id: entry_id,
-        content: body.content,
-    })
-}
-
-pub async fn delete_entry(req: Request<ServerState>, user_id: i64) -> Result<Response> {
-    // get parameters
-    //
-    let entry_id: i64 = req.param("id")?;
-
-    // db statement
-    //
-    let mut pool = &req.state().pool;
-    let _rec = sqlx::query!(
-        r#"DELETE from entries where id = $1 and user_id = $2"#,
-        entry_id,
-        user_id
-    )
-    .execute(&mut pool)
-    .await?;
-
-    // send response
-    //
-    ok_json(&IdResponseBody { id: entry_id })
+    pub async fn delete_entry(db_pool: &Pool, entry_id: i64, user_id: i64) -> Result<()> {
+        pg::zero::<Entry>(
+            db_pool,
+            include_str!("sql/entries_delete.sql"),
+            &[&entry_id, &user_id],
+        )
+        .await?;
+        Ok(())
+    }
 }
