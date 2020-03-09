@@ -13,21 +13,16 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use serde::{Deserialize, Serialize};
-use tokio_pg_mapper_derive::PostgresMapper;
+use crate::error::{Error, Result};
+use std::str::FromStr;
 
-#[derive(Deserialize, PostgresMapper, Serialize)]
-#[pg_mapper(table = "entries")]
-pub struct Entry {
-    pub user_id: i64,
-    pub content: String,
-}
+pub const AUTH: &str = "auth";
 
-#[derive(Debug, Deserialize, PostgresMapper, Serialize)]
-#[pg_mapper(table = "things")]
-pub struct Thing {
-    pub user_id: i64,
-    pub textual: Option<String>,
-    //pub exact_date: Option<String>, // ???
-    pub longitude: Option<f32>,
+pub fn user_id(session: &actix_session::Session) -> Result<i64> {
+    if let Some(auth) = session.get::<String>(AUTH)? {
+        let user_id: i64 = i64::from_str(&auth)?;
+        Ok(user_id)
+    } else {
+        Err(Error::Authenticating)
+    }
 }

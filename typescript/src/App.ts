@@ -478,7 +478,7 @@ async function restoreEvolveUI(controller: Controller) {
 }
 
 async function loadScriptWithId(controller: Controller, id: number) {
-    const response = await fetch(`gallery/${id}`);
+    const response = await fetch(`api/gallery/${id}`);
     const script = await response.text();
 
     await controller.dispatch(Action.SetScript, { script });
@@ -815,7 +815,7 @@ function setupUI(controller: Controller) {
 }
 
 async function getGallery(controller: Controller) {
-    const galleryItems = await getJSON('gallery');
+    const galleryItems = await getJSON('api/gallery');
 
     await controller.dispatch(Action.SetGalleryItems, { galleryItems });
     await createGalleryDisplayChunk(controller);

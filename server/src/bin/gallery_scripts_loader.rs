@@ -1,3 +1,6 @@
+// NOTE: this is old code that was using sqlx for postgres integration
+// REWRITE THIS
+
 use async_std::task;
 use dotenv;
 use server::Result;

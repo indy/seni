@@ -1,121 +1,92 @@
-// mod auth_cookie;
+// Copyright (C) 2020 Inderjit Gill <email@indy.io>
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+mod api;
 mod error;
-// mod handle_authentication;
-// mod handle_entries;
-// mod handle_registration;
 mod handle_gallery;
-mod handlers;
-// mod models;
-mod server;
-mod staticfile;
+mod handle_users;
+mod models;
+mod pg;
+mod session;
 
-pub use crate::error::{Error, Result};
-use crate::handlers::unathorized_handler;
-use crate::server::{Request, Response, Server, ServerState};
-use crate::staticfile::{Responder, StaticFile};
-use http::header;
-use sqlx::PgPool;
+pub use crate::error::Result;
+
+use actix_files as fs;
+use actix_session::CookieSession;
+use actix_web::middleware::errhandlers::ErrorHandlers;
+use actix_web::{http, App, HttpServer};
+use dotenv;
 use std::env;
+use tokio_postgres::NoTls;
+use tracing::info;
+use tracing::Level;
+use tracing_subscriber::FmtSubscriber;
 
-async fn gallery_item(req: Request<ServerState>) -> Response {
-    unathorized_handler(handle_gallery::gallery_item, req).await
-}
+static SESSION_SIGNING_KEY: &[u8] = &[0; 32];
 
-async fn gallery(req: Request<ServerState>) -> Response {
-    unathorized_handler(handle_gallery::gallery, req).await
-}
+pub async fn start_server() -> Result<()> {
+    dotenv::dotenv().ok();
 
-// async fn login(req: Request<ServerState>) -> Response {
-//     unathorized_handler(handle_authentication::login, req).await
-// }
+    // a builder for `FmtSubscriber`.
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::TRACE)
+        .finish();
 
-// async fn logout(req: Request<ServerState>) -> Response {
-//     unathorized_handler(handle_authentication::logout, req).await
-// }
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-// async fn user_info(req: Request<ServerState>) -> Response {
-//     user_handler(handle_authentication::user_info, req).await
-// }
+    let port = env::var("PORT")?;
+    let www_path = env::var("WWW_PATH")?;
 
-// async fn register(req: Request<ServerState>) -> Response {
-//     unathorized_handler(handle_registration::register, req).await
-// }
+    let postgres_db = env::var("POSTGRES_DB")?;
+    let postgres_host = env::var("POSTGRES_HOST")?;
+    let postgres_user = env::var("POSTGRES_USER")?;
+    let postgres_password = env::var("POSTGRES_PASSWORD")?;
 
-// async fn get_entries(req: Request<ServerState>) -> Response {
-//     user_handler(handle_entries::get_entries, req).await
-// }
-
-// async fn get_entry(req: Request<ServerState>) -> Response {
-//     user_handler(handle_entries::get_entry, req).await
-// }
-
-// async fn add_entry(req: Request<ServerState>) -> Response {
-//     user_handler(handle_entries::add_entry, req).await
-// }
-
-// async fn edit_entry(req: Request<ServerState>) -> Response {
-//     user_handler(handle_entries::edit_entry, req).await
-// }
-
-// async fn delete_entry(req: Request<ServerState>) -> Response {
-//     user_handler(handle_entries::delete_entry, req).await
-// }
-
-async fn fetch_file(req: Request<ServerState>) -> Response {
-    let actual_path: &str = req.uri().path();
-    let if_none_match: Option<&str> = req.header(header::IF_MODIFIED_SINCE.as_str());
-    let if_modified_since: Option<&str> = req.header(header::IF_NONE_MATCH.as_str());
-    let static_file: &StaticFile = &req.state().static_file;
-
-    let responder = Responder::from(actual_path, if_none_match, if_modified_since, static_file);
-    responder.stream().await
-}
-
-pub async fn start() -> Result<()> {
-    let app_name = env::var("APP_NAME")?;
-    let address = env::var("ADDRESS").unwrap_or(String::from("localhost:8000"));
-    let www_path = env::var("WWW_PATH").unwrap_or(String::from("./www"));
-    let database_url = env::var("DATABASE_URL")?;
-    let cookie_key = env::var("COOKIE_KEY")?;
-    let cookie_iv = env::var("COOKIE_IV")?;
-    let cookie_secure_str = env::var("COOKIE_SECURE")?;
-    let session_path = env::var("SESSION_PATH")?;
-
-    let server_state = ServerState {
-        app_name,
-        address: String::from(&address),
-        cookie_key,
-        cookie_iv,
-        cookie_secure: cookie_secure_str.to_lowercase() == "true",
-        session_path,
-
-        static_file: StaticFile::new(www_path),
-        pool: PgPool::new(&database_url).await?,
+    let cfg = deadpool_postgres::Config {
+        user: Some(String::from(&postgres_user)),
+        password: Some(String::from(&postgres_password)),
+        dbname: Some(String::from(&postgres_db)),
+        host: Some(String::from(&postgres_host)),
+        ..Default::default()
     };
 
-    let mut app = Server::with_state(server_state);
+    let pool: deadpool_postgres::Pool = cfg.create_pool(NoTls)?;
 
-    app.at("/gallery/:id").get(gallery_item);
-    app.at("/gallery").get(gallery);
+    let server = HttpServer::new(move || {
+        let session_store = CookieSession::signed(SESSION_SIGNING_KEY).secure(false);
+        let error_handlers = ErrorHandlers::new()
+            .handler(
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+                api::internal_server_error,
+            )
+            .handler(http::StatusCode::BAD_REQUEST, api::bad_request)
+            .handler(http::StatusCode::NOT_FOUND, api::not_found);
 
-    // app.at("/api/auth").post(login);
-    // app.at("/api/auth").delete(logout);
-    // app.at("/api/auth").get(user_info);
+        App::new()
+            .data(pool.clone())
+            .wrap(session_store)
+            .wrap(error_handlers)
+            .service(api::public_api("/api"))
+            .service(fs::Files::new("/", String::from(&www_path)).index_file("index.html"))
+    })
+    .bind(format!("127.0.0.1:{}", port))?
+    .run();
 
-    // app.at("/api/users").post(register);
+    info!("local server running on port: {}", port);
 
-    // app.at("/api/entries").get(get_entries);
-    // app.at("/api/entry/:id").get(get_entry);
-    // app.at("/api/entry/add").post(add_entry);
-    // app.at("/api/entry/:id").post(edit_entry);
-    // app.at("/api/entry/:id").delete(delete_entry);
-
-    app.at("/").get(fetch_file);
-    app.at("/*").get(fetch_file);
-
-    println!("starting server at {}", &address);
-
-    app.listen(address).await.expect("serving");
+    server.await?;
 
     Ok(())
 }
