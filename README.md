@@ -15,6 +15,7 @@ It's scripts can be annotated so that genetic algorithms can generate variations
 - Typescript
 
 ```sh
+$ npm install -g typescript
 $ rustup update
 $ rustup target add wasm32-unknown-unknown
 $ cargo install -f wasm-bindgen-cli
