@@ -2113,39 +2113,39 @@ impl Compiler {
 
         let offset_after_then = c.opcode_offset;
 
+        // logically we're now going to go down one of possibly two paths
+        // so we can't just continue to add the c->opcode_offset since
+        // that would result in the offset taking both of the conditional's paths
+        c.opcode_offset = offset_after_if;
+
+        // insert a bc_jump_else opcode
+        let addr_jump_else = c.code.len();
+
+        c.emit(Opcode::JUMP, 0, 0)?;
+
+        let addr_jump_then_offset = c.code.len() as i32 - addr_jump_then as i32;
+        c.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+
         if let Some(else_node) = else_node {
-            // logically we're now going to go down one of possibly two paths
-            // so we can't just continue to add the c->opcode_offset since
-            // that would result in the offset taking both of the conditional's paths
-            c.opcode_offset = offset_after_if;
-
-            // insert a bc_jump_else opcode
-            let addr_jump_else = c.code.len();
-
-            c.emit(Opcode::JUMP, 0, 0)?;
-
-            let addr_jump_then_offset = c.code.len() as i32 - addr_jump_then as i32;
-            c.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
-
             self.compile(c, else_node)?;
-
-            let offset_after_else = c.opcode_offset;
-
-            if offset_after_then != offset_after_else {
-                // is this case actually going to happen?
-                // if so we can check which of the two paths has the lower opcode offset
-                // and pad out that path by inserting some LOAD CONST 9999 into the
-                // c
-                parent.error_here("different opcode_offsets for the two paths in a conditional");
-                return Err(Error::Compiler);
-            }
-
-            let addr_jump_else_offset = c.code.len() as i32 - addr_jump_else as i32;
-            c.bytecode_modify_arg0_i32(addr_jump_else, addr_jump_else_offset)?;
         } else {
-            let addr_jump_then_offset = c.code.len() as i32 - addr_jump_then as i32;
-            c.bytecode_modify_arg0_i32(addr_jump_then, addr_jump_then_offset)?;
+            // emit a dummy value that's going to be popped off the stack
+            c.emit(Opcode::LOAD, Mem::Constant, NONSENSE)?;
         }
+
+        let offset_after_else = c.opcode_offset;
+
+        if offset_after_then != offset_after_else {
+            // is this case actually going to happen?
+            // if so we can check which of the two paths has the lower opcode offset
+            // and pad out that path by inserting some LOAD CONST 9999 into the
+            // c
+            parent.error_here("different opcode_offsets for the two paths in a conditional");
+            return Err(Error::Compiler);
+        }
+
+        let addr_jump_else_offset = c.code.len() as i32 - addr_jump_else as i32;
+        c.bytecode_modify_arg0_i32(addr_jump_else, addr_jump_else_offset)?;
 
         Ok(())
     }

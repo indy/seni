@@ -28,7 +28,7 @@ use std::time::Instant;
 
 use core::{
     bitmaps_to_transfer, build_traits, compile_preamble, compile_program, parse,
-    BitmapInfo, Context, Packable, Program, VMProfiling, Var, Vm, RenderPacket,
+    BitmapInfo, Context, Packable, Program, ProbeSample, VMProfiling, Var, Vm, RenderPacket,
 };
 
 type Result<T> = ::std::result::Result<T, Box<dyn ::std::error::Error>>;
@@ -259,9 +259,25 @@ fn run_script(script: &Path, settings: &config::Config) -> Result<()> {
         }
 
         show_program_results(&res, &context);
+
+        if !vm.probe_samples.is_empty() {
+            print_probe_samples(&vm.probe_samples)
+        }
     }
 
     Ok(())
+}
+
+fn print_probe_samples(probe_samples: &Vec<ProbeSample>) {
+    for p in probe_samples {
+        if let Some(s) = p.scalar {
+            println!("fp: {fp:>width$}, sp: {sp:>width$}, ip: {ip:>width$}, scalar: {sc}", fp=p.fp, sp=p.sp, ip=p.ip, sc=s, width=3);
+        } else if let Some((x,y)) = p.scalar_v2 {
+            println!("fp: {fp:>width$}, sp: {sp:>width$}, ip: {ip:>width$}, v2: ({a}, {b})", fp=p.fp, sp=p.sp, ip=p.ip, a=x, b=y, width=3);
+        } else {
+            println!("fp: {fp:>width$}, sp: {sp:>width$}, ip: {ip:>width$}", fp=p.fp, sp=p.sp, ip=p.ip, width=3);
+        }
+    }
 }
 
 fn show_program_results(result: &Var, context: &Context) {

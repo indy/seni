@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use curio::{start_server, Result};
+use seni_server::{start_server, Result};
 
 #[actix_rt::main]
 async fn main() -> Result<()> {

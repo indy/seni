@@ -1,5 +1,5 @@
 [package]
-name = "curio"
+name = "seni-server"
 version = "0.1.0"
 authors = ["Inderjit Gill <email@indy.io>"]
 license = "AGPL-3.0"

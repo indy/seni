@@ -34,9 +34,9 @@ use std;
 use std::fmt;
 use std::convert::TryFrom;
 
-const COLOUR_UNIT_ANGLE: f64 = (360.0 / 12.0);
-const COLOUR_COMPLIMENTARY_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 6.0);
-const COLOUR_TRIAD_ANGLE: f64 = (COLOUR_UNIT_ANGLE * 4.0);
+const COLOUR_UNIT_ANGLE: f64 = 360.0 / 12.0;
+const COLOUR_COMPLIMENTARY_ANGLE: f64 = COLOUR_UNIT_ANGLE * 6.0;
+const COLOUR_TRIAD_ANGLE: f64 = COLOUR_UNIT_ANGLE * 4.0;
 
 const REF_U: f64 = 0.197_830_006_642_836_807_640;
 const REF_V: f64 = 0.468_319_994_938_791_003_700;
@@ -604,7 +604,7 @@ fn gamma_expansion(component: f64) -> f64 {
     if component > 0.04045 {
         ((component + 0.055) / 1.055).powf(2.4)
     } else {
-        (component / 12.92)
+        component / 12.92
     }
 }
 

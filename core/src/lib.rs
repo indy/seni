@@ -81,7 +81,7 @@ pub use crate::render_packet::{
 };
 pub use crate::trait_list::TraitList;
 pub use crate::unparser::{simplified_unparse, unparse};
-pub use crate::vm::{VMProfiling, Var, Vm};
+pub use crate::vm::{ProbeSample, VMProfiling, Var, Vm};
 
 pub fn run_program_with_preamble(
     vm: &mut Vm,
