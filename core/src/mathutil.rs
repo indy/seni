@@ -19,14 +19,6 @@ pub const PI: f32 = std::f32::consts::PI;
 pub const PI_BY_2: f32 = std::f32::consts::FRAC_PI_2;
 pub const TAU: f32 = std::f32::consts::PI * 2.0;
 
-pub fn mc_m(xa: f32, ya: f32, xb: f32, yb: f32) -> f32 {
-    (ya - yb) / (xa - xb)
-}
-
-pub fn mc_c(xa: f32, ya: f32, m: f32) -> f32 {
-    ya - (m * xa)
-}
-
 pub fn deg_to_rad(a: f32) -> f32 {
     a * (PI / 180.0)
 }
@@ -43,9 +35,9 @@ pub fn lerp(t: f32, a: f32, b: f32) -> f32 {
     a + t * (b - a)
 }
 
-// pub fn unlerp(t: f32, a: f32, b: f32) -> f32 {
-//     (t - a) / (b - a)
-// }
+pub fn unlerp(t: f32, a: f32, b: f32) -> f32 {
+    (t - a) / (b - a)
+}
 
 pub fn clamp(x: f32, xmin: f32, xmax: f32) -> f32 {
     if x < xmin {

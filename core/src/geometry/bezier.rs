@@ -15,8 +15,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::ease::{easing, Easing};
+use crate::ease::Easing;
 use crate::error::{Error, Result};
+use crate::interp::parametric;
 use crate::mathutil::*;
 use crate::matrix::Matrix;
 use crate::render_list::RenderList;
@@ -54,10 +55,6 @@ pub fn render(
     //
     let half_width_start = line_width_start / 2.0;
     let half_width_end = line_width_end / 2.0;
-    let from_m = mc_m(t_start, 0.0, t_end, 1.0);
-    let from_c = mc_c(t_start, 0.0, from_m);
-    let to_m = mc_m(0.0, half_width_start, 1.0, half_width_end);
-    let to_c = mc_c(0.0, half_width_start, to_m);
 
     let x0 = coords[0];
     let x1 = coords[2];
@@ -82,9 +79,7 @@ pub fn render(
     let xs_next = bezier_point(x0, x1, x2, x3, t_val_next);
     let ys_next = bezier_point(y0, y1, y2, y3, t_val_next);
     let (n1x, n1y) = normal(xs, ys, xs_next, ys_next);
-    let from_interp = (from_m * t_val) + from_c;
-    let to_interp = easing(from_interp, width_mapping);
-    let half_width = (to_m * to_interp) + to_c;
+    let half_width = parametric(t_val, t_start, t_end, half_width_start, half_width_end, width_mapping, false);
     let v1x = (n1x * half_width) + xs;
     let v1y = (n1y * half_width) + ys;
     render_list.prepare_to_add_triangle_strip(matrix, tessellation * 2, v1x, v1y)?;
@@ -108,10 +103,7 @@ pub fn render(
         let (n1x, n1y) = normal(xs, ys, xs_next, ys_next);
         let (n2x, n2y) = opposite_normal(n1x, n1y);
 
-        let from_interp = (from_m * t_val) + from_c;
-        let to_interp = easing(from_interp, width_mapping);
-
-        let half_width = (to_m * to_interp) + to_c;
+        let half_width = parametric(t_val, t_start, t_end, half_width_start, half_width_end, width_mapping, false);
 
         let v1x = (n1x * half_width) + xs;
         let v1y = (n1y * half_width) + ys;

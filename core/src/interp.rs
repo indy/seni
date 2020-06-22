@@ -20,11 +20,10 @@ use crate::mathutil;
 
 #[derive(Clone, Debug)]
 pub struct InterpStateStruct {
-    pub from_m: f32,
-    pub to_m: f32,
-    pub from_c: f32,
-    pub to_c: f32,
-    pub to: (f32, f32),
+    pub from_a: f32,
+    pub from_b: f32,
+    pub to_a: f32,
+    pub to_b: f32,
     pub clamping: bool,
     pub mapping: ease::Easing,
 }
@@ -32,11 +31,10 @@ pub struct InterpStateStruct {
 impl Default for InterpStateStruct {
     fn default() -> InterpStateStruct {
         InterpStateStruct {
-            from_m: 0.0,
-            to_m: 0.0,
-            from_c: 0.0,
-            to_c: 0.0,
-            to: (0.0, 1.0),
+            from_a: 0.0,
+            from_b: 0.0,
+            to_a: 0.0,
+            to_b: 0.0,
             clamping: false,
             mapping: ease::Easing::Linear,
         }
@@ -45,21 +43,7 @@ impl Default for InterpStateStruct {
 
 impl InterpStateStruct {
     pub fn value(&self, t: f32) -> f32 {
-        let from_interp = (self.from_m * t) + self.from_c;
-        let to_interp = ease::easing(from_interp, self.mapping);
-        let res = (self.to_m * to_interp) + self.to_c;
-
-        if self.clamping {
-            if from_interp < 0.0 {
-                self.to.0
-            } else if from_interp > 1.0 {
-                self.to.1
-            } else {
-                res
-            }
-        } else {
-            res
-        }
+        parametric(t, self.from_a, self.from_b, self.to_a, self.to_b, self.mapping, self.clamping)
     }
 }
 
@@ -72,20 +56,14 @@ pub fn parametric(
     mapping: ease::Easing,
     clamping: bool,
 ) -> f32 {
-    let from_m = mathutil::mc_m(from_a, 0.0, from_b, 1.0);
-    let from_c = mathutil::mc_c(from_a, 0.0, from_m);
-
-    let to_m = mathutil::mc_m(0.0, to_a, 1.0, to_b);
-    let to_c = mathutil::mc_c(0.0, to_a, to_m);
-
-    let from_interp = (from_m * val) + from_c;
-    let to_interp = ease::easing(from_interp, mapping);
-    let res = (to_m * to_interp) + to_c;
+    let from_t = mathutil::unlerp(val, from_a, from_b);
+    let to_t = ease::easing(from_t, mapping);
+    let res = mathutil::lerp(to_t, to_a, to_b);
 
     if clamping {
-        return if from_interp < 0.0 {
+        return if to_t < 0.0 {
             to_a
-        } else if from_interp > 1.0 {
+        } else if to_t > 1.0 {
             to_b
         } else {
             res
@@ -150,7 +128,20 @@ pub fn ray(point: (f32, f32), direction: (f32, f32), t: f32) -> (f32, f32) {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::vm::tests::*;
+
+    #[test]
+    fn test_interp_parametric() {
+        assert_eq!(parametric(20.0, 5.0, 50.0, 10.0, 100.0, ease::Easing::Linear, false), 40.0);
+        assert_eq!(parametric(10.0, 5.0, 50.0, 20.0, 100.0, ease::Easing::SlowIn, false), 20.07274);
+        assert_eq!(parametric(45.0, 5.0, 50.0, 20.0, 100.0, ease::Easing::CubicOut, false), 99.89026);
+        assert_eq!(parametric(2.0, 5.0, 50.0, 10.0, 100.0, ease::Easing::Linear, true), 10.0);
+        assert_eq!(parametric(20.0, 10.0, 100.0, 5.0, 50.0, ease::Easing::Linear, false), 10.0);
+        assert_eq!(parametric(10.0, 20.0, 100.0, 5.0, 50.0, ease::Easing::SlowIn, false), 5.065186);
+        assert_eq!(parametric(45.0, 20.0, 100.0, 5.0, 50.0, ease::Easing::CubicOut, false), 35.377197);
+        assert_eq!(parametric(2.0, 10.0, 100.0, 5.0, 50.0, ease::Easing::Linear, true), 5.0);
+    }
 
     #[test]
     fn test_interp_cos() {

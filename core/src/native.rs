@@ -2299,20 +2299,13 @@ fn interp_build_execute(vm: &mut Vm) -> Result<Option<Var>> {
     let mapping: Keyword = vm.stack_peek(4)?;
 
     let clamping = clamping == Keyword::True;
-
     let mapping = Easing::try_from(mapping)?;
 
-    let from_m = mathutil::mc_m(from.0, 0.0, from.1, 1.0);
-    let from_c = mathutil::mc_c(from.0, 0.0, from_m);
-    let to_m = mathutil::mc_m(0.0, to.0, 1.0, to.1);
-    let to_c = mathutil::mc_c(0.0, to.0, to_m);
-
     Ok(Some(Var::InterpState(interp::InterpStateStruct {
-        from_m,
-        to_m,
-        from_c,
-        to_c,
-        to,
+        from_a: from.0,
+        from_b: from.1,
+        to_a: to.0,
+        to_b: to.1,
         clamping,
         mapping,
     })))
