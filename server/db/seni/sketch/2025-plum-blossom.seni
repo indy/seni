@@ -18,15 +18,15 @@
   (gen/2d min: -500 max: 500)
 
   col-fn-1 (col/build-procedural a: [0.518 0.495 0.619] ~ (gen/scalar)
-                              b: [0.980 0.237 0.203] ~ (gen/scalar)
-                              c: [0.730 0.338 0.560] ~ (gen/scalar)
-                              d: [0.124 0.567 0.445] ~ (gen/scalar)
-                              alpha: 0.08)
+                                 b: [0.980 0.237 0.203] ~ (gen/scalar)
+                                 c: [0.730 0.338 0.560] ~ (gen/scalar)
+                                 d: [0.124 0.567 0.445] ~ (gen/scalar)
+                                 alpha: 0.08)
   col-fn-2 (col/build-procedural a: [0.334 0.875 0.663] ~ (gen/scalar)
-                              b: [0.401 0.013 0.646] ~ (gen/scalar)
-                              c: [0.069 0.860 0.241] ~ (gen/scalar)
-                              d: [0.940 0.123 0.942] ~ (gen/scalar)
-                              alpha: 0.08))
+                                 b: [0.401 0.013 0.646] ~ (gen/scalar)
+                                 c: [0.069 0.860 0.241] ~ (gen/scalar)
+                                 d: [0.940 0.123 0.942] ~ (gen/scalar)
+                                 alpha: 0.08))
 
 (fn (wash vol: 200
           line-width: 70
@@ -62,44 +62,44 @@
                         colour: red
                         seed: 123
                         radius: 300)
-    (define
-      rng (prng/build min: 0 max: 1 seed: seed)
-      srng (prng/build min: -1 max: 1 seed: seed))
+  (define
+    rng (prng/build min: 0 max: 1 seed: seed)
+    srng (prng/build min: -1 max: 1 seed: seed))
 
   (on-matrix-stack
     (translate vector: position)
     (scale scalar: (/ radius 210))
     (loop (i to: 8)
-          (on-matrix-stack
-           (define
-             outer-exterior (+ (* (rng.prng/value) 40) 170)
-             outer-interior (+ (* (rng.prng/value) 90)  80)
-             inner-exterior (+ (* (rng.prng/value) 50) 100)
-             inner-interior (+ (* (rng.prng/value) 100)  0))
+      (on-matrix-stack
+        (define
+          outer-exterior (+ (* (rng.prng/value) 40) 170)
+          outer-interior (+ (* (rng.prng/value) 90)  80)
+          inner-exterior (+ (* (rng.prng/value) 50) 100)
+          inner-interior (+ (* (rng.prng/value) 100)  0))
 
-           (rotate angle: (* 360 (rng.prng/value)))
-           ;; outer ring
-           (circle-slice tessellation: 80
-                         position: [0 0]
-                         colour: (col/lighten from: colour
-                                              value: (* 85 ~ (gen/int min: 20 max: 600) (srng.prng/value)))
-                         angle-start: 0
-                         angle-end: 320
-                         width: outer-exterior
-                         inner-width: outer-interior
-                         height: outer-exterior
-                         inner-height: outer-interior)
-           ;; inner ring
-           (circle-slice tessellation: 50
-                         position: [0 0]
-                         colour: (col/lighten from: colour
-                                              value: (* 54 ~ (gen/int min: 10 max: 400) (srng.prng/value)))
-                         angle-start: 0
-                         angle-end: 320
-                         width: inner-exterior
-                         inner-width: inner-interior
-                         height: inner-exterior
-                         inner-height: inner-interior)))
+        (rotate angle: (* 360 (rng.prng/value)))
+        ;; outer ring
+        (circle-slice tessellation: 80
+                      position: [0 0]
+                      colour: (col/lighten from: colour
+                                           value: (* 85 ~ (gen/int min: 20 max: 600) (srng.prng/value)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: outer-exterior
+                      inner-width: outer-interior
+                      height: outer-exterior
+                      inner-height: outer-interior)
+        ;; inner ring
+        (circle-slice tessellation: 50
+                      position: [0 0]
+                      colour: (col/lighten from: colour
+                                           value: (* 54 ~ (gen/int min: 10 max: 400) (srng.prng/value)))
+                      angle-start: 0
+                      angle-end: 320
+                      width: inner-exterior
+                      inner-width: inner-interior
+                      height: inner-exterior
+                      inner-height: inner-interior)))
     ;; centre fill
     (circle-slice tessellation: 50
                   position: [0 0]
@@ -135,10 +135,10 @@
     phi (/ (sqrt 5.428 ~ (gen/scalar min: 4 max: 6)) 8.036 ~ (gen/scalar min: 8 max: 10))
     seeds 200
     focalpoint (focal/build-point ~ (gen/select from: '(focal/build-point
-                                                    focal/build-hline
-                                                    focal/build-vline))
+                                                        focal/build-hline
+                                                        focal/build-vline))
                                   position: [430 ~ (gen/int max: canvas/width)
-                                                 533 ~ (gen/int max: canvas/height)]
+                                             533 ~ (gen/int max: canvas/height)]
                                   distance: 651 ~ (gen/int min: (/ canvas/width 2) max: canvas/width)))
 
   (on-matrix-stack
