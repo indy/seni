@@ -1902,6 +1902,10 @@ pub mod tests {
             "(define v []) (loop (x from: 0 upto: 10 inc: 2) (++ v x)) v",
             vec![0.0, 2.0, 4.0, 6.0, 8.0, 10.0],
         );
+        is_vec_of_f32(
+            "(define v []) (loop (x from: 0 upto: 10 inc: (/ 10 2)) (++ v x)) v",
+            vec![0.0, 5.0, 10.0],
+        );
     }
 
     #[test]
