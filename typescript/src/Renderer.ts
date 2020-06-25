@@ -136,6 +136,7 @@ class RendererTS {
 
     static compileShader(gl: WebGLRenderingContext, shaderType: number, src: string) {
         Log.log("compileShader called");
+        Log.log(src);
         const shader = gl.createShader(shaderType);
 
         if (shader) {
@@ -378,7 +379,7 @@ class GLRenderer2 {
     public renderTexture: WebGLTexture | null;
     public framebuffer: WebGLFramebuffer | null;
 
-    constructor(canvasElement: HTMLCanvasElement, shaders: IHashStrStr, renderTextureWidth: number, renderTextureHeight: number) {
+    constructor(prefix: string, canvasElement: HTMLCanvasElement, shaders: IHashStrStr, renderTextureWidth: number, renderTextureHeight: number) {
         this.glDomElement = canvasElement;
 
         // webgl setup
@@ -390,8 +391,12 @@ class GLRenderer2 {
             this.loadedTextureCache = {};
 
             // note: constructors can't be async so the shaders should already have been loaded by loadShaders
-            this.sketchShader = RendererTS.setupSketchShaders(gl, shaders['shader/main-vert.glsl'], shaders['shader/main-frag.glsl']);
-            this.blitShader = RendererTS.setupBlitShaders(gl, shaders['shader/blit-vert.glsl'], shaders['shader/blit-frag.glsl']);
+            this.sketchShader = RendererTS.setupSketchShaders(gl,
+                                                              shaders[prefix + '/shader/main-vert.glsl'],
+                                                              shaders[prefix + '/shader/main-frag.glsl']);
+            this.blitShader = RendererTS.setupBlitShaders(gl,
+                                                          shaders[prefix + '/shader/blit-vert.glsl'],
+                                                          shaders[prefix + '/shader/blit-frag.glsl']);
 
             RendererTS.setupGLState(gl);
 
@@ -435,20 +440,21 @@ class GLRenderer2 {
     }
 
     // todo: this is copied from stuff.js, use that version instead
-    normalize_bitmap_url(url: string) {
+    normalize_bitmap_url(prefix: string, url: string) {
         const re = /^[\w-/]+.png/;
 
         if (url.match(re)) {
             // requesting a bitmap just by filename, so get it from /img/immutable/
-            return "img/immutable/" + url;
+            return prefix + "/img/immutable/" + url;
         } else {
             // change nothing, try and fetch the url
             return url;
         }
     }
 
-    public async ensureTexture(unit: TextureUnit, src: string) {
-        let normalized_src = this.normalize_bitmap_url(src);
+    public async ensureTexture(unit: TextureUnit, prefix: string, src: string) {
+        // console.log(`ensureTexture called with ${prefix} ${src}`)
+        let normalized_src = this.normalize_bitmap_url(prefix, src);
         if (this.gl) {
         let texUnit = RendererTS.textureUnitToGl(this.gl, unit);
 
@@ -480,7 +486,7 @@ class GLRenderer2 {
         }
     }
 
-    public async renderGeometryToTexture(meta: any, destTextureWidth: number, destTextureHeight: number, memoryF32: any, buffers: any, sectionDim: number, section: number) {
+    public async renderGeometryToTexture(prefix: string, meta: any, destTextureWidth: number, destTextureHeight: number, memoryF32: any, buffers: any, sectionDim: number, section: number) {
         if (this.gl === null) {
             return;
         }
@@ -544,7 +550,7 @@ class GLRenderer2 {
         const textureItemSize = 2;
         const totalSize = (vertexItemSize + colourItemSize + textureItemSize);
 
-        await this.ensureTexture(TextureUnit.maskTexture, 'mask/white.png');
+        await this.ensureTexture(TextureUnit.maskTexture, prefix, 'mask/white.png');
 
         for(let b = 0; b < buffers.length; b++) {
             let buffer = buffers[b];
@@ -573,7 +579,7 @@ class GLRenderer2 {
                     gl.drawArrays(gl.TRIANGLE_STRIP, 0, buffer.geo_len / totalSize);
                     break;
                 case RPCommand.mask:
-                    await this.ensureTexture(TextureUnit.maskTexture, buffer.mask_filename);
+                    await this.ensureTexture(TextureUnit.maskTexture, prefix, buffer.mask_filename);
                     gl.uniform1i(shader.maskInvert, buffer.mask_invert);
                     break;
                 case RPCommand.image:

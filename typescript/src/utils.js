@@ -1,3 +1,5 @@
+let gMuhPrefix = '';
+
 // based on code from:
 // https://hackernoon.com/functional-javascript-resolving-promises-sequentially-7aac18c4431e
 function sequentialPromises(funcs) {
@@ -38,7 +40,7 @@ function normalize_bitmap_url(url) {
 
   if (url.match(re)) {
     // requesting a bitmap just by filename, so get it from /img/immutable/
-    return "img/immutable/" + url;
+    return gMuhPrefix + "/img/immutable/" + url;
   } else {
     // change nothing, try and fetch the url
     return url;

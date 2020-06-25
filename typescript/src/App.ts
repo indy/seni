@@ -167,7 +167,7 @@ function updateSelectionUI(state: State) {
 async function paintGeometry(meta: any, memory: any, buffers: any, imageElement: HTMLImageElement, w: number, h: number, sectionDim: number, section: any) {
     const stopFn = Timer.startTiming();
 
-    await gGLRenderer.renderGeometryToTexture(meta, g_render_texture_width, g_render_texture_height, memory, buffers, sectionDim, section);
+    await gGLRenderer.renderGeometryToTexture('', meta, g_render_texture_width, g_render_texture_height, memory, buffers, sectionDim, section);
     gGLRenderer.renderTextureToScreen(meta, w, h);
     await gGLRenderer.copyImageDataTo(imageElement);
 
@@ -317,15 +317,27 @@ async function updateUI(state: State) {
 }
 
 async function ensureMode(controller: Controller, mode: SeniMode) {
+    let loadingGallery = false;
     if (mode === SeniMode.gallery && controller.getState().galleryLoaded === false) {
         // want to show the gallery but it hasn't been loaded yet. This occurs when
         // editing a particular sketch by loading it's id directly into the URL
         // e.g. http://localhost:3210/#61
         //
+        loadingGallery = true;
+
+        const state = await controller.dispatch(Action.SetMode, { mode });
+        SeniHistory.pushState(state);
+
         await getGallery(controller);
+
+        return;
+        // loadingGallery is set to true, this is a check for the following:
+        // user loads a gallery
+        // while the images are being generated the user selects a piece to edit (mode changes)
+        // once gallery loads everything, stop if from calling the following code as the pushState will force the app to go back to the gallery screen
     }
 
-    if (controller.getState().currentMode !== mode) {
+    if (controller.getState().currentMode !== mode && !loadingGallery) {
         const currentState = controller.getState();
         if (currentState.currentMode === SeniMode.evolve) {
             Log.log('leaving evolve mode');
@@ -955,10 +967,10 @@ async function main() {
                                        'shader/main-frag.glsl',
                                        'shader/blit-vert.glsl',
                                        'shader/blit-frag.glsl']);
-    gGLRenderer = new GLRenderer2(canvasElement, <IHashStrStr>shaders, g_render_texture_width, g_render_texture_height);
+    gGLRenderer = new GLRenderer2('', canvasElement, <IHashStrStr>shaders, g_render_texture_width, g_render_texture_height);
 
     try {
-        await gGLRenderer.ensureTexture(TextureUnit.brushTexture, 'brush.png');
+        await gGLRenderer.ensureTexture(TextureUnit.brushTexture, '', 'brush.png');
 
         setupUI(controller);
 

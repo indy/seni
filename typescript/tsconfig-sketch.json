@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "lib": ["ES2018", "DOM"],
     "outFile": "../www/sketch.js",
     "allowJs": true,
     "sourceMap": true,
@@ -14,10 +15,11 @@
   "include": [
     "./src/Log.ts",
     "./src/Matrix.ts",
-    "./src/renderer.js",
+    "./src/Renderer.ts",
+    "./src/SeniMode.ts",
     "./src/JobType.ts",
     "./src/Job.ts",
     "./src/utils.js",
-    "./src/sketch.js"
+    "./src/Sketch.ts"
   ]
 }
