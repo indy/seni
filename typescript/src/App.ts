@@ -29,6 +29,8 @@
 ///<reference path='utils.js'/>
 ///<reference path='editor.js'/>
 
+const PREFIX = "";
+
 // todo: render_texture_width/height were in gState, fix this for sketch.js as well
 let g_render_texture_width: number = 2048;
 let g_render_texture_height: number = 2048;
@@ -963,10 +965,10 @@ async function main() {
 
     // load the shaders asynchronously here as constructors can't do that.
     //
-    const shaders = await loadShaders(['shader/main-vert.glsl',
-                                       'shader/main-frag.glsl',
-                                       'shader/blit-vert.glsl',
-                                       'shader/blit-frag.glsl']);
+    const shaders = await loadShaders([`${PREFIX}/shader/main-vert.glsl`,
+                                       `${PREFIX}/shader/main-frag.glsl`,
+                                       `${PREFIX}/shader/blit-vert.glsl`,
+                                       `${PREFIX}/shader/blit-frag.glsl`]);
     gGLRenderer = new GLRenderer2('', canvasElement, <IHashStrStr>shaders, g_render_texture_width, g_render_texture_height);
 
     try {

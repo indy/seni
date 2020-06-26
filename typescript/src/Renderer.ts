@@ -135,8 +135,8 @@ class RendererTS {
     }
 
     static compileShader(gl: WebGLRenderingContext, shaderType: number, src: string) {
-        Log.log("compileShader called");
-        Log.log(src);
+        // Log.log("compileShader called");
+        // Log.log(src);
         const shader = gl.createShader(shaderType);
 
         if (shader) {

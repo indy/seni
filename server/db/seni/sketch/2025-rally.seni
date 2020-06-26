@@ -143,7 +143,7 @@
   (on-matrix-stack
     (translate vector: [500 0])
     (scale scalar: 20)
-    (loop (i from: 0 to: seeds)         ;todo
+    (loop (i from: 0 to: seeds)
       (define
         theta (/ (* (- seeds i) math/TAU) phi)
         r (* scale-factor (sqrt (- seeds i)))
